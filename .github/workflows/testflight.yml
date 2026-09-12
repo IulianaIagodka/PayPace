@@ -1,0 +1,75 @@
+name: TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      changelog:
+        description: "TestFlight what to test"
+        required: false
+        default: "PayPace beta"
+  push:
+    tags:
+      - "tf-*"
+
+concurrency:
+  group: testflight-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  beta:
+    name: Build & upload to TestFlight
+    runs-on: macos-14
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: PayPace
+
+    env:
+      DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+      APP_IDENTIFIER: app.paypace.PayPace
+      TESTFLIGHT_CHANGELOG: ${{ github.event.inputs.changelog || 'PayPace beta' }}
+      # Fastlane lane reads TESTFLIGHT_CHANGELOG
+      FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        run: |
+          ls /Applications | grep -i xcode || true
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: PayPace
+
+      - name: Install certificates via API key (automatic signing)
+        run: |
+          if [ -z "$DEVELOPMENT_TEAM" ]; then
+            echo "Missing DEVELOPMENT_TEAM secret" >&2
+            exit 1
+          fi
+          if [ -z "$APP_STORE_CONNECT_API_KEY_ID" ] || [ -z "$APP_STORE_CONNECT_ISSUER_ID" ] || [ -z "$APP_STORE_CONNECT_API_KEY_CONTENT" ]; then
+            echo "Missing App Store Connect API key secrets" >&2
+            exit 1
+          fi
+
+      - name: Build & upload
+        run: bundle exec fastlane beta
+
+      - name: Upload IPA artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PayPace-ipa
+          path: PayPace/build/PayPace.ipa
+          if-no-files-found: warn
+          retention-days: 14

@@ -65,6 +65,23 @@ Not included: bank connections, investments, credit scores, heavy reports, socia
 3. Set your Development Team under Signing  
 4. Run  
 
+## TestFlight
+
+See [`TESTFLIGHT.md`](TESTFLIGHT.md) for Fastlane + GitHub Actions upload.
+
+Quick local upload (Mac):
+
+```bash
+cd PayPace
+bundle install
+export DEVELOPMENT_TEAM=YOUR_TEAM_ID
+export APP_STORE_CONNECT_API_KEY_ID=...
+export APP_STORE_CONNECT_ISSUER_ID=...
+export APP_STORE_CONNECT_API_KEY_PATH=~/AuthKey_XXXXXX.p8   # local .p8 path
+# or: export APP_STORE_CONNECT_API_KEY_CONTENT=$(base64 -i AuthKey_XXXXXX.p8)
+bundle exec fastlane beta
+```
+
 ## Project structure
 
 ```
