@@ -33,6 +33,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
+    "test:shared": "node --experimental-strip-types scripts/sharedBudget.e2e.mts",
     "build:ios": "eas build --platform ios --profile production",
     "submit:ios": "eas submit --platform ios --profile production --latest",
     "build:ios:submit": "eas build --platform ios --profile production --auto-submit"
