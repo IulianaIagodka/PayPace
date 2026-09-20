@@ -60,10 +60,15 @@ Not included: bank connections, investments, credit scores, heavy reports, socia
 
 ## Open in Xcode
 
-1. Open `PayPace/PayPace.xcodeproj` on a Mac with Xcode 15+  
-2. Select an iPhone simulator (iOS 17+)  
-3. Set your Development Team under Signing  
+1. On a Mac, clone the repo and open **`PayPace/PayPace.xcodeproj`** (the blue project icon), not a single `.swift` file  
+2. Xcode 15+ · iPhone simulator (iOS 17+)  
+3. Set your Development Team under **Signing & Capabilities**  
 4. Run  
+
+If Xcode says the project is corrupted: pull the latest branch, then reopen. The project must include `project.xcworkspace` inside the `.xcodeproj` package.  
+
+For TestFlight, prefer the Expo app in `PayPaceApp/` (`eas build --local` + `eas submit`) — that path does not need this Xcode project.  
+
 
 ## TestFlight
 
