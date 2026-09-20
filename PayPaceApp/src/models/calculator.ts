@@ -1,5 +1,6 @@
 import { addDays, addMonths, differenceInCalendarDays, startOfDay } from 'date-fns';
 import type { PayCycle, PaySchedule, SafeSpendSnapshot } from './types';
+import { asMoney, fromDateKey } from '../services/formatting';
 
 export const scheduleOptions: { id: PaySchedule; title: string; subtitle: string }[] = [
   { id: 'monthly', title: 'Monthly', subtitle: 'Once a month' },
@@ -37,24 +38,44 @@ export function nextPaydayAfter(schedule: PaySchedule, from: Date): Date {
 
 export function cycleMetrics(cycle: PayCycle, now = new Date()) {
   const today = startOfDay(now);
-  const start = startOfDay(new Date(cycle.startDate));
-  const payday = startOfDay(new Date(cycle.nextPayday));
+  const start = fromDateKey(cycle.startDate);
+  const payday = fromDateKey(cycle.nextPayday);
   const daysUntilPayday = Math.max(differenceInCalendarDays(payday, today), 0);
   const totalDaysInCycle = Math.max(differenceInCalendarDays(payday, start), 1);
   const daysElapsed = Math.min(Math.max(differenceInCalendarDays(today, start), 0), totalDaysInCycle);
-  const unpaidBillsTotal = cycle.bills.filter((b) => !b.isPaid).reduce((s, b) => s + b.amount, 0);
-  const spentThisCycle = cycle.expenses.reduce((s, e) => s + e.amount, 0);
-  return { daysUntilPayday, totalDaysInCycle, daysElapsed, unpaidBillsTotal, spentThisCycle };
+  const unpaidBillsTotal = cycle.bills
+    .filter((b) => !b.isPaid)
+    .reduce((s, b) => s + asMoney(b.amount), 0);
+  const spentThisCycle = cycle.expenses.reduce((s, e) => s + Math.max(asMoney(e.amount), 0), 0);
+  return {
+    daysUntilPayday,
+    totalDaysInCycle,
+    daysElapsed,
+    unpaidBillsTotal,
+    spentThisCycle,
+    balance: asMoney(cycle.currentBalance),
+    reservedTotal:
+      asMoney(cycle.savingsGoal) + asMoney(cycle.emergencyBuffer) + asMoney(cycle.spendingBuffer),
+  };
 }
 
 export function calculateSafeSpend(cycle: PayCycle, now = new Date()): SafeSpendSnapshot {
-  const { daysUntilPayday, totalDaysInCycle, daysElapsed, unpaidBillsTotal, spentThisCycle } =
-    cycleMetrics(cycle, now);
-  const reservedTotal = cycle.savingsGoal + cycle.emergencyBuffer + cycle.spendingBuffer;
-  const remainingUntilPayday =
-    cycle.currentBalance - unpaidBillsTotal - reservedTotal - spentThisCycle;
-  const divisor = Math.max(daysUntilPayday, 1);
-  const safeToSpendToday = Math.max(remainingUntilPayday, 0) / divisor;
+  const {
+    daysUntilPayday,
+    totalDaysInCycle,
+    daysElapsed,
+    unpaidBillsTotal,
+    spentThisCycle,
+    balance,
+    reservedTotal,
+  } = cycleMetrics(cycle, now);
+
+  // Money left for discretionary spending until payday
+  const remainingUntilPayday = balance - unpaidBillsTotal - reservedTotal - spentThisCycle;
+
+  // Spread remaining across days left (at least 1 so payday-today still shows a number)
+  const daysToCover = Math.max(daysUntilPayday, 1);
+  const safeToSpendToday = remainingUntilPayday > 0 ? remainingUntilPayday / daysToCover : 0;
 
   let projectedShortfallDays: number | null = null;
   if (remainingUntilPayday < 0) {

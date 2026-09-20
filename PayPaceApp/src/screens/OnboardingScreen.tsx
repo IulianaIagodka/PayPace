@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { addDays, formatISO, startOfDay } from 'date-fns';
+import { addDays, startOfDay } from 'date-fns';
 import { newId } from '../services/id';
 import {
   AmountField,
@@ -21,7 +21,7 @@ import {
 } from '../components/ui';
 import { calculateSafeSpend, scheduleOptions } from '../models/calculator';
 import type { Bill, ExpenseCategory, PayCycle, PaySchedule } from '../models/types';
-import { currencySymbol, parseAmount } from '../services/formatting';
+import { currencySymbol, parseAmount, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 
@@ -60,8 +60,8 @@ export function OnboardingScreen() {
     () => ({
       id: newId(),
       schedule,
-      startDate: startOfDay(new Date()).toISOString(),
-      nextPayday: nextPayday.toISOString(),
+      startDate: toDateKey(new Date()),
+      nextPayday: toDateKey(nextPayday),
       currentBalance: parseAmount(balance) ?? 0,
       expectedPaycheck: parseAmount(paycheck) ?? 0,
       savingsGoal: parseAmount(savings) ?? 0,
@@ -78,7 +78,7 @@ export function OnboardingScreen() {
   const snap = calculateSafeSpend(draftCycle);
 
   const addBill = () => {
-    const amount = parseAmount(billAmount);
+    const amount = parsePositiveAmount(billAmount);
     if (!billName.trim() || amount == null) return;
     setBills((prev) => [
       ...prev,
@@ -86,7 +86,7 @@ export function OnboardingScreen() {
         id: newId(),
         name: billName.trim(),
         amount,
-        dueDate: formatISO(addDays(new Date(), 3)),
+        dueDate: toDateKey(addDays(new Date(), 3)),
         isRecurring: false,
         isPaid: false,
       },

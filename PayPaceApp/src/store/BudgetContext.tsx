@@ -11,6 +11,7 @@ import {
   type SafeSpendSnapshot,
 } from '../models/types';
 import { loadStore, saveStore } from '../services/persistence';
+import { asMoney, toDateKey } from '../services/formatting';
 
 type BudgetContextValue = {
   ready: boolean;
@@ -132,10 +133,13 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     },
     addExpense: async (expense) => {
       if (!activeCycle) return;
+      const amount = Math.max(asMoney(expense.amount), 0);
+      if (amount <= 0) return;
       const next: DailyExpense = {
         ...expense,
+        amount,
         id: expense.id ?? newId(),
-        date: expense.date ?? new Date().toISOString(),
+        date: expense.date ?? toDateKey(new Date()),
       };
       await commit({
         ...store,

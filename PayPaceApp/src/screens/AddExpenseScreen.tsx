@@ -8,29 +8,33 @@ import {
   ScreenBackground,
   SoftCard,
 } from '../components/ui';
-import { currencySymbol, formatMoney, parseAmount } from '../services/formatting';
+import { currencySymbol, formatMoney, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
+import { calculateSafeSpend } from '../models/calculator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
 
 export function AddExpenseScreen({ navigation }: Props) {
-  const { addExpense, deleteExpense, snapshot, store, activeCycle } = useBudget();
+  const { addExpense, deleteExpense, store, activeCycle } = useBudget();
   const suffix = currencySymbol(store.settings.currencyCode);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [confirm, setConfirm] = useState<number | null>(null);
 
   const onAdd = async () => {
-    const value = parseAmount(amount);
-    if (!name.trim() || value == null) return;
-    await addExpense({ name: name.trim(), amount: value });
-    const nextSafe = Math.max(
-      (snapshot.remainingUntilPayday - value) / Math.max(snapshot.daysUntilPayday, 1),
-      0,
-    );
-    setConfirm(nextSafe);
+    const value = parsePositiveAmount(amount);
+    if (!name.trim() || value == null || !activeCycle) return;
+    await addExpense({ name: name.trim(), amount: value, date: toDateKey(new Date()) });
+    const after = calculateSafeSpend({
+      ...activeCycle,
+      expenses: [
+        { id: 'temp', name: name.trim(), amount: value, date: toDateKey(new Date()) },
+        ...activeCycle.expenses,
+      ],
+    });
+    setConfirm(after.safeToSpendToday);
     setName('');
     setAmount('');
   };
@@ -61,7 +65,7 @@ export function AddExpenseScreen({ navigation }: Props) {
         <PrimaryButton
           title="Add expense"
           onPress={onAdd}
-          disabled={!name.trim() || parseAmount(amount) == null}
+          disabled={!name.trim() || parsePositiveAmount(amount) == null}
         />
 
         {expenses.length > 0 && (

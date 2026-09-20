@@ -12,7 +12,7 @@ import {
 } from '../components/ui';
 import { nextPaydayAfter, scheduleOptions } from '../models/calculator';
 import type { PaySchedule } from '../models/types';
-import { currencySymbol, formatMoney, parseAmount } from '../services/formatting';
+import { currencySymbol, formatMoney, fromDateKey, parseAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
@@ -41,7 +41,7 @@ export function PayCycleScreen({ navigation }: Props) {
     setBuffer(activeCycle.spendingBuffer ? String(activeCycle.spendingBuffer) : '');
     setSchedule(activeCycle.schedule);
     const days = Math.max(
-      differenceInCalendarDays(startOfDay(new Date(activeCycle.nextPayday)), startOfDay(new Date())),
+      differenceInCalendarDays(fromDateKey(activeCycle.nextPayday), startOfDay(new Date())),
       0,
     );
     setDaysUntil(String(days || 1));
@@ -60,19 +60,19 @@ export function PayCycleScreen({ navigation }: Props) {
       emergencyBuffer: parseAmount(emergency) ?? 0,
       spendingBuffer: parseAmount(buffer) ?? 0,
       schedule,
-      nextPayday: nextPayday.toISOString(),
+      nextPayday: toDateKey(nextPayday),
     }));
     setSaved(true);
     navigation.navigate('Home');
   };
 
   const startNext = async () => {
-    const payday = nextPaydayAfter(schedule, new Date(activeCycle.nextPayday));
+    const payday = nextPaydayAfter(schedule, fromDateKey(activeCycle.nextPayday));
     await replaceActiveCycle({
       id: newId(),
       schedule,
-      startDate: startOfDay(new Date(activeCycle.nextPayday)).toISOString(),
-      nextPayday: payday.toISOString(),
+      startDate: toDateKey(fromDateKey(activeCycle.nextPayday)),
+      nextPayday: toDateKey(payday),
       currentBalance: (parseAmount(balance) ?? 0) + (parseAmount(paycheck) ?? 0),
       expectedPaycheck: parseAmount(paycheck) ?? 0,
       savingsGoal: parseAmount(savings) ?? 0,

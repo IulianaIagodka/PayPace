@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { addDays, formatISO } from 'date-fns';
+import { addDays } from 'date-fns';
 import { AmountField, BillRow, PrimaryButton, ScreenBackground, SoftCard } from '../components/ui';
-import { currencySymbol, formatMoney, parseAmount } from '../services/formatting';
+import { currencySymbol, formatMoney, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 
@@ -70,12 +70,12 @@ export function BillsScreen() {
         <PrimaryButton
           title="Save bill"
           onPress={async () => {
-            const value = parseAmount(amount);
+            const value = parsePositiveAmount(amount);
             if (!name.trim() || value == null) return;
             await addBill({
               name: name.trim(),
               amount: value,
-              dueDate: formatISO(addDays(new Date(), 5)),
+              dueDate: toDateKey(addDays(new Date(), 5)),
               isRecurring: false,
               isPaid: false,
             });
