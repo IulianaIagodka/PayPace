@@ -15,6 +15,7 @@ import { HistoryScreen } from './src/screens/HistoryScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { ReceiptScanScreen } from './src/screens/ReceiptScanScreen';
 import { CategoryBalancesScreen } from './src/screens/CategoryBalancesScreen';
+import { SharedBudgetScreen } from './src/screens/SharedBudgetScreen';
 import { colors } from './src/theme/colors';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -57,6 +58,11 @@ function RootNavigator() {
             name="CategoryBalances"
             component={CategoryBalancesScreen}
             options={{ title: 'Categories' }}
+          />
+          <Stack.Screen
+            name="SharedBudget"
+            component={SharedBudgetScreen}
+            options={{ title: 'Shared budget' }}
           />
         </Stack.Navigator>
       ) : (

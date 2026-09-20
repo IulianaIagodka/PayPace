@@ -25,6 +25,7 @@ export function SettingsScreen({ navigation }: Props) {
         </SoftCard>
 
         <PrimaryButton title="Edit budget" onPress={() => navigation.navigate('PayCycle')} />
+        <PrimaryButton title="Shared budget" onPress={() => navigation.navigate('SharedBudget')} />
         <PrimaryButton title="Upcoming bills" onPress={() => navigation.navigate('Bills')} />
         <PrimaryButton title="Scan receipt (Premium)" onPress={() => navigation.navigate('ReceiptScan')} />
         <PrimaryButton title="Category balances (Premium)" onPress={() => navigation.navigate('CategoryBalances')} />
@@ -61,7 +62,7 @@ export function SettingsScreen({ navigation }: Props) {
             <>
               <Text style={styles.sub}>
                 Recurring bills, unlimited pay cycles, history, receipt scan, category balances,
-                widgets, advanced notifications.
+                shared budget extras, widgets, advanced notifications.
               </Text>
               <Text style={styles.price}>$2.99/month or $19.99/year</Text>
               <PrimaryButton title="Upgrade (demo unlock)" onPress={() => setPremium(true)} />

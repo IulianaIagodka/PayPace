@@ -216,7 +216,10 @@ export function ExpenseRow({
     <View style={styles.row}>
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={styles.rowTitle}>{expense.name}</Text>
-        <Text style={styles.meta}>{formatShortDate(expense.date)}</Text>
+        <Text style={styles.meta}>
+          {formatShortDate(expense.date)}
+          {expense.memberName ? ` · ${expense.memberName}` : ''}
+        </Text>
       </View>
       <Text style={styles.rowAmount}>{formatMoney(expense.amount, currencyCode)}</Text>
       {onDelete ? (

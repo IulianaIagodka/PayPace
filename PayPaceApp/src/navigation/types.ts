@@ -8,4 +8,5 @@ export type RootStackParamList = {
   Settings: undefined;
   ReceiptScan: undefined;
   CategoryBalances: undefined;
+  SharedBudget: undefined;
 };

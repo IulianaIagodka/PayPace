@@ -47,7 +47,9 @@
       "eas": {
         "projectId": "5bddd7a8-b03e-4100-ba4c-2895cb5d4ccb"
       },
-      "openaiApiKey": ""
+      "openaiApiKey": "",
+      "supabaseUrl": "",
+      "supabaseAnonKey": ""
     },
     "owner": "iuliana.iagodka"
   }

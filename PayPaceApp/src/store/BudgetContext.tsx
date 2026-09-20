@@ -1,4 +1,13 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 import { newId } from '../services/id';
 import { calculateSafeSpend } from '../models/calculator';
 import {
@@ -7,17 +16,33 @@ import {
   type AppStoreData,
   type Bill,
   type DailyExpense,
+  type Household,
+  type HouseholdMember,
   type PayCycle,
   type SafeSpendSnapshot,
+  type SharedHouseholdPayload,
 } from '../models/types';
 import { loadStore, saveStore } from '../services/persistence';
 import { asMoney, toDateKey } from '../services/formatting';
+import { getDeviceId } from '../services/deviceIdentity';
+import { generateInviteCode, normalizeInviteCode } from '../services/inviteCode';
+import { mergeSharedPayloads, toSharedPayload } from '../services/householdMerge';
+import {
+  cloudFetchById,
+  cloudFetchByInviteCode,
+  cloudUpsertPayload,
+  isCloudSyncConfigured,
+} from '../services/householdCloud';
 
 type BudgetContextValue = {
   ready: boolean;
   store: AppStoreData;
   activeCycle: PayCycle | null;
   snapshot: SafeSpendSnapshot;
+  localMember: HouseholdMember | null;
+  cloudSyncReady: boolean;
+  syncStatus: 'idle' | 'syncing' | 'error';
+  syncError: string | null;
   completeOnboarding: (cycle: PayCycle) => Promise<void>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
   updateActiveCycle: (mutate: (cycle: PayCycle) => PayCycle) => Promise<void>;
@@ -32,30 +57,170 @@ type BudgetContextValue = {
   replaceActiveCycle: (cycle: PayCycle) => Promise<void>;
   resetAll: () => Promise<void>;
   setPremium: (enabled: boolean) => Promise<void>;
+  createHousehold: (displayName: string, householdName?: string) => Promise<Household>;
+  joinHousehold: (inviteCode: string, displayName: string) => Promise<Household>;
+  leaveHousehold: () => Promise<void>;
+  renameLocalMember: (displayName: string) => Promise<void>;
+  syncHouseholdNow: () => Promise<void>;
 };
 
 const BudgetContext = createContext<BudgetContextValue | null>(null);
 
+function stamp(): string {
+  return new Date().toISOString();
+}
+
+function withCycleTouch(cycle: PayCycle): PayCycle {
+  return { ...cycle, updatedAt: stamp() };
+}
+
 export function BudgetProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [store, setStore] = useState<AppStoreData>(emptyStore);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const storeRef = useRef(store);
+  storeRef.current = store;
+  const syncingRef = useRef(false);
+
+  const persist = useCallback(async (next: AppStoreData) => {
+    setStore(next);
+    storeRef.current = next;
+    await saveStore(next);
+  }, []);
+
+  const pushIfShared = useCallback(async (next: AppStoreData) => {
+    if (!next.household || !isCloudSyncConfigured()) return;
+    const payload = toSharedPayload({
+      household: next.household,
+      currencyCode: next.settings.currencyCode,
+      cycles: next.cycles,
+    });
+    await cloudUpsertPayload(payload);
+  }, []);
+
+  const commit = useCallback(
+    async (next: AppStoreData, opts?: { skipPush?: boolean }) => {
+      let payload = next;
+      if (payload.household && !opts?.skipPush) {
+        payload = {
+          ...payload,
+          household: {
+            ...payload.household,
+            revision: payload.household.revision + 1,
+            updatedAt: stamp(),
+          },
+        };
+      }
+      await persist(payload);
+      if (!opts?.skipPush) {
+        try {
+          await pushIfShared(payload);
+          setSyncStatus('idle');
+          setSyncError(null);
+        } catch (error) {
+          setSyncStatus('error');
+          setSyncError(error instanceof Error ? error.message : 'Sync failed');
+        }
+      }
+    },
+    [persist, pushIfShared],
+  );
+
+  const applyRemotePayload = useCallback(
+    async (remote: SharedHouseholdPayload, localMemberId: string | null) => {
+      const current = storeRef.current;
+      if (!current.household) return;
+      const localPayload = toSharedPayload({
+        household: current.household,
+        currencyCode: current.settings.currencyCode,
+        cycles: current.cycles,
+      });
+      const merged = mergeSharedPayloads(localPayload, remote);
+      const next: AppStoreData = {
+        ...current,
+        household: merged.household,
+        localMemberId:
+          localMemberId ??
+          current.localMemberId ??
+          merged.household.members.find((m) => m.id === current.localMemberId)?.id ??
+          null,
+        settings: {
+          ...current.settings,
+          currencyCode: merged.settings.currencyCode || current.settings.currencyCode,
+          hasCompletedOnboarding: true,
+        },
+        cycles: merged.cycles.length ? merged.cycles : current.cycles,
+      };
+      if (
+        next.localMemberId &&
+        next.household &&
+        !next.household.members.some((m) => m.id === next.localMemberId)
+      ) {
+        next.localMemberId = next.household.members[0]?.id ?? null;
+      }
+      await persist(next);
+    },
+    [persist],
+  );
+
+  const syncHouseholdNow = useCallback(async () => {
+    const current = storeRef.current;
+    if (!current.household || !isCloudSyncConfigured() || syncingRef.current) return;
+    syncingRef.current = true;
+    setSyncStatus('syncing');
+    try {
+      const remote = await cloudFetchById(current.household.id);
+      if (remote) {
+        await applyRemotePayload(remote, current.localMemberId);
+        const after = storeRef.current;
+        if (after.household) {
+          await pushIfShared(after);
+        }
+      } else {
+        await pushIfShared(current);
+      }
+      setSyncStatus('idle');
+      setSyncError(null);
+    } catch (error) {
+      setSyncStatus('error');
+      setSyncError(error instanceof Error ? error.message : 'Sync failed');
+    } finally {
+      syncingRef.current = false;
+    }
+  }, [applyRemotePayload, pushIfShared]);
 
   useEffect(() => {
     loadStore().then((data) => {
       setStore(data);
+      storeRef.current = data;
       setReady(true);
     });
   }, []);
 
-  const commit = useCallback(async (next: AppStoreData) => {
-    setStore(next);
-    await saveStore(next);
-  }, []);
+  useEffect(() => {
+    if (!ready || !store.household || !isCloudSyncConfigured()) return;
+    void syncHouseholdNow();
+    const timer = setInterval(() => void syncHouseholdNow(), 20_000);
+    const onAppState = (state: AppStateStatus) => {
+      if (state === 'active') void syncHouseholdNow();
+    };
+    const sub = AppState.addEventListener('change', onAppState);
+    return () => {
+      clearInterval(timer);
+      sub.remove();
+    };
+  }, [ready, store.household?.id, syncHouseholdNow]);
 
   const activeCycle = useMemo(
     () => store.cycles.find((c) => c.isActive) ?? store.cycles[0] ?? null,
     [store.cycles],
   );
+
+  const localMember = useMemo(() => {
+    if (!store.household || !store.localMemberId) return null;
+    return store.household.members.find((m) => m.id === store.localMemberId) ?? null;
+  }, [store.household, store.localMemberId]);
 
   const snapshot = useMemo(
     () =>
@@ -77,15 +242,30 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     [activeCycle],
   );
 
+  const attribution = useCallback(() => {
+    const member = localMember;
+    const name = member?.displayName || store.settings.displayName || undefined;
+    return {
+      memberId: member?.id,
+      memberName: name,
+      updatedAt: stamp(),
+    };
+  }, [localMember, store.settings.displayName]);
+
   const value: BudgetContextValue = {
     ready,
     store,
     activeCycle,
     snapshot,
+    localMember,
+    cloudSyncReady: isCloudSyncConfigured(),
+    syncStatus,
+    syncError,
     completeOnboarding: async (cycle) => {
       await commit({
+        ...store,
         settings: { ...store.settings, hasCompletedOnboarding: true },
-        cycles: [{ ...cycle, isActive: true }],
+        cycles: [{ ...withCycleTouch(cycle), isActive: true }],
       });
     },
     updateSettings: async (patch) => {
@@ -93,7 +273,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     },
     updateActiveCycle: async (mutate) => {
       if (!activeCycle) return;
-      const updated = mutate(activeCycle);
+      const updated = withCycleTouch(mutate(activeCycle));
       await commit({
         ...store,
         cycles: store.cycles.map((c) => (c.id === updated.id ? updated : c)),
@@ -106,21 +286,28 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         id: bill.id ?? newId(),
         isRecurring: bill.isRecurring ?? false,
         isPaid: bill.isPaid ?? false,
+        updatedAt: stamp(),
       };
       await commit({
         ...store,
         cycles: store.cycles.map((c) =>
-          c.id === activeCycle.id ? { ...c, bills: [...c.bills, nextBill] } : c,
+          c.id === activeCycle.id
+            ? withCycleTouch({ ...c, bills: [...c.bills, nextBill] })
+            : c,
         ),
       });
     },
     updateBill: async (bill) => {
       if (!activeCycle) return;
+      const nextBill = { ...bill, updatedAt: stamp() };
       await commit({
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id
-            ? { ...c, bills: c.bills.map((b) => (b.id === bill.id ? bill : b)) }
+            ? withCycleTouch({
+                ...c,
+                bills: c.bills.map((b) => (b.id === bill.id ? nextBill : b)),
+              })
             : c,
         ),
       });
@@ -130,7 +317,9 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       await commit({
         ...store,
         cycles: store.cycles.map((c) =>
-          c.id === activeCycle.id ? { ...c, bills: c.bills.filter((b) => b.id !== id) } : c,
+          c.id === activeCycle.id
+            ? withCycleTouch({ ...c, bills: c.bills.filter((b) => b.id !== id) })
+            : c,
         ),
       });
     },
@@ -138,8 +327,10 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       if (!activeCycle) return;
       const amount = Math.max(asMoney(expense.amount), 0);
       if (amount <= 0) return;
+      const attr = attribution();
       const next: DailyExpense = {
         ...expense,
+        ...attr,
         amount,
         id: expense.id ?? newId(),
         date: expense.date ?? toDateKey(new Date()),
@@ -147,18 +338,22 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       await commit({
         ...store,
         cycles: store.cycles.map((c) =>
-          c.id === activeCycle.id ? { ...c, expenses: [next, ...c.expenses] } : c,
+          c.id === activeCycle.id
+            ? withCycleTouch({ ...c, expenses: [next, ...c.expenses] })
+            : c,
         ),
       });
     },
     addExpenses: async (expenses) => {
       if (!activeCycle || expenses.length === 0) return;
+      const attr = attribution();
       const nextItems: DailyExpense[] = expenses
         .map((expense) => {
           const amount = Math.max(asMoney(expense.amount), 0);
           if (amount <= 0) return null;
           return {
             ...expense,
+            ...attr,
             amount,
             id: expense.id ?? newId(),
             date: expense.date ?? toDateKey(new Date()),
@@ -170,7 +365,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id
-            ? { ...c, expenses: [...nextItems, ...c.expenses] }
+            ? withCycleTouch({ ...c, expenses: [...nextItems, ...c.expenses] })
             : c,
         ),
       });
@@ -181,21 +376,150 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id
-            ? { ...c, expenses: c.expenses.filter((e) => e.id !== id) }
+            ? withCycleTouch({
+                ...c,
+                expenses: c.expenses.filter((e) => e.id !== id),
+              })
             : c,
         ),
       });
     },
     replaceActiveCycle: async (cycle) => {
       await commit({
+        ...store,
         settings: { ...store.settings, hasCompletedOnboarding: true },
-        cycles: [{ ...cycle, isActive: true }],
+        cycles: [{ ...withCycleTouch(cycle), isActive: true }],
       });
     },
-    resetAll: async () => commit(emptyStore),
+    resetAll: async () => commit(emptyStore, { skipPush: true }),
     setPremium: async (enabled) => {
       await commit({ ...store, settings: { ...store.settings, isPremium: enabled } });
     },
+    createHousehold: async (displayName, householdName) => {
+      const trimmed = displayName.trim();
+      if (!trimmed) throw new Error('Enter your name');
+      const deviceId = await getDeviceId();
+      const memberId = newId();
+      const now = stamp();
+      const household: Household = {
+        id: newId(),
+        name: (householdName?.trim() || 'Our budget').slice(0, 40),
+        inviteCode: generateInviteCode(),
+        members: [
+          {
+            id: memberId,
+            displayName: trimmed,
+            deviceId,
+            role: 'owner',
+            joinedAt: now,
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+        revision: 1,
+      };
+      const next: AppStoreData = {
+        ...store,
+        settings: { ...store.settings, displayName: trimmed },
+        household,
+        localMemberId: memberId,
+      };
+      await commit(next);
+      return household;
+    },
+    joinHousehold: async (inviteCode, displayName) => {
+      const trimmed = displayName.trim();
+      const code = normalizeInviteCode(inviteCode);
+      if (!trimmed) throw new Error('Enter your name');
+      if (code.length < 4) throw new Error('Enter the invite code');
+      if (!isCloudSyncConfigured()) {
+        throw new Error(
+          'Cloud sync is not configured yet. Add Supabase keys (see SHARED-BUDGET.md), then rebuild.',
+        );
+      }
+      const remote = await cloudFetchByInviteCode(code);
+      if (!remote) throw new Error('Code not found. Check with your partner.');
+      const deviceId = await getDeviceId();
+      const existingOnDevice = remote.household.members.find((m) => m.deviceId === deviceId);
+      if (!existingOnDevice && remote.household.members.length >= 2) {
+        throw new Error('This household already has two people.');
+      }
+      let memberId = existingOnDevice?.id;
+      let members = [...remote.household.members];
+      if (!memberId) {
+        memberId = newId();
+        members = [
+          ...members,
+          {
+            id: memberId,
+            displayName: trimmed,
+            deviceId,
+            role: 'partner',
+            joinedAt: stamp(),
+          },
+        ];
+      } else {
+        members = members.map((m) =>
+          m.id === memberId ? { ...m, displayName: trimmed } : m,
+        );
+      }
+      const household: Household = {
+        ...remote.household,
+        members,
+        updatedAt: stamp(),
+        revision: remote.revision + 1,
+      };
+      const next: AppStoreData = {
+        ...store,
+        settings: {
+          ...store.settings,
+          displayName: trimmed,
+          currencyCode: remote.settings.currencyCode || store.settings.currencyCode,
+          hasCompletedOnboarding: true,
+        },
+        household,
+        localMemberId: memberId,
+        cycles: remote.cycles.length
+          ? remote.cycles
+          : store.cycles,
+      };
+      await persist(next);
+      await cloudUpsertPayload(
+        toSharedPayload({
+          household,
+          currencyCode: next.settings.currencyCode,
+          cycles: next.cycles,
+        }),
+      );
+      return household;
+    },
+    leaveHousehold: async () => {
+      await commit(
+        {
+          ...store,
+          household: null,
+          localMemberId: null,
+        },
+        { skipPush: true },
+      );
+    },
+    renameLocalMember: async (displayName) => {
+      const trimmed = displayName.trim();
+      if (!trimmed || !store.household || !store.localMemberId) return;
+      const household: Household = {
+        ...store.household,
+        members: store.household.members.map((m) =>
+          m.id === store.localMemberId ? { ...m, displayName: trimmed } : m,
+        ),
+        updatedAt: stamp(),
+      };
+      await commit({
+        ...store,
+        settings: { ...store.settings, displayName: trimmed },
+        household,
+      });
+    },
+    syncHouseholdNow,
   };
 
   return <BudgetContext.Provider value={value}>{children}</BudgetContext.Provider>;
