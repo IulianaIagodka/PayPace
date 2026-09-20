@@ -43,6 +43,7 @@ function RootNavigator() {
             headerShadowVisible: false,
             contentStyle: { backgroundColor: colors.bgTop },
             headerBackTitle: 'Back',
+            headerTitleStyle: { fontWeight: '700', color: colors.ink },
           }}
         >
           <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'PayPace' }} />

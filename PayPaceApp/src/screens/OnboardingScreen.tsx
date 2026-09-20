@@ -100,7 +100,10 @@ export function OnboardingScreen() {
       <ScreenBackground>
         <View style={styles.pad}>
           <View style={{ flex: 1, justifyContent: 'center', gap: 18, paddingTop: 80 }}>
-            <Text style={styles.brand}>PayPace</Text>
+            <Text style={styles.brand}>
+              <Text style={styles.brandPay}>Pay</Text>
+              <Text style={styles.brandPace}>pace</Text>
+            </Text>
             <Text style={styles.title}>Know what you can spend.{'\n'}Until your next payday.</Text>
             <Text style={styles.sub}>
               No monthly spreadsheet. Just a clear number for today — and peace of mind until payday.
@@ -264,7 +267,7 @@ function Dots({ step }: { step: Step }) {
             height: 8,
             width: i === idx ? 28 : 10,
             borderRadius: 99,
-            backgroundColor: i <= idx ? colors.accent : 'rgba(46,51,49,0.12)',
+            backgroundColor: i <= idx ? colors.accent : 'rgba(24, 42, 34, 0.12)',
           }}
         />
       ))}
@@ -274,7 +277,9 @@ function Dots({ step }: { step: Step }) {
 
 const styles = StyleSheet.create({
   pad: { flexGrow: 1, padding: 24, paddingBottom: 40, gap: 16 },
-  brand: { fontSize: 44, fontWeight: '700', color: colors.ink },
+  brand: { fontSize: 44, fontWeight: '700' },
+  brandPay: { color: colors.ink },
+  brandPace: { color: colors.accentMid },
   title: { fontSize: 30, fontWeight: '700', color: colors.ink, lineHeight: 36 },
   sub: { fontSize: 16, color: colors.inkSecondary, lineHeight: 22 },
   subSmall: { fontSize: 13, color: colors.inkSecondary },

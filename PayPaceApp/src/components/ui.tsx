@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../theme/colors';
+import { colors, paceGradient } from '../theme/colors';
 import { formatMoney, formatShortDate } from '../services/formatting';
 import type { Bill, DailyExpense } from '../models/types';
 
@@ -23,6 +23,10 @@ export function ScreenBackground({
 }) {
   return (
     <LinearGradient colors={[colors.bgTop, colors.bgMid, colors.bgBottom]} style={styles.flex}>
+      <View pointerEvents="none" style={styles.atmosphere}>
+        <View style={[styles.blob, styles.blobMint]} />
+        <View style={[styles.blob, styles.blobForest]} />
+      </View>
       <SafeAreaView style={styles.flex} edges={edges}>
         {children}
       </SafeAreaView>
@@ -166,10 +170,16 @@ export function CycleProgress({
   daysElapsed: number;
   totalDays: number;
 }) {
+  const widthPct = `${Math.max(Math.round(progress * 100), 4)}%` as `${number}%`;
   return (
     <View style={{ gap: 10 }}>
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${Math.max(Math.round(progress * 100), 4)}%` }]} />
+        <LinearGradient
+          colors={[...paceGradient]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={[styles.progressFill, { width: widthPct }]}
+        />
       </View>
       <View style={styles.progressMeta}>
         <Text style={styles.meta}>Pay cycle</Text>
@@ -226,6 +236,23 @@ export function ExpenseRow({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  atmosphere: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
+  blob: { position: 'absolute', borderRadius: 999, opacity: 0.55 },
+  blobMint: {
+    width: 280,
+    height: 280,
+    backgroundColor: colors.mint,
+    top: -80,
+    right: -60,
+  },
+  blobForest: {
+    width: 240,
+    height: 240,
+    backgroundColor: colors.accentLight,
+    bottom: 40,
+    left: -90,
+    opacity: 0.35,
+  },
   headerBtn: {
     minHeight: 44,
     minWidth: 44,
@@ -274,15 +301,14 @@ const styles = StyleSheet.create({
   heroRemaining: { color: colors.ink, fontSize: 16, fontWeight: '600' },
   heroDays: { color: colors.inkSecondary, fontSize: 15 },
   progressTrack: {
-    height: 10,
+    height: 12,
     borderRadius: 99,
-    backgroundColor: 'rgba(46,51,49,0.08)',
+    backgroundColor: 'rgba(24, 42, 34, 0.08)',
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     borderRadius: 99,
-    backgroundColor: colors.accent,
   },
   progressMeta: { flexDirection: 'row', justifyContent: 'space-between' },
   meta: { color: colors.inkSecondary, fontSize: 13, fontWeight: '500' },

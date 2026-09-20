@@ -1,11 +1,12 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import { PrimaryButton, ScreenBackground, SoftCard } from '../components/ui';
 import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import { formatMoney } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
-import { colors } from '../theme/colors';
+import { colors, paceGradient } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CategoryBalances'>;
@@ -38,7 +39,12 @@ export function CategoryBalancesScreen({ navigation }: Props) {
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{row.title}</Text>
                 <View style={styles.track}>
-                  <View style={[styles.fill, { width: `${Math.max(row.share * 100, row.spent > 0 ? 4 : 0)}%` }]} />
+                  <LinearGradient
+                    colors={[...paceGradient]}
+                    start={{ x: 0, y: 0.5 }}
+                    end={{ x: 1, y: 0.5 }}
+                    style={[styles.fill, { width: `${Math.max(row.share * 100, row.spent > 0 ? 4 : 0)}%` }]}
+                  />
                 </View>
               </View>
               <Text style={styles.amount}>{formatMoney(row.spent, currency)}</Text>
@@ -61,9 +67,9 @@ const styles = StyleSheet.create({
   track: {
     height: 8,
     borderRadius: 99,
-    backgroundColor: 'rgba(46,51,49,0.08)',
+    backgroundColor: 'rgba(24, 42, 34, 0.08)',
     overflow: 'hidden',
     marginTop: 6,
   },
-  fill: { height: '100%', backgroundColor: colors.accent, borderRadius: 99 },
+  fill: { height: '100%', borderRadius: 99 },
 });

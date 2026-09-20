@@ -94,7 +94,7 @@ export function HomeScreen({ navigation }: Props) {
         <SecondaryButton title="Open settings" onPress={() => navigation.navigate('Settings')} />
 
         {snapshot.projectedShortfallDays != null && (
-          <SoftCard style={{ backgroundColor: 'rgba(219,158,97,0.18)' }}>
+          <SoftCard style={{ backgroundColor: 'rgba(196, 181, 160, 0.28)' }}>
             <Text style={styles.warning}>
               At your current pace, you may run short {snapshot.projectedShortfallDays} days before
               payday.
