@@ -18,8 +18,7 @@
       "bundleIdentifier": "app.paypace.PayPace",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "CFBundleDisplayName": "PayPace",
-        "NSUserNotificationsUsageDescription": "PayPace sends optional reminders about your safe-to-spend amount and upcoming bills."
+        "CFBundleDisplayName": "PayPace"
       }
     },
     "android": {
