@@ -1,7 +1,8 @@
 import React from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PrimaryButton, ScreenBackground, SoftCard } from '../components/ui';
+import { CURRENCIES } from '../services/currencies';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
@@ -25,11 +26,20 @@ export function SettingsScreen({ navigation }: Props) {
 
         <SoftCard>
           <Text style={styles.section}>Currency</Text>
-          {(['PLN', 'USD', 'EUR', 'GBP'] as const).map((code) => (
-            <Pressable key={code} onPress={() => updateSettings({ currencyCode: code })} style={styles.row}>
-              <Text style={styles.rowText}>{code}</Text>
-              <Text style={{ color: s.currencyCode === code ? colors.accent : colors.inkSecondary }}>
-                {s.currencyCode === code ? '●' : '○'}
+          {CURRENCIES.map((currency) => (
+            <Pressable
+              key={currency.code}
+              onPress={() => updateSettings({ currencyCode: currency.code })}
+              style={styles.row}
+            >
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <Text style={styles.rowText}>
+                  {currency.symbol} · {currency.code}
+                </Text>
+                <Text style={styles.rowSub}>{currency.name}</Text>
+              </View>
+              <Text style={{ color: s.currencyCode === currency.code ? colors.accent : colors.inkSecondary }}>
+                {s.currencyCode === currency.code ? '●' : '○'}
               </Text>
             </Pressable>
           ))}
@@ -77,7 +87,8 @@ const styles = StyleSheet.create({
   brand: { fontSize: 22, fontWeight: '700', color: colors.ink },
   sub: { color: colors.inkSecondary, fontSize: 15, lineHeight: 21 },
   section: { color: colors.ink, fontWeight: '700', fontSize: 16, marginBottom: 4 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, minHeight: 44 },
-  rowText: { color: colors.ink, fontSize: 15 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, minHeight: 52 },
+  rowText: { color: colors.ink, fontSize: 15, fontWeight: '600' },
+  rowSub: { color: colors.inkSecondary, fontSize: 13, marginTop: 2 },
   price: { color: colors.accent, fontWeight: '700', fontSize: 15 },
 });

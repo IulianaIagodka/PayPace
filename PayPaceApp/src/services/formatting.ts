@@ -1,22 +1,16 @@
 import { startOfDay } from 'date-fns';
-
-const symbols: Record<string, string> = {
-  PLN: 'zł',
-  USD: '$',
-  EUR: '€',
-  GBP: '£',
-};
+import { getCurrency } from './currencies';
 
 export function currencySymbol(code: string): string {
-  return symbols[code] ?? code;
+  return getCurrency(code).symbol;
 }
 
-export function formatMoney(amount: number, code = 'PLN'): string {
+export function formatMoney(amount: number, code = 'UAH'): string {
   const rounded = Math.round(asMoney(amount));
-  const abs = Math.abs(rounded).toLocaleString('pl-PL');
+  const abs = Math.abs(rounded).toLocaleString('uk-UA');
   const sign = rounded < 0 ? '−' : '';
-  const symbol = currencySymbol(code);
-  if (code === 'PLN') return `${sign}${abs} ${symbol}`;
+  const { symbol, symbolAfter } = getCurrency(code);
+  if (symbolAfter) return `${sign}${abs} ${symbol}`;
   return `${sign}${symbol}${abs}`;
 }
 
@@ -66,5 +60,5 @@ export function fromDateKey(value: string): Date {
 }
 
 export function formatShortDate(isoOrKey: string): string {
-  return fromDateKey(isoOrKey).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return fromDateKey(isoOrKey).toLocaleDateString('uk-UA', { month: 'short', day: 'numeric' });
 }
