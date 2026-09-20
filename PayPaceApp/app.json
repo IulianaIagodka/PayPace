@@ -24,7 +24,7 @@
     "android": {
       "package": "app.paypace.paypace",
       "adaptiveIcon": {
-        "backgroundColor": "#E8F0EB",
+        "backgroundColor": "#F0EBE3",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
