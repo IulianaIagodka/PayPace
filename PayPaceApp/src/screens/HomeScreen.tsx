@@ -5,6 +5,7 @@ import {
   BillRow,
   CycleProgress,
   ExpenseRow,
+  HeaderIconButton,
   PrimaryButton,
   SafeSpendHero,
   ScreenBackground,
@@ -27,6 +28,7 @@ export function HomeScreen({ navigation }: Props) {
         <View style={styles.pad}>
           <Text style={styles.brand}>PayPace</Text>
           <Text style={styles.sub}>No pay cycle yet.</Text>
+          <PrimaryButton title="Set up budget" onPress={() => navigation.navigate('Settings')} />
         </View>
       </ScreenBackground>
     );
@@ -37,16 +39,12 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={styles.pad}>
+      <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.brand}>PayPace</Text>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Pressable onPress={() => navigation.navigate('PayCycle')}>
-              <Text style={styles.link}>Cycle</Text>
-            </Pressable>
-            <Pressable onPress={() => navigation.navigate('Settings')}>
-              <Text style={styles.link}>Settings</Text>
-            </Pressable>
+          <View style={styles.headerActions}>
+            <HeaderIconButton label="Budget" onPress={() => navigation.navigate('PayCycle')} />
+            <HeaderIconButton label="Settings" onPress={() => navigation.navigate('Settings')} />
           </View>
         </View>
         <Text style={styles.paydayHint}>Payday {formatShortDate(activeCycle.nextPayday)}</Text>
@@ -65,6 +63,8 @@ export function HomeScreen({ navigation }: Props) {
           totalDays={snapshot.totalDaysInCycle}
         />
 
+        <PrimaryButton title="Edit budget" onPress={() => navigation.navigate('PayCycle')} />
+
         {snapshot.projectedShortfallDays != null && (
           <SoftCard style={{ backgroundColor: 'rgba(219,158,97,0.18)' }}>
             <Text style={styles.warning}>
@@ -76,7 +76,7 @@ export function HomeScreen({ navigation }: Props) {
 
         <View style={styles.sectionHead}>
           <Text style={styles.sectionTitle}>Upcoming expenses</Text>
-          <Pressable onPress={() => navigation.navigate('Bills')}>
+          <Pressable onPress={() => navigation.navigate('Bills')} hitSlop={10}>
             <Text style={styles.link}>See all</Text>
           </Pressable>
         </View>
@@ -90,7 +90,7 @@ export function HomeScreen({ navigation }: Props) {
 
         <View style={styles.sectionHead}>
           <Text style={styles.sectionTitle}>Daily spending</Text>
-          <Pressable onPress={() => navigation.navigate('AddExpense')}>
+          <Pressable onPress={() => navigation.navigate('AddExpense')} hitSlop={10}>
             <Text style={styles.link}>Add</Text>
           </Pressable>
         </View>
@@ -110,8 +110,9 @@ export function HomeScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   pad: { padding: 24, paddingBottom: 48, gap: 20 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  brand: { fontSize: 24, fontWeight: '700', color: colors.ink },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  headerActions: { flexDirection: 'row', gap: 8 },
+  brand: { fontSize: 24, fontWeight: '700', color: colors.ink, flexShrink: 1 },
   link: { color: colors.accent, fontWeight: '600', fontSize: 15 },
   paydayHint: { color: colors.inkSecondary, fontSize: 13, fontWeight: '500', marginTop: -10 },
   sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

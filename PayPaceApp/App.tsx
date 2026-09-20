@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { BudgetProvider, useBudget } from './src/store/BudgetContext';
 import type { RootStackParamList } from './src/navigation/types';
@@ -38,6 +39,7 @@ function RootNavigator() {
           headerStyle: { backgroundColor: colors.bgTop },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.bgTop },
+          headerBackTitle: 'Back',
         }}
       >
         {!showHome ? (
@@ -51,7 +53,7 @@ function RootNavigator() {
             <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
             <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'Add spending' }} />
             <Stack.Screen name="Bills" component={BillsScreen} options={{ title: 'Upcoming bills' }} />
-            <Stack.Screen name="PayCycle" component={PayCycleScreen} options={{ title: 'Pay cycle' }} />
+            <Stack.Screen name="PayCycle" component={PayCycleScreen} options={{ title: 'Edit budget' }} />
             <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'History' }} />
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
           </>
@@ -63,8 +65,10 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <BudgetProvider>
-      <RootNavigator />
-    </BudgetProvider>
+    <SafeAreaProvider>
+      <BudgetProvider>
+        <RootNavigator />
+      </BudgetProvider>
+    </SafeAreaProvider>
   );
 }

@@ -9,15 +9,44 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { formatMoney, formatShortDate } from '../services/formatting';
 import type { Bill, DailyExpense } from '../models/types';
 
-export function ScreenBackground({ children }: { children: React.ReactNode }) {
+export function ScreenBackground({
+  children,
+  edges = ['top', 'left', 'right'],
+}: {
+  children: React.ReactNode;
+  edges?: ('top' | 'right' | 'bottom' | 'left')[];
+}) {
   return (
     <LinearGradient colors={[colors.bgTop, colors.bgMid, colors.bgBottom]} style={styles.flex}>
-      {children}
+      <SafeAreaView style={styles.flex} edges={edges}>
+        {children}
+      </SafeAreaView>
     </LinearGradient>
+  );
+}
+
+export function HeaderIconButton({
+  label,
+  onPress,
+}: {
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+    >
+      <Text style={styles.headerBtnText}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -178,6 +207,17 @@ export function ExpenseRow({ expense, currencyCode }: { expense: DailyExpense; c
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  headerBtn: {
+    minHeight: 44,
+    minWidth: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerBtnText: { color: colors.accent, fontWeight: '700', fontSize: 14 },
   primaryBtn: {
     backgroundColor: colors.accent,
     borderRadius: 18,
