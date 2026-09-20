@@ -35,13 +35,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font",
-      [
-        "expo-notifications",
-        {
-          "color": "#387A6B"
-        }
-      ]
+      "expo-font"
     ],
     "extra": {
       "eas": {
