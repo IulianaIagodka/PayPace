@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -19,6 +19,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function RootNavigator() {
   const { ready, store, activeCycle } = useBudget();
+  const showHome = store.settings.hasCompletedOnboarding && activeCycle != null;
 
   if (!ready) {
     return (
@@ -28,37 +29,32 @@ function RootNavigator() {
     );
   }
 
-  const showHome = store.settings.hasCompletedOnboarding && activeCycle != null;
-
   return (
-    <NavigationContainer>
+    <NavigationContainer key={showHome ? 'app' : 'onboarding'}>
       <StatusBar style="dark" />
-      <Stack.Navigator
-        screenOptions={{
-          headerTintColor: colors.accent,
-          headerStyle: { backgroundColor: colors.bgTop },
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: colors.bgTop },
-          headerBackTitle: 'Back',
-        }}
-      >
-        {!showHome ? (
-          <Stack.Screen
-            name="Onboarding"
-            component={OnboardingScreen}
-            options={{ headerShown: false }}
-          />
-        ) : (
-          <>
-            <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'Add spending' }} />
-            <Stack.Screen name="Bills" component={BillsScreen} options={{ title: 'Upcoming bills' }} />
-            <Stack.Screen name="PayCycle" component={PayCycleScreen} options={{ title: 'Edit budget' }} />
-            <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'History' }} />
-            <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
-          </>
-        )}
-      </Stack.Navigator>
+      {showHome ? (
+        <Stack.Navigator
+          initialRouteName="Home"
+          screenOptions={{
+            headerTintColor: colors.accent,
+            headerStyle: { backgroundColor: colors.bgTop },
+            headerShadowVisible: false,
+            contentStyle: { backgroundColor: colors.bgTop },
+            headerBackTitle: 'Back',
+          }}
+        >
+          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'PayPace' }} />
+          <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'Add spending' }} />
+          <Stack.Screen name="Bills" component={BillsScreen} options={{ title: 'Upcoming bills' }} />
+          <Stack.Screen name="PayCycle" component={PayCycleScreen} options={{ title: 'Edit budget' }} />
+          <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'History' }} />
+          <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+        </Stack.Navigator>
+      ) : (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+        </Stack.Navigator>
+      )}
     </NavigationContainer>
   );
 }
