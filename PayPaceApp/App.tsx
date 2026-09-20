@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -13,6 +13,8 @@ import { BillsScreen } from './src/screens/BillsScreen';
 import { PayCycleScreen } from './src/screens/PayCycleScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { ReceiptScanScreen } from './src/screens/ReceiptScanScreen';
+import { CategoryBalancesScreen } from './src/screens/CategoryBalancesScreen';
 import { colors } from './src/theme/colors';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -49,6 +51,12 @@ function RootNavigator() {
           <Stack.Screen name="PayCycle" component={PayCycleScreen} options={{ title: 'Edit budget' }} />
           <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'History' }} />
           <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+          <Stack.Screen name="ReceiptScan" component={ReceiptScanScreen} options={{ title: 'Scan receipt' }} />
+          <Stack.Screen
+            name="CategoryBalances"
+            component={CategoryBalancesScreen}
+            options={{ title: 'Categories' }}
+          />
         </Stack.Navigator>
       ) : (
         <Stack.Navigator screenOptions={{ headerShown: false }}>

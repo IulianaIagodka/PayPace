@@ -25,6 +25,9 @@ type BudgetContextValue = {
   updateBill: (bill: Bill) => Promise<void>;
   deleteBill: (id: string) => Promise<void>;
   addExpense: (expense: Omit<DailyExpense, 'id' | 'date'> & { id?: string; date?: string }) => Promise<void>;
+  addExpenses: (
+    expenses: Array<Omit<DailyExpense, 'id' | 'date'> & { id?: string; date?: string }>,
+  ) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
   replaceActiveCycle: (cycle: PayCycle) => Promise<void>;
   resetAll: () => Promise<void>;
@@ -145,6 +148,30 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id ? { ...c, expenses: [next, ...c.expenses] } : c,
+        ),
+      });
+    },
+    addExpenses: async (expenses) => {
+      if (!activeCycle || expenses.length === 0) return;
+      const nextItems: DailyExpense[] = expenses
+        .map((expense) => {
+          const amount = Math.max(asMoney(expense.amount), 0);
+          if (amount <= 0) return null;
+          return {
+            ...expense,
+            amount,
+            id: expense.id ?? newId(),
+            date: expense.date ?? toDateKey(new Date()),
+          } satisfies DailyExpense;
+        })
+        .filter(Boolean) as DailyExpense[];
+      if (!nextItems.length) return;
+      await commit({
+        ...store,
+        cycles: store.cycles.map((c) =>
+          c.id === activeCycle.id
+            ? { ...c, expenses: [...nextItems, ...c.expenses] }
+            : c,
         ),
       });
     },

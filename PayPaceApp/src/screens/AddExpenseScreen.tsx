@@ -9,6 +9,7 @@ import {
   SoftCard,
 } from '../components/ui';
 import { currencySymbol, formatMoney, parsePositiveAmount, toDateKey } from '../services/formatting';
+import { guessCategory } from '../services/categories';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
@@ -26,11 +27,13 @@ export function AddExpenseScreen({ navigation }: Props) {
   const onAdd = async () => {
     const value = parsePositiveAmount(amount);
     if (!name.trim() || value == null || !activeCycle) return;
-    await addExpense({ name: name.trim(), amount: value, date: toDateKey(new Date()) });
+    const trimmed = name.trim();
+    const category = guessCategory(trimmed);
+    await addExpense({ name: trimmed, amount: value, date: toDateKey(new Date()), category });
     const after = calculateSafeSpend({
       ...activeCycle,
       expenses: [
-        { id: 'temp', name: name.trim(), amount: value, date: toDateKey(new Date()) },
+        { id: 'temp', name: trimmed, amount: value, date: toDateKey(new Date()), category },
         ...activeCycle.expenses,
       ],
     });

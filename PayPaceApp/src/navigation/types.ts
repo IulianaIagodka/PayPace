@@ -6,4 +6,6 @@ export type RootStackParamList = {
   PayCycle: undefined;
   History: undefined;
   Settings: undefined;
+  ReceiptScan: undefined;
+  CategoryBalances: undefined;
 };

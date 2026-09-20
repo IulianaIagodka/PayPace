@@ -13,7 +13,8 @@ import {
 } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { formatShortDate } from '../services/formatting';
+import { formatShortDate, formatMoney } from '../services/formatting';
+import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
@@ -65,6 +66,9 @@ export function HomeScreen({ navigation }: Props) {
 
   const upcoming = activeCycle.bills.filter((b) => !b.isPaid).slice(0, 3);
   const recent = activeCycle.expenses.slice(0, 4);
+  const categoryRows = store.settings.isPremium
+    ? categoryBalancesForDisplay(activeCycle).slice(0, 5)
+    : [];
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
@@ -86,6 +90,7 @@ export function HomeScreen({ navigation }: Props) {
         />
 
         <PrimaryButton title="Edit budget" onPress={() => navigation.navigate('PayCycle')} />
+        <SecondaryButton title="Scan receipt (Premium)" onPress={() => navigation.navigate('ReceiptScan')} />
         <SecondaryButton title="Open settings" onPress={() => navigation.navigate('Settings')} />
 
         {snapshot.projectedShortfallDays != null && (
@@ -142,6 +147,29 @@ export function HomeScreen({ navigation }: Props) {
         </SoftCard>
 
         <PrimaryButton title="Add spending" onPress={() => navigation.navigate('AddExpense')} />
+
+        {store.settings.isPremium ? (
+          <View style={{ gap: 12 }}>
+            <View style={styles.sectionHead}>
+              <Text style={styles.sectionTitle}>By category</Text>
+              <Pressable onPress={() => navigation.navigate('CategoryBalances')} hitSlop={12}>
+                <Text style={styles.link}>All</Text>
+              </Pressable>
+            </View>
+            <SoftCard>
+              {categoryRows.every((r) => r.spent === 0) ? (
+                <Text style={styles.sub}>Scan a receipt to fill category balances.</Text>
+              ) : (
+                categoryRows.map((row) => (
+                  <View key={row.category} style={styles.catRow}>
+                    <Text style={styles.catName}>{row.title}</Text>
+                    <Text style={styles.catAmount}>{formatMoney(row.spent, currency)}</Text>
+                  </View>
+                ))
+              )}
+            </SoftCard>
+          </View>
+        ) : null}
       </ScrollView>
     </ScreenBackground>
   );
@@ -164,4 +192,7 @@ const styles = StyleSheet.create({
   sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: '700' },
   sub: { color: colors.inkSecondary, fontSize: 15, lineHeight: 21 },
   warning: { color: colors.ink, fontSize: 15, lineHeight: 21 },
+  catRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
+  catName: { color: colors.ink, fontSize: 15, fontWeight: '500' },
+  catAmount: { color: colors.ink, fontSize: 15, fontWeight: '700' },
 });
