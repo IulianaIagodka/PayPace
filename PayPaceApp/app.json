@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "PayPace",
+    "slug": "paypace",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "paypace",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7F2E8"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.paypace.PayPace",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDisplayName": "PayPace",
+        "NSUserNotificationsUsageDescription": "PayPace sends optional reminders about your safe-to-spend amount and upcoming bills."
+      }
+    },
+    "android": {
+      "package": "app.paypace.paypace",
+      "adaptiveIcon": {
+        "backgroundColor": "#E8F0EB",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "color": "#387A6B"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5bddd7a8-b03e-4100-ba4c-2895cb5d4ccb"
+      }
+    },
+    "owner": "iuliana.iagodka"
+  }
+}

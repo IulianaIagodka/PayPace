@@ -1,0 +1,70 @@
+import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StatusBar } from 'expo-status-bar';
+import { BudgetProvider, useBudget } from './src/store/BudgetContext';
+import type { RootStackParamList } from './src/navigation/types';
+import { OnboardingScreen } from './src/screens/OnboardingScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { AddExpenseScreen } from './src/screens/AddExpenseScreen';
+import { BillsScreen } from './src/screens/BillsScreen';
+import { PayCycleScreen } from './src/screens/PayCycleScreen';
+import { HistoryScreen } from './src/screens/HistoryScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
+import { colors } from './src/theme/colors';
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+function RootNavigator() {
+  const { ready, store, activeCycle } = useBudget();
+
+  if (!ready) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bgTop }}>
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
+  }
+
+  const showHome = store.settings.hasCompletedOnboarding && activeCycle != null;
+
+  return (
+    <NavigationContainer>
+      <StatusBar style="dark" />
+      <Stack.Navigator
+        screenOptions={{
+          headerTintColor: colors.accent,
+          headerStyle: { backgroundColor: colors.bgTop },
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: colors.bgTop },
+        }}
+      >
+        {!showHome ? (
+          <Stack.Screen
+            name="Onboarding"
+            component={OnboardingScreen}
+            options={{ headerShown: false }}
+          />
+        ) : (
+          <>
+            <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'Add spending' }} />
+            <Stack.Screen name="Bills" component={BillsScreen} options={{ title: 'Upcoming bills' }} />
+            <Stack.Screen name="PayCycle" component={PayCycleScreen} options={{ title: 'Pay cycle' }} />
+            <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'History' }} />
+            <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <BudgetProvider>
+      <RootNavigator />
+    </BudgetProvider>
+  );
+}

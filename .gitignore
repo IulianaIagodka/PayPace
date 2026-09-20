@@ -1,0 +1,12 @@
+.DS_Store
+**/.expo/
+**/node_modules/
+**/dist/
+**/.eas/
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+PayPaceApp/.claude/
+PayPaceApp/AGENTS.md
+PayPaceApp/CLAUDE.md
