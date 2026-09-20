@@ -1,5 +1,5 @@
 import React, { useLayoutEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   BillRow,
@@ -19,7 +19,7 @@ import type { RootStackParamList } from '../navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export function HomeScreen({ navigation }: Props) {
-  const { activeCycle, snapshot, store } = useBudget();
+  const { activeCycle, snapshot, store, deleteExpense } = useBudget();
   const currency = store.settings.currencyCode;
 
   useLayoutEffect(() => {
@@ -121,7 +121,23 @@ export function HomeScreen({ navigation }: Props) {
           {recent.length === 0 ? (
             <Text style={styles.sub}>Nothing logged yet. Categories are optional.</Text>
           ) : (
-            recent.map((e) => <ExpenseRow key={e.id} expense={e} currencyCode={currency} />)
+            recent.map((e) => (
+              <ExpenseRow
+                key={e.id}
+                expense={e}
+                currencyCode={currency}
+                onDelete={() =>
+                  Alert.alert('Delete spending?', e.name, [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Delete',
+                      style: 'destructive',
+                      onPress: () => deleteExpense(e.id),
+                    },
+                  ])
+                }
+              />
+            ))
           )}
         </SoftCard>
 

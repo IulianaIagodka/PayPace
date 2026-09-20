@@ -193,7 +193,15 @@ export function BillRow({ bill, currencyCode }: { bill: Bill; currencyCode: stri
   );
 }
 
-export function ExpenseRow({ expense, currencyCode }: { expense: DailyExpense; currencyCode: string }) {
+export function ExpenseRow({
+  expense,
+  currencyCode,
+  onDelete,
+}: {
+  expense: DailyExpense;
+  currencyCode: string;
+  onDelete?: () => void;
+}) {
   return (
     <View style={styles.row}>
       <View style={{ flex: 1, gap: 2 }}>
@@ -201,6 +209,17 @@ export function ExpenseRow({ expense, currencyCode }: { expense: DailyExpense; c
         <Text style={styles.meta}>{formatShortDate(expense.date)}</Text>
       </View>
       <Text style={styles.rowAmount}>{formatMoney(expense.amount, currencyCode)}</Text>
+      {onDelete ? (
+        <Pressable
+          onPress={onDelete}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={`Delete ${expense.name}`}
+          style={styles.deleteBtn}
+        >
+          <Text style={styles.deleteText}>Delete</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -270,4 +289,10 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 },
   rowTitle: { color: colors.ink, fontSize: 16, fontWeight: '600' },
   rowAmount: { color: colors.ink, fontSize: 16, fontWeight: '600' },
+  deleteBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  deleteText: { color: colors.danger, fontWeight: '600', fontSize: 14 },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ExpenseRow, PrimaryButton, ScreenBackground, SoftCard } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
@@ -9,12 +9,12 @@ import type { RootStackParamList } from '../navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'History'>;
 
 export function HistoryScreen({ navigation }: Props) {
-  const { activeCycle, store } = useBudget();
+  const { activeCycle, store, deleteExpense } = useBudget();
   const currency = store.settings.currencyCode;
 
   if (!store.settings.isPremium) {
     return (
-      <ScreenBackground>
+      <ScreenBackground edges={['left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>History is Premium</Text>
           <Text style={styles.sub}>
@@ -27,7 +27,7 @@ export function HistoryScreen({ navigation }: Props) {
   }
 
   return (
-    <ScreenBackground>
+    <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad}>
         <Text style={styles.title}>History</Text>
         <SoftCard>
@@ -35,7 +35,21 @@ export function HistoryScreen({ navigation }: Props) {
             <Text style={styles.sub}>No spending logged yet.</Text>
           ) : (
             activeCycle.expenses.map((e) => (
-              <ExpenseRow key={e.id} expense={e} currencyCode={currency} />
+              <ExpenseRow
+                key={e.id}
+                expense={e}
+                currencyCode={currency}
+                onDelete={() =>
+                  Alert.alert('Delete spending?', e.name, [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Delete',
+                      style: 'destructive',
+                      onPress: () => deleteExpense(e.id),
+                    },
+                  ])
+                }
+              />
             ))
           )}
         </SoftCard>
