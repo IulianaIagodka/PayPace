@@ -85,11 +85,11 @@ Submit the IPA path printed at the end of the build:
 npx eas-cli submit --platform ios --profile production --path ./your-build.ipa
 ```
 
-### If local build fails: RuntimeScheduler / SWIFT_RETURNS_RETAINED
+### If local build fails: RuntimeScheduler or “sending resultPtr risks causing data races”
 
-Xcode 26.2–26.3 (Swift 6.2) rejects `SWIFT_RETURNS_RETAINED` on `RuntimeScheduler` constructors in `expo-modules-jsi`. SDK 57’s official Xcode floor is 26.4; Sequoia often cannot install that.
+Xcode 26.2–26.3 (Swift 6.2) cannot compile stock `expo-modules-jsi`: invalid `SWIFT_RETURNS_RETAINED` on constructors, and `nonisolated(unsafe) let` still trips “sending 'resultPtr'/'thisPtr'/'argumentsPtr' risks causing data races”. SDK 57’s official Xcode floor is 26.4; Sequoia often cannot install that.
 
-The repo already patches this (`patches/expo-modules-jsi+57.1.0.patch`, applied on `npm install`). After pulling, run `npm install` before `npm run build:ios:local`.
+The repo patches both (`patches/expo-modules-jsi+57.1.0.patch`, applied on `npm install`). After pulling, run `npm install` before `npm run build:ios:local`.
 
 ### If local build fails: certificate not imported
 
