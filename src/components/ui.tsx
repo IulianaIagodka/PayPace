@@ -130,9 +130,6 @@ export function HudButton({
         />
       ) : null}
       <View style={styles.btnContent}>
-        {variant === 'primary' ? (
-          <Ionicons name="add" size={22} color={colors.resource} style={{ marginRight: 6 }} />
-        ) : null}
         <Text
           style={[
             styles.btnText,
