@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
     backgroundColor: colors.panelDeep,
     borderRadius: 0,
@@ -96,12 +96,12 @@ const styles = StyleSheet.create({
   },
   triggerText: {
     flex: 1,
-    color: colors.text,
+    color: colors.ammo,
     fontSize: 15,
     fontWeight: '600',
   },
   menu: {
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
     backgroundColor: colors.panelAlt,
     borderRadius: 0,

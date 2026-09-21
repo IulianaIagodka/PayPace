@@ -34,10 +34,17 @@ export function ScreenBackground({
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={['#0C0E0C', '#050605', '#030403']}
-        locations={[0, 0.5, 1]}
+        colors={['#1A1410', '#0C0A08', '#060504']}
+        locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
+      {/* Scanline grit — Doom CRT feel */}
+      <View pointerEvents="none" style={styles.scanlines}>
+        {Array.from({ length: 48 }).map((_, i) => (
+          <View key={i} style={styles.scanline} />
+        ))}
+      </View>
+      <View pointerEvents="none" style={styles.vignette} />
       <SafeAreaView style={styles.flex} edges={edges}>
         {children}
       </SafeAreaView>
@@ -45,7 +52,7 @@ export function ScreenBackground({
   );
 }
 
-/** Steel plate — bevel only, no rivet spam */
+/** Steel plate — thick bevel + rivets */
 export function Panel({
   children,
   style,
@@ -62,7 +69,7 @@ export function Panel({
   return (
     <View style={[styles.panelWrap, glow && styles.panelGlow, style]}>
       <LinearGradient
-        colors={alt ? ['#1E231E', '#121612'] : ['#181D18', '#0E110E']}
+        colors={alt ? ['#2E2820', '#1A1612'] : ['#262218', '#141210']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={[styles.panel, innerGlow && styles.panelInnerGlow]}
@@ -71,13 +78,17 @@ export function Panel({
         <View style={[styles.bevel, styles.bevelTR]} />
         <View style={[styles.bevel, styles.bevelBL]} />
         <View style={[styles.bevel, styles.bevelBR]} />
+        <View style={[styles.rivet, styles.rivetTL]} />
+        <View style={[styles.rivet, styles.rivetTR]} />
+        <View style={[styles.rivet, styles.rivetBL]} />
+        <View style={[styles.rivet, styles.rivetBR]} />
         {children}
       </LinearGradient>
     </View>
   );
 }
 
-export function StatusChip({ label = 'SYSTEM ONLINE' }: { label?: string }) {
+export function StatusChip({ label = 'ARMED' }: { label?: string }) {
   return (
     <View style={styles.chip}>
       <View style={styles.chipDot} />
@@ -112,7 +123,7 @@ export function HudButton({
     >
       {variant === 'primary' ? (
         <LinearGradient
-          colors={['#1A3F1E', '#0C2410']}
+          colors={['#2A4A14', '#0E1C08']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -126,7 +137,7 @@ export function HudButton({
           style={[
             styles.btnText,
             variant === 'secondary' && { color: colors.text },
-            variant === 'danger' && { color: colors.text },
+            variant === 'danger' && { color: colors.danger },
           ]}
         >
           {title.replace(/^\+\s*/, '')}
@@ -468,17 +479,39 @@ export function HeaderIconButton({ label, onPress }: { label: string; onPress: (
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   root: { flex: 1, backgroundColor: colors.bg },
+  scanlines: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    opacity: 0.07,
+    justifyContent: 'space-between',
+  },
+  scanline: {
+    height: 1,
+    backgroundColor: '#000',
+  },
+  vignette: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderWidth: 18,
+    borderColor: 'rgba(0,0,0,0.45)',
+  },
   panelWrap: {},
   panelGlow: {
     shadowColor: colors.resource,
-    shadowOpacity: 0.22,
-    shadowRadius: 6,
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 3,
+    elevation: 4,
   },
   panel: {
     borderRadius: 0,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: colors.border,
     padding: 14,
     gap: 8,
@@ -486,42 +519,54 @@ const styles = StyleSheet.create({
   },
   panelInnerGlow: {
     borderColor: colors.resource,
-    borderWidth: 1.5,
+    borderWidth: 2,
   },
   bevel: {
     position: 'absolute',
-    width: 10,
-    height: 10,
+    width: 14,
+    height: 14,
     borderColor: colors.borderBright,
-    opacity: 0.85,
+    opacity: 1,
   },
-  bevelTL: { top: 0, left: 0, borderTopWidth: 2, borderLeftWidth: 2 },
-  bevelTR: { top: 0, right: 0, borderTopWidth: 2, borderRightWidth: 2 },
-  bevelBL: { bottom: 0, left: 0, borderBottomWidth: 2, borderLeftWidth: 2 },
-  bevelBR: { bottom: 0, right: 0, borderBottomWidth: 2, borderRightWidth: 2 },
+  bevelTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3 },
+  bevelTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3 },
+  bevelBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3 },
+  bevelBR: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3 },
+  rivet: {
+    position: 'absolute',
+    width: 4,
+    height: 4,
+    backgroundColor: colors.metalDim,
+    borderWidth: 1,
+    borderColor: colors.borderBright,
+  },
+  rivetTL: { top: 5, left: 5 },
+  rivetTR: { top: 5, right: 5 },
+  rivetBL: { bottom: 5, left: 5 },
+  rivetBR: { bottom: 5, right: 5 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderWidth: 1,
-    borderColor: colors.resource,
-    backgroundColor: colors.resourceSoft,
+    borderWidth: 2,
+    borderColor: colors.danger,
+    backgroundColor: 'rgba(255, 34, 0, 0.12)',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 0,
   },
   chipDot: {
-    width: 5,
-    height: 5,
+    width: 6,
+    height: 6,
     borderRadius: 0,
-    backgroundColor: colors.resource,
+    backgroundColor: colors.danger,
   },
   chipText: {
-    color: colors.resource,
-    fontSize: 10,
+    color: colors.danger,
+    fontSize: 11,
     fontFamily: fonts.label,
     fontWeight: '700',
-    letterSpacing: 1.6,
+    letterSpacing: 2,
   },
   btn: {
     borderRadius: 0,
@@ -529,25 +574,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    borderWidth: 2,
     overflow: 'hidden',
     minHeight: 54,
   },
   btnPrimary: {
-    backgroundColor: '#0C2410',
+    backgroundColor: '#0E1C08',
     borderColor: colors.resource,
     shadowColor: colors.resource,
-    shadowOpacity: 0.28,
-    shadowRadius: 5,
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 3,
+    elevation: 4,
   },
   btnSecondary: {
     backgroundColor: colors.panelAlt,
     borderColor: colors.borderBright,
   },
   btnDanger: {
-    backgroundColor: '#220E0C',
+    backgroundColor: '#2A0A08',
     borderColor: colors.danger,
   },
   btnContent: {
@@ -559,13 +604,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: fonts.display,
     fontWeight: '700',
-    letterSpacing: 2.4,
+    letterSpacing: 2.6,
   },
   barTrack: {
     flexDirection: 'row',
     gap: 2,
-    backgroundColor: '#050705',
-    borderWidth: 1.5,
+    backgroundColor: '#080604',
+    borderWidth: 2,
     borderColor: colors.border,
     borderRadius: 0,
     padding: 3,
@@ -606,17 +651,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.display,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.ammo,
   },
   cellAmountDim: { color: colors.textDim, fontWeight: '600' },
   emptyCell: {
     flex: 1,
     minHeight: 92,
     borderRadius: 0,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.borderSoft,
     backgroundColor: colors.panelDeep,
-    opacity: 0.55,
+    opacity: 0.45,
   },
   fieldLabel: {
     color: colors.textSecondary,
@@ -630,7 +675,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.panelAlt,
     borderRadius: 0,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -639,22 +684,22 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 22,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.ammo,
     fontFamily: fonts.display,
   },
   suffix: { color: colors.textSecondary, fontSize: 16, fontWeight: '600' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   rowTitle: { color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: fonts.body },
-  rowAmount: { color: colors.text, fontSize: 15, fontWeight: '700', fontFamily: fonts.display },
+  rowAmount: { color: colors.ammo, fontSize: 15, fontWeight: '700', fontFamily: fonts.display },
   meta: { color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body },
   deleteBtn: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 4 },
   deleteText: { color: colors.danger, fontWeight: '700', fontSize: 12, letterSpacing: 1 },
-  heroAmount: { color: colors.text, fontSize: 40, fontWeight: '800', fontFamily: fonts.display },
+  heroAmount: { color: colors.ammo, fontSize: 40, fontWeight: '800', fontFamily: fonts.display },
   headerBtn: {
     minHeight: 40,
     paddingHorizontal: 10,
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
     backgroundColor: colors.panel,
     borderRadius: 0,

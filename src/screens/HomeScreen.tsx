@@ -104,7 +104,9 @@ export function HomeScreen({ navigation }: Props) {
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <View style={styles.brandRow}>
-          <Text style={styles.brand}>PAYPACE</Text>
+          <Text style={styles.brand}>
+            PAY<Text style={styles.brandAccent}>PACE</Text>
+          </Text>
           <StatusChip />
         </View>
 
@@ -116,13 +118,13 @@ export function HomeScreen({ navigation }: Props) {
         <SegmentedBar
           ratio={snapshot.resourcesRemainingRatio}
           segments={10}
-          height={26}
+          height={30}
           animateFrom={drainFrom}
           tipAmber
         />
         <View style={styles.metaRow}>
-          <Text style={styles.meta}>{pct}% remaining</Text>
-          <Text style={styles.meta}>{snapshot.daysUntilPayday} days left</Text>
+          <Text style={styles.meta}>{pct}% REMAINING</Text>
+          <Text style={styles.meta}>{snapshot.daysUntilPayday}D TO PAYDAY</Text>
         </View>
 
         <Animated.View style={{ opacity: heroPulse }}>
@@ -133,18 +135,18 @@ export function HomeScreen({ navigation }: Props) {
                 <Text style={[styles.safe, { color: safeColor }]}>
                   {formatMoney(safe, currency)}
                 </Text>
-                <Text style={styles.perUnit}>/ day</Text>
+                <Text style={styles.perUnit}>/ DAY</Text>
               </View>
               <View style={styles.safeDivider} />
               <View style={styles.safeCol}>
                 <Text style={[styles.safeWeek, { color: safeColor }]}>
                   {formatMoney(periodSafe, currency)}
                 </Text>
-                <Text style={styles.perUnit}>{periodUnit}</Text>
+                <Text style={styles.perUnit}>{periodUnit.toUpperCase()}</Text>
                 <Text style={styles.weekHint}>
                   {isWeek
-                    ? `${periodDays}d left in week`
-                    : `${snapshot.daysUntilPayday}d until payday`}
+                    ? `${periodDays}D LEFT IN WEEK`
+                    : `${snapshot.daysUntilPayday}D UNTIL PAYDAY`}
                 </Text>
               </View>
             </View>
@@ -209,20 +211,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 4.5,
   },
+  brandAccent: {
+    color: colors.resource,
+  },
   availableBlock: { gap: 2 },
   label: {
-    color: colors.textSecondary,
+    color: colors.warning,
     fontSize: 11,
     fontFamily: fonts.label,
     fontWeight: '700',
-    letterSpacing: 2.2,
+    letterSpacing: 2.6,
   },
   available: {
-    color: colors.text,
-    fontSize: 42,
+    color: colors.ammo,
+    fontSize: 44,
     fontFamily: fonts.display,
     fontWeight: '700',
     letterSpacing: -0.8,
+    textShadowColor: 'rgba(255, 34, 0, 0.35)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
   metaRow: {
     flexDirection: 'row',
@@ -230,9 +238,11 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   meta: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontFamily: fonts.body,
+    color: colors.metal,
+    fontSize: 12,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.4,
   },
   heroPanel: {
     paddingVertical: 18,
@@ -244,7 +254,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: fonts.label,
     fontWeight: '700',
-    letterSpacing: 2.4,
+    letterSpacing: 2.8,
   },
   safeRow: {
     flexDirection: 'row',
@@ -256,13 +266,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   safeDivider: {
-    width: 1,
-    backgroundColor: colors.border,
+    width: 2,
+    backgroundColor: colors.borderBright,
     marginVertical: 4,
   },
   safe: {
     color: colors.safeValue,
-    fontSize: 32,
+    fontSize: 34,
     fontFamily: fonts.display,
     fontWeight: '700',
     letterSpacing: -0.4,
@@ -275,24 +285,26 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   perUnit: {
-    color: colors.textSecondary,
+    color: colors.metal,
     fontSize: 13,
     fontFamily: fonts.label,
     fontWeight: '700',
-    letterSpacing: 1.2,
+    letterSpacing: 1.6,
   },
   weekHint: {
     color: colors.textDim,
     fontSize: 11,
-    fontFamily: fonts.body,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1,
     marginTop: 2,
   },
   sub: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, fontFamily: fonts.body },
-  alert: { borderColor: colors.warning },
+  alert: { borderColor: colors.danger },
   alertTitle: {
-    color: colors.warning,
+    color: colors.danger,
     fontWeight: '700',
-    letterSpacing: 1.2,
+    letterSpacing: 1.6,
     fontSize: 12,
     fontFamily: fonts.label,
   },
@@ -302,6 +314,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontFamily: fonts.body,
   },
-  grid: { gap: 10, marginTop: 2 },
-  gridRow: { flexDirection: 'row', gap: 10 },
+  grid: { gap: 8, marginTop: 2 },
+  gridRow: { flexDirection: 'row', gap: 8 },
 });

@@ -1,47 +1,50 @@
-/** PayPace HUD — harder Doom industrial, sparse for readability */
+/** PayPace HUD — Doom status-bar industrial */
 export const colors = {
-  bg: '#050605',
-  bgGrid: '#0A0C0A',
-  panel: '#121612',
-  panelRaised: '#1A1F1A',
-  panelAlt: '#1C211C',
-  panelDeep: '#0B0D0B',
-  border: '#4A524A',
-  borderBright: '#7A847A',
-  borderSoft: '#151915',
-  metal: '#9AA29A',
-  metalDim: '#5A625A',
+  bg: '#0A0806',
+  bgGrid: '#120E0A',
+  panel: '#1A1612',
+  panelRaised: '#242018',
+  panelAlt: '#2A241C',
+  panelDeep: '#100E0B',
+  border: '#5A5040',
+  borderBright: '#9A8A6A',
+  borderSoft: '#1C1814',
+  metal: '#B0A080',
+  metalDim: '#6A6050',
 
-  resource: '#6CFF2A',
-  resourceDim: '#2E8A1C',
-  resourceGlow: 'rgba(108, 255, 42, 0.22)',
-  resourceSoft: 'rgba(108, 255, 42, 0.08)',
-  healthy: '#6CFF2A',
-  warning: '#E8A020',
-  danger: '#E8331A',
-  critical: '#B01010',
+  /** Toxic Doom green — health / live resources */
+  resource: '#55FF00',
+  resourceDim: '#2A8A00',
+  resourceGlow: 'rgba(85, 255, 0, 0.28)',
+  resourceSoft: 'rgba(85, 255, 0, 0.1)',
+  healthy: '#55FF00',
+  /** Classic Doom ammo / readout yellow */
+  warning: '#FFCC00',
+  danger: '#FF2200',
+  critical: '#990000',
 
-  text: '#F2F4EE',
-  textSecondary: '#8E968E',
-  textDim: '#555D55',
-  /** Neutral safe-to-spend readout (not a warning color). */
-  safeValue: '#DCE6D8',
+  text: '#E8E0D0',
+  textSecondary: '#9A9080',
+  textDim: '#5A5048',
+  /** Big counters — Doom yellow digits */
+  safeValue: '#FFDD33',
+  ammo: '#FFDD33',
 
   // legacy aliases
-  bgTop: '#050605',
-  bgMid: '#050605',
-  bgBottom: '#050605',
-  ink: '#F2F4EE',
-  inkSecondary: '#8E968E',
-  accent: '#6CFF2A',
-  accentMid: '#6CFF2A',
-  accentLight: '#6CFF2A',
-  mint: '#1C211C',
-  accentSoft: 'rgba(108, 255, 42, 0.08)',
-  warm: '#E8A020',
-  success: '#6CFF2A',
-  whiteSoft: '#121612',
-  whiteSofter: '#1C211C',
+  bgTop: '#0A0806',
+  bgMid: '#0A0806',
+  bgBottom: '#0A0806',
+  ink: '#E8E0D0',
+  inkSecondary: '#9A9080',
+  accent: '#55FF00',
+  accentMid: '#55FF00',
+  accentLight: '#55FF00',
+  mint: '#2A241C',
+  accentSoft: 'rgba(85, 255, 0, 0.1)',
+  warm: '#FFCC00',
+  success: '#55FF00',
+  whiteSoft: '#1A1612',
+  whiteSofter: '#2A241C',
 };
 
 export const spacing = {
@@ -74,7 +77,7 @@ export function colorForTone(tone: ResourceTone): string {
 
 /** Healthy bars tip amber on the last lit chunk (FPS HUD feel) */
 export function segmentColor(index: number, lit: number, tone: ResourceTone): string {
-  if (index >= lit) return '#0C0E0C';
+  if (index >= lit) return '#12100C';
   if (tone === 'healthy' && lit > 1 && index === lit - 1) return colors.warning;
   return colorForTone(tone);
 }
