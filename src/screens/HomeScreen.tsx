@@ -205,12 +205,6 @@ export function HomeScreen({ navigation }: Props) {
           ))}
         </View>
 
-        <HudButton
-          title={isWeek ? 'IMPORT WEEK STATEMENT' : 'IMPORT CYCLE STATEMENT'}
-          onPress={() => navigation.navigate('StatementImport', { horizon })}
-          variant="secondary"
-        />
-
         <HudButton title="+ ADD EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
       </ScrollView>
     </ScreenBackground>
