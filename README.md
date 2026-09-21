@@ -1,44 +1,53 @@
 # PayPace
 
-**Know exactly what you can spend until payday.**
+Payday → payday envelope budgeting. Money = energy.
 
-## Apps in this repo
+One Expo app at the **repo root**. Build with EAS (cloud) or on your Mac.
 
-| Folder | Stack | Notes |
-|--------|-------|-------|
-| `PayPaceApp/` | **Expo (React Native)** | Prefer this for TestFlight via EAS cloud builds |
-| `PayPace/` | Native SwiftUI | Original iOS project (Xcode Archive) |
-
-## Expo → TestFlight (recommended)
-
-**Important:** `app.json` / `eas.json` live in `PayPaceApp/`.  
-If you run `eas build` from the repo root you get:
-
-`Run this command inside a project directory.`
+## Setup
 
 ```bash
-cd PayPaceApp
+git clone <repo>
+cd PayPace
 npm install
+```
+
+## Local (Mac)
+
+```bash
+npx expo start
+# then press i for iOS simulator, or scan QR with Expo Go / dev client
+```
+
+Native iOS folder (optional, for Xcode):
+
+```bash
+npx expo prebuild --platform ios
+npx expo run:ios
+```
+
+## Cloud TestFlight (EAS)
+
+```bash
 npx eas-cli login
-npm run build:ios
-# or:
+npm run build:ios          # cloud build
+npm run submit:ios         # upload to TestFlight
+# or
 npm run build:ios:submit
 ```
 
-From the repo root you can also use the forwarder scripts:
+Details: [TESTFLIGHT-EAS.md](./TESTFLIGHT-EAS.md)
 
-```bash
-npm run build:ios
-```
+## Shared budget
 
-`npm warn deprecated rimraf/glob` during install is noisy but not a build failure.
+Couple sync via invite code: [SHARED-BUDGET.md](./SHARED-BUDGET.md)
 
-Details: [`PayPaceApp/TESTFLIGHT-EAS.md`](PayPaceApp/TESTFLIGHT-EAS.md)
+## Scripts
 
-## Shared budget (couple sync)
-
-See [`PayPaceApp/SHARED-BUDGET.md`](PayPaceApp/SHARED-BUDGET.md) — invite code + Supabase sync.
-
-## Native Swift → TestFlight
-
-See [`PayPace/TESTFLIGHT.md`](PayPace/TESTFLIGHT.md)
+| Command | What |
+|---------|------|
+| `npm start` | Expo dev server |
+| `npm run typecheck` | TypeScript |
+| `npm run test:shared` | Shared-budget E2E simulation |
+| `npm run build:ios` | EAS iOS production build |
+| `npm run submit:ios` | Submit latest build to TestFlight |

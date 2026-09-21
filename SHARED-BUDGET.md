@@ -15,9 +15,9 @@ Sync needs a free [Supabase](https://supabase.com) project (2 minutes).
 ## Setup (once)
 
 1. Create a Supabase project
-2. SQL Editor → paste and run `PayPaceApp/supabase/schema.sql`
+2. SQL Editor → paste and run `supabase/schema.sql`
 3. Project Settings → API → copy **Project URL** and **anon public** key
-4. Put them in `PayPaceApp/app.json` under `expo.extra`:
+4. Put them in `app.json` → `expo.extra`:
 
 ```json
 "supabaseUrl": "https://YOUR_PROJECT.supabase.co",

@@ -1,13 +1,43 @@
 {
-  "name": "paypace-monorepo",
-  "private": true,
-  "description": "Run Expo/EAS commands from PayPaceApp — root scripts forward there.",
+  "name": "paypace",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-navigation/bottom-tabs": "^7.19.2",
+    "@react-navigation/native": "^7.4.1",
+    "@react-navigation/native-stack": "^7.19.2",
+    "@supabase/supabase-js": "^2.116.0",
+    "date-fns": "^4.4.0",
+    "expo": "~57.0.24",
+    "expo-clipboard": "~57.0.2",
+    "expo-constants": "~57.0.19",
+    "expo-crypto": "~57.0.3",
+    "expo-device": "~57.0.2",
+    "expo-font": "~57.0.4",
+    "expo-image-picker": "~57.0.19",
+    "expo-linear-gradient": "~57.0.2",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "eas-cli": "^24.7.0",
+    "typescript": "~6.0.3"
+  },
   "scripts": {
-    "start": "npm --prefix PayPaceApp start",
-    "typecheck": "npm --prefix PayPaceApp run typecheck",
-    "build:ios": "npm --prefix PayPaceApp run build:ios",
-    "submit:ios": "npm --prefix PayPaceApp run submit:ios",
-    "build:ios:submit": "npm --prefix PayPaceApp run build:ios:submit",
-    "eas": "npm --prefix PayPaceApp exec -- eas"
-  }
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "test:shared": "node --experimental-strip-types scripts/sharedBudget.e2e.mts",
+    "build:ios": "eas build --platform ios --profile production",
+    "submit:ios": "eas submit --platform ios --profile production --latest",
+    "build:ios:submit": "eas build --platform ios --profile production --auto-submit"
+  },
+  "private": true
 }
