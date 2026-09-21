@@ -48,7 +48,7 @@ export function AddExpenseScreen({ navigation }: Props) {
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Add spending</Text>
-        <Text style={styles.sub}>Keep it simple. Name and amount are enough.</Text>
+        <Text style={styles.sub}>Name and amount. Or scan a receipt from the home button.</Text>
         <TextInput
           value={name}
           onChangeText={setName}
