@@ -5,11 +5,12 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   CategoryCell,
+  EmptyCell,
   HudButton,
-  MottoSlot,
   Panel,
   ScreenBackground,
   SegmentedBar,
+  StatusChip,
 } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
@@ -30,7 +31,7 @@ export function HomeScreen({ navigation }: Props) {
   const currency = store.settings.currencyCode;
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
   const prevRatio = useRef(snapshot.resourcesRemainingRatio);
-  const heroPulse = useRef(new Animated.Value(0.7)).current;
+  const heroPulse = useRef(new Animated.Value(0.85)).current;
 
   useEffect(() => {
     if (prevRatio.current > snapshot.resourcesRemainingRatio) {
@@ -45,8 +46,8 @@ export function HomeScreen({ navigation }: Props) {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(heroPulse, { toValue: 1, duration: 1400, useNativeDriver: true }),
-        Animated.timing(heroPulse, { toValue: 0.7, duration: 1400, useNativeDriver: true }),
+        Animated.timing(heroPulse, { toValue: 1, duration: 1600, useNativeDriver: true }),
+        Animated.timing(heroPulse, { toValue: 0.85, duration: 1600, useNativeDriver: true }),
       ]),
     ).start();
   }, [heroPulse]);
@@ -77,14 +78,11 @@ export function HomeScreen({ navigation }: Props) {
   const pct = Math.round(snapshot.resourcesRemainingRatio * 100);
   const safe = Math.max(snapshot.safeToSpendToday, 0);
 
-  const cells: Array<{ type: 'cat'; mod: (typeof modules)[0] } | { type: 'motto' }> = [
-    ...gridModules.map((mod) => ({ type: 'cat' as const, mod })),
-    { type: 'motto' },
-  ];
-
-  const rows: (typeof cells)[] = [];
-  for (let i = 0; i < cells.length; i += 2) {
-    rows.push(cells.slice(i, i + 2));
+  type GridItem = (typeof gridModules)[number] | null;
+  const withPad: GridItem[] = [...gridModules, null];
+  const rows: GridItem[][] = [];
+  for (let i = 0; i < withPad.length; i += 2) {
+    rows.push(withPad.slice(i, i + 2));
   }
 
   return (
@@ -92,52 +90,33 @@ export function HomeScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <View style={styles.brandRow}>
           <Text style={styles.brand}>PAYPACE</Text>
-          <Text style={styles.brandMotto}>DISCIPLINE BUILDS{'\n'}FREEDOM.</Text>
+          <StatusChip />
         </View>
 
         <View style={styles.availableBlock}>
           <Text style={styles.label}>AVAILABLE</Text>
-          <View style={styles.availableRow}>
-            <Text style={styles.available}>{formatMoney(available, currency)}</Text>
-            <Text style={styles.sideHint}>
-              PLAN TRACK{'\n'}PROGRESS{'\n'}A CALMER YOU.
-            </Text>
-          </View>
+          <Text style={styles.available}>{formatMoney(available, currency)}</Text>
         </View>
 
         <SegmentedBar
           ratio={snapshot.resourcesRemainingRatio}
           segments={10}
-          height={28}
+          height={26}
           animateFrom={drainFrom}
           tipAmber
         />
         <View style={styles.metaRow}>
-          <Text style={styles.meta}>{pct}% resources remaining</Text>
+          <Text style={styles.meta}>{pct}% remaining</Text>
           <Text style={styles.meta}>{snapshot.daysUntilPayday} days left</Text>
         </View>
 
-        <Animated.View
-          style={{
-            opacity: heroPulse.interpolate({
-              inputRange: [0.7, 1],
-              outputRange: [0.94, 1],
-            }),
-          }}
-        >
+        <Animated.View style={{ opacity: heroPulse }}>
           <Panel glow innerGlow style={styles.heroPanel}>
-            <View style={styles.heroBody}>
-              <View style={{ flex: 1, gap: 4 }}>
-                <Text style={styles.heroLabel}>SAFE TO SPEND</Text>
-                <Text style={[styles.safe, snapshot.isAtRisk && { color: colors.danger }]}>
-                  {formatMoney(safe, currency)}
-                  <Text style={styles.perDay}>/day</Text>
-                </Text>
-              </View>
-              <Text style={styles.heroSide}>
-                STAY ON{'\n'}TRACK{'\n'}LIVE{'\n'}BETTER.
-              </Text>
-            </View>
+            <Text style={styles.heroLabel}>SAFE TO SPEND</Text>
+            <Text style={[styles.safe, snapshot.isAtRisk && { color: colors.danger }]}>
+              {formatMoney(safe, currency)}
+              <Text style={styles.perDay}>/day</Text>
+            </Text>
           </Panel>
         </Animated.View>
 
@@ -154,24 +133,23 @@ export function HomeScreen({ navigation }: Props) {
         <View style={styles.grid}>
           {rows.map((row, rowIndex) => (
             <View key={rowIndex} style={styles.gridRow}>
-              {row.map((cell, colIndex) =>
-                cell.type === 'motto' ? (
-                  <MottoSlot key="motto" text="DIFFERENT CHOICES A BRIGHTER TOMORROW." />
+              {row.map((mod, colIndex) =>
+                mod == null ? (
+                  <EmptyCell key="empty" />
                 ) : (
                   <CategoryCell
-                    key={cell.mod.envelope.id}
-                    title={cell.mod.envelope.title}
-                    iconKey={cell.mod.envelope.key}
-                    spent={cell.mod.spent}
-                    allocated={cell.mod.envelope.allocated}
+                    key={mod.envelope.id}
+                    title={mod.envelope.title}
+                    iconKey={mod.envelope.key}
+                    spent={mod.spent}
+                    allocated={mod.envelope.allocated}
                     currencyCode={currency}
-                    tone={cell.mod.tone}
+                    tone={mod.tone}
                     index={rowIndex * 2 + colIndex}
                     onPress={() => navigation.navigate('AddExpense')}
                   />
                 ),
               )}
-              {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
             </View>
           ))}
         </View>
@@ -183,29 +161,19 @@ export function HomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 28, gap: 12 },
+  pad: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 28, gap: 12 },
   brandRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   brand: {
     color: colors.text,
-    fontSize: 28,
+    fontSize: 26,
     fontFamily: fonts.display,
     fontWeight: '700',
-    letterSpacing: 4,
-  },
-  brandMotto: {
-    color: colors.textDim,
-    fontSize: 9,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    textAlign: 'right',
-    lineHeight: 12,
-    marginTop: 4,
+    letterSpacing: 3.5,
   },
   availableBlock: { gap: 2 },
   label: {
@@ -215,29 +183,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 2.2,
   },
-  availableRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
   available: {
     color: colors.text,
-    fontSize: 44,
+    fontSize: 42,
     fontFamily: fonts.display,
     fontWeight: '700',
-    letterSpacing: -1,
-    flexShrink: 1,
-  },
-  sideHint: {
-    color: colors.textDim,
-    fontSize: 8,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.1,
-    lineHeight: 11,
-    textAlign: 'right',
-    marginBottom: 8,
+    letterSpacing: -0.8,
   },
   metaRow: {
     flexDirection: 'row',
@@ -246,48 +197,33 @@ const styles = StyleSheet.create({
   },
   meta: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: fonts.body,
   },
   heroPanel: {
     paddingVertical: 18,
     paddingHorizontal: 16,
-    marginTop: 4,
-  },
-  heroBody: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    gap: 4,
   },
   heroLabel: {
     color: colors.resource,
     fontSize: 12,
     fontFamily: fonts.label,
     fontWeight: '700',
-    letterSpacing: 2.6,
+    letterSpacing: 2.4,
   },
   safe: {
     color: colors.text,
-    fontSize: 38,
+    fontSize: 36,
     fontFamily: fonts.display,
     fontWeight: '700',
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
   perDay: {
     color: colors.textSecondary,
     fontSize: 18,
     fontFamily: fonts.label,
     fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  heroSide: {
-    color: colors.textDim,
-    fontSize: 9,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.3,
-    lineHeight: 12,
-    textAlign: 'right',
   },
   sub: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, fontFamily: fonts.body },
   alert: { borderColor: colors.warning },
@@ -304,6 +240,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontFamily: fonts.body,
   },
-  grid: { gap: 10, marginTop: 4 },
+  grid: { gap: 10, marginTop: 2 },
   gridRow: { flexDirection: 'row', gap: 10 },
 });
