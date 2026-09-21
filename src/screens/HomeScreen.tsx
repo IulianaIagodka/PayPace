@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -17,6 +17,7 @@ import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 import { formatMoney } from '../services/formatting';
 import { envelopeStatuses } from '../services/envelopes';
+import type { PaceHorizon } from '../models/calculator';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
 type Props = CompositeScreenProps<
@@ -27,8 +28,9 @@ type Props = CompositeScreenProps<
 const GRID_KEYS = ['food', 'transport', 'kids', 'fun', 'home'] as const;
 
 export function HomeScreen({ navigation }: Props) {
-  const { activeCycle, snapshot, store } = useBudget();
+  const { activeCycle, snapshot, store, updateSettings } = useBudget();
   const currency = store.settings.currencyCode;
+  const horizon: PaceHorizon = store.settings.paceHorizon ?? 'week';
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
   const prevRatio = useRef(snapshot.resourcesRemainingRatio);
   const heroPulse = useRef(new Animated.Value(0.85)).current;
@@ -77,7 +79,15 @@ export function HomeScreen({ navigation }: Props) {
   const available = Math.max(snapshot.remainingUntilPayday, 0);
   const pct = Math.round(snapshot.resourcesRemainingRatio * 100);
   const safe = Math.max(snapshot.safeToSpendToday, 0);
-  const safeWeek = Math.max(snapshot.safeToSpendThisWeek, 0);
+  const isWeek = horizon === 'week';
+  const periodSafe = Math.max(
+    isWeek ? snapshot.safeToSpendThisWeek : snapshot.safeToSpendThisMonth,
+    0,
+  );
+  const periodDays = isWeek ? snapshot.daysLeftInWeek : snapshot.daysLeftInMonth;
+  const periodShare = isWeek ? snapshot.weekShare : snapshot.monthShare;
+  const periodUnit = isWeek ? '/ week' : '/ month';
+  const horizonLabel = isWeek ? 'WEEK' : 'MONTH';
 
   type GridItem = (typeof gridModules)[number] | null;
   const withPad: GridItem[] = [...gridModules, null];
@@ -111,6 +121,23 @@ export function HomeScreen({ navigation }: Props) {
           <Text style={styles.meta}>{snapshot.daysUntilPayday} days left</Text>
         </View>
 
+        <View style={styles.horizonRow}>
+          {(['week', 'month'] as PaceHorizon[]).map((h) => {
+            const on = horizon === h;
+            return (
+              <Pressable
+                key={h}
+                onPress={() => updateSettings({ paceHorizon: h })}
+                style={[styles.horizonChip, on && styles.horizonChipOn]}
+              >
+                <Text style={[styles.horizonChipText, on && styles.horizonChipTextOn]}>
+                  {h === 'week' ? 'WEEK' : 'MONTH'}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         <Animated.View style={{ opacity: heroPulse }}>
           <Panel glow innerGlow style={styles.heroPanel}>
             <Text style={styles.heroLabel}>SAFE TO SPEND</Text>
@@ -124,12 +151,10 @@ export function HomeScreen({ navigation }: Props) {
               <View style={styles.safeDivider} />
               <View style={styles.safeCol}>
                 <Text style={[styles.safeWeek, snapshot.isAtRisk && { color: colors.danger }]}>
-                  {formatMoney(safeWeek, currency)}
+                  {formatMoney(periodSafe, currency)}
                 </Text>
-                <Text style={styles.perUnit}>/ week</Text>
-                <Text style={styles.weekHint}>
-                  {snapshot.daysLeftInWeek}d left in week
-                </Text>
+                <Text style={styles.perUnit}>{periodUnit}</Text>
+                <Text style={styles.weekHint}>{periodDays}d left in {isWeek ? 'week' : 'month'}</Text>
               </View>
             </View>
           </Panel>
@@ -161,6 +186,8 @@ export function HomeScreen({ navigation }: Props) {
                     currencyCode={currency}
                     tone={mod.tone}
                     index={rowIndex * 2 + colIndex}
+                    periodShare={periodShare}
+                    horizonLabel={horizonLabel}
                     onPress={() => navigation.navigate('AddExpense')}
                   />
                 ),
@@ -215,6 +242,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.body,
   },
+  horizonRow: { flexDirection: 'row', gap: 8 },
+  horizonChip: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.panelDeep,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 3,
+  },
+  horizonChipOn: {
+    borderColor: colors.resource,
+    backgroundColor: colors.resourceSoft,
+  },
+  horizonChipText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.6,
+  },
+  horizonChipTextOn: { color: colors.resource },
   heroPanel: {
     paddingVertical: 18,
     paddingHorizontal: 16,

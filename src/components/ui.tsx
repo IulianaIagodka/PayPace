@@ -245,6 +245,8 @@ export function CategoryCell({
   tone,
   index = 0,
   onPress,
+  periodShare = 1,
+  horizonLabel = 'CYCLE',
 }: {
   title: string;
   iconKey: string;
@@ -254,9 +256,13 @@ export function CategoryCell({
   tone: ResourceTone;
   index?: number;
   onPress?: () => void;
+  /** Fraction of cycle remaining that belongs to the selected week/month window. */
+  periodShare?: number;
+  horizonLabel?: string;
 }) {
-  const remaining = Math.max(allocated - spent, 0);
-  const remainingRatio = allocated > 0 ? remaining / allocated : 0;
+  const cycleRemaining = Math.max(allocated - spent, 0);
+  const periodRemaining = cycleRemaining * Math.max(0, Math.min(periodShare, 1));
+  const remainingRatio = allocated > 0 ? cycleRemaining / allocated : 0;
   const enter = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -293,10 +299,14 @@ export function CategoryCell({
             <Text style={styles.cellTitle} numberOfLines={1}>
               {title}
             </Text>
+            <Text style={styles.cellHorizon}>{horizonLabel}</Text>
           </View>
           <Text style={styles.cellAmount} numberOfLines={1}>
-            {formatMoney(remaining, currencyCode)}
-            <Text style={styles.cellAmountDim}> / {formatMoney(allocated, currencyCode)}</Text>
+            {formatMoney(periodRemaining, currencyCode)}
+            <Text style={styles.cellAmountDim}>
+              {' '}
+              / {formatMoney(cycleRemaining, currencyCode)}
+            </Text>
           </Text>
           <SegmentedBar
             ratio={remainingRatio}
@@ -571,6 +581,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     fontWeight: '700',
     letterSpacing: 1.2,
+  },
+  cellHorizon: {
+    color: colors.textDim,
+    fontSize: 9,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   cellAmount: {
     fontSize: 13,

@@ -1,8 +1,9 @@
-import { addDays, addMonths, differenceInCalendarDays, endOfWeek, startOfDay } from 'date-fns';
+import { addDays, addMonths, differenceInCalendarDays, endOfMonth, endOfWeek, startOfDay } from 'date-fns';
 import type { PayCycle, PaySchedule, SafeSpendSnapshot, TrajectoryLabel } from './types';
 import { asMoney, fromDateKey } from '../services/formatting';
 
 export type WeekStartsOn = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export type PaceHorizon = 'week' | 'month';
 
 export const WEEK_START_OPTIONS: Array<{ value: WeekStartsOn; label: string; short: string }> = [
   { value: 1, label: 'Monday', short: 'MON' },
@@ -78,6 +79,13 @@ export function daysRemainingInWeek(now = new Date(), weekStartsOn: WeekStartsOn
   return Math.max(differenceInCalendarDays(weekEnd, today) + 1, 1);
 }
 
+/** Inclusive days from today through end of the calendar month. */
+export function daysRemainingInMonth(now = new Date()): number {
+  const today = startOfDay(now);
+  const monthEnd = startOfDay(endOfMonth(today));
+  return Math.max(differenceInCalendarDays(monthEnd, today) + 1, 1);
+}
+
 export function calculateSafeSpend(
   cycle: PayCycle,
   now = new Date(),
@@ -98,11 +106,18 @@ export function calculateSafeSpend(
   const daysToCover = Math.max(daysUntilPayday, 1);
   const safeToSpendToday = remainingUntilPayday > 0 ? remainingUntilPayday / daysToCover : 0;
 
-  const daysInWeek = daysRemainingInWeek(now, weekStartsOn);
-  const daysLeftInWeek = Math.min(daysInWeek, daysToCover);
+  const daysLeftInWeek = Math.min(daysRemainingInWeek(now, weekStartsOn), daysToCover);
+  const daysLeftInMonth = Math.min(daysRemainingInMonth(now), daysToCover);
+  const weekShare = daysLeftInWeek / daysToCover;
+  const monthShare = daysLeftInMonth / daysToCover;
+
   const safeToSpendThisWeek =
     remainingUntilPayday > 0
       ? Math.min(safeToSpendToday * daysLeftInWeek, remainingUntilPayday)
+      : 0;
+  const safeToSpendThisMonth =
+    remainingUntilPayday > 0
+      ? Math.min(safeToSpendToday * daysLeftInMonth, remainingUntilPayday)
       : 0;
 
   let projectedShortfallDays: number | null = null;
@@ -131,7 +146,11 @@ export function calculateSafeSpend(
     remainingUntilPayday,
     safeToSpendToday,
     safeToSpendThisWeek,
+    safeToSpendThisMonth,
     daysLeftInWeek,
+    daysLeftInMonth,
+    weekShare,
+    monthShare,
     daysUntilPayday,
     totalDaysInCycle,
     daysElapsed,

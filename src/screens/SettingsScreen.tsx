@@ -66,6 +66,29 @@ export function SettingsScreen({ navigation }: Props) {
           ))}
 
           <View style={styles.divider} />
+          <Text style={styles.label}>REMAINING HORIZON</Text>
+          <Text style={styles.sub}>
+            Show how much is left until the end of the week or month. Categories follow the same window.
+          </Text>
+          <View style={styles.weekGrid}>
+            {([
+              { value: 'week' as const, short: 'WEEK' },
+              { value: 'month' as const, short: 'MONTH' },
+            ]).map((opt) => {
+              const on = (s.paceHorizon ?? 'week') === opt.value;
+              return (
+                <Pressable
+                  key={opt.value}
+                  onPress={() => updateSettings({ paceHorizon: opt.value })}
+                  style={[styles.weekChip, on && styles.weekChipOn]}
+                >
+                  <Text style={[styles.weekChipText, on && styles.weekChipTextOn]}>{opt.short}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View style={styles.divider} />
           <Text style={styles.label}>WEEK STARTS ON</Text>
           <Text style={styles.sub}>
             Weekly safe-to-spend follows this calendar week. Use payday weekday if pay lands mid-week.

@@ -98,6 +98,8 @@ export interface AppSettings {
   displayName: string;
   /** Week start: 0=Sun … 6=Sat (date-fns). Default Monday = 1. */
   weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  /** Show remaining for the current calendar week or month (categories follow). */
+  paceHorizon: 'week' | 'month';
 }
 
 export interface AppStoreData {
@@ -122,8 +124,18 @@ export interface SafeSpendSnapshot {
   safeToSpendToday: number;
   /** Remaining allowance for the current calendar week (weekStartsOn → +6). */
   safeToSpendThisWeek: number;
+  /** Remaining allowance for the current calendar month. */
+  safeToSpendThisMonth: number;
   /** Days left in the current week, capped by days until payday. */
   daysLeftInWeek: number;
+  /** Days left in the current month, capped by days until payday. */
+  daysLeftInMonth: number;
+  /**
+   * Share of the remaining cycle that belongs to the selected horizon window
+   * (daysLeftInPeriod / daysToCover). Categories multiply remaining by this.
+   */
+  weekShare: number;
+  monthShare: number;
   daysUntilPayday: number;
   totalDaysInCycle: number;
   daysElapsed: number;
@@ -148,6 +160,7 @@ export const defaultSettings: AppSettings = {
   isPremium: false,
   displayName: '',
   weekStartsOn: 1,
+  paceHorizon: 'week',
 };
 
 export const emptyStore: AppStoreData = {
