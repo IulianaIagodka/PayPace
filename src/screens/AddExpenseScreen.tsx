@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AmountField, HudButton, Panel, ScreenBackground } from '../components/ui';
 import { currencySymbol, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 import { ensureEnvelopes } from '../services/envelopes';
 import type { EnvelopeKey } from '../models/types';
 import type { RootStackParamList } from '../navigation/types';
@@ -44,7 +46,28 @@ export function AddExpenseScreen({ navigation }: Props) {
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>ADD EXPENSE</Text>
-        <Text style={styles.sub}>Amount · category · optional note</Text>
+        <Text style={styles.sub}>Log manually, or import from a receipt / statement.</Text>
+
+        <View style={styles.importRow}>
+          <Pressable
+            style={styles.importCard}
+            onPress={() => navigation.navigate('ReceiptScan')}
+          >
+            <Ionicons name="camera-outline" size={22} color={colors.resource} />
+            <Text style={styles.importTitle}>PHOTO RECEIPT</Text>
+            <Text style={styles.importHint}>Camera or gallery</Text>
+          </Pressable>
+          <Pressable
+            style={styles.importCard}
+            onPress={() => navigation.navigate('StatementImport')}
+          >
+            <Ionicons name="document-text-outline" size={22} color={colors.resource} />
+            <Text style={styles.importTitle}>UPLOAD FILE</Text>
+            <Text style={styles.importHint}>Bank statement</Text>
+          </Pressable>
+        </View>
+
+        <Text style={styles.or}>OR LOG MANUALLY</Text>
 
         <AmountField label="AMOUNT" value={amount} onChangeText={setAmount} suffix={suffix} />
 
@@ -88,9 +111,52 @@ export function AddExpenseScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   pad: { padding: 20, gap: 14, paddingBottom: 40 },
-  title: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 1.5 },
-  sub: { color: colors.textSecondary, fontSize: 13 },
-  label: { color: colors.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 1.4 },
+  title: {
+    color: colors.text,
+    fontSize: 22,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+  sub: { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
+  importRow: { flexDirection: 'row', gap: 10 },
+  importCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.resource,
+    backgroundColor: colors.resourceSoft,
+    borderRadius: 4,
+    padding: 14,
+    gap: 6,
+    minHeight: 96,
+  },
+  importTitle: {
+    color: colors.resource,
+    fontSize: 12,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+  },
+  importHint: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontFamily: fonts.body,
+  },
+  or: {
+    color: colors.textDim,
+    fontSize: 11,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.6,
+    textAlign: 'center',
+  },
+  label: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    fontFamily: fonts.label,
+  },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   cat: {
     borderWidth: 1,
@@ -98,7 +164,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.panel,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 4,
     minWidth: '30%',
   },
   catOn: { borderColor: colors.resource, backgroundColor: '#14301A' },

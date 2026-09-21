@@ -29,6 +29,7 @@ import { HistoryScreen } from './src/screens/HistoryScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AllocateScreen } from './src/screens/AllocateScreen';
 import { ReceiptScanScreen } from './src/screens/ReceiptScanScreen';
+import { StatementImportScreen } from './src/screens/StatementImportScreen';
 import { CategoryBalancesScreen } from './src/screens/CategoryBalancesScreen';
 import { SharedBudgetScreen } from './src/screens/SharedBudgetScreen';
 import { colors } from './src/theme/colors';
@@ -174,6 +175,11 @@ function RootNavigator() {
           <Stack.Screen name="PayCycle" component={PayCycleScreen} options={{ title: 'EDIT CYCLE' }} />
           <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'HISTORY' }} />
           <Stack.Screen name="ReceiptScan" component={ReceiptScanScreen} options={{ title: 'SCAN' }} />
+          <Stack.Screen
+            name="StatementImport"
+            component={StatementImportScreen}
+            options={{ title: 'STATEMENT' }}
+          />
           <Stack.Screen name="CategoryBalances" component={CategoryBalancesScreen} options={{ title: 'CELLS' }} />
           <Stack.Screen name="SharedBudget" component={SharedBudgetScreen} options={{ title: 'SHARE' }} />
         </Stack.Navigator>

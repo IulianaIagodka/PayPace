@@ -47,7 +47,8 @@
           "photosPermission": "PayPace uses photos to scan receipts and categorize spending.",
           "cameraPermission": "PayPace uses the camera to photograph receipts."
         }
-      ]
+      ],
+      "expo-document-picker"
     ],
     "extra": {
       "eas": {
