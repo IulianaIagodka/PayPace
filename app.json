@@ -5,8 +5,14 @@
     "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "scheme": "paypace",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#050505"
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.paypace.PayPace",
@@ -18,7 +24,7 @@
     "android": {
       "package": "app.paypace.paypace",
       "adaptiveIcon": {
-        "backgroundColor": "#010101",
+        "backgroundColor": "#050505",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -30,30 +36,20 @@
     "plugins": [
       "expo-font",
       [
-        "expo-splash-screen",
-        {
-          "image": "./assets/splash-icon.png",
-          "resizeMode": "contain",
-          "backgroundColor": "#010101",
-          "dark": {
-            "image": "./assets/splash-icon.png",
-            "backgroundColor": "#010101"
-          }
-        }
-      ],
-      [
         "expo-image-picker",
         {
           "photosPermission": "PayPace uses photos to scan receipts and categorize spending.",
           "cameraPermission": "PayPace uses the camera to photograph receipts."
         }
-      ],
-      "expo-document-picker"
+      ]
     ],
     "extra": {
       "eas": {
         "projectId": "5bddd7a8-b03e-4100-ba4c-2895cb5d4ccb"
-      }
+      },
+      "openaiApiKey": "",
+      "supabaseUrl": "",
+      "supabaseAnonKey": ""
     },
     "owner": "iuliana.iagodka"
   }
