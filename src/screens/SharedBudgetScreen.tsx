@@ -85,7 +85,7 @@ export function SharedBudgetScreen({}: Props) {
         <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>Shared budget</Text>
           <Text style={styles.sub}>
-            Один бюджет на двох. Витрати видно обом, з ім’ям хто додав.
+            One budget for two. Both see spends, tagged with who logged them.
           </Text>
 
           <SoftCard>
@@ -186,7 +186,7 @@ export function SharedBudgetScreen({}: Props) {
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Shared budget</Text>
         <Text style={styles.sub}>
-          Трекайте payday-бюджет разом. Один баланс, один safe-to-spend, витрати з іменами.
+          Track the payday budget together. One balance, one safe-to-spend, spends tagged by name.
         </Text>
 
         <SoftCard>

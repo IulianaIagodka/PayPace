@@ -104,7 +104,7 @@ export const SPENDING_CATEGORIES: ExpenseCategory[] = [
   'other',
 ];
 
-export function categoryTitle(category: ExpenseCategory, uk = true): string {
+export function categoryTitle(category: ExpenseCategory, uk = false): string {
   return uk ? CATEGORY_META[category].titleUk : CATEGORY_META[category].title;
 }
 

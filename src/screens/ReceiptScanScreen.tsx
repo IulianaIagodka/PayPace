@@ -76,8 +76,8 @@ export function ReceiptScanScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>Scan receipt</Text>
           <Text style={styles.sub}>
-            Premium: сфотографуй чек — PayPace розпізнає позиції, згрупує за категоріями і покаже
-            баланс по кожній.
+            Premium: photograph a receipt — PayPace recognizes line items, groups them by category,
+            and shows each balance.
           </Text>
           <PrimaryButton title="Unlock Premium (demo)" onPress={() => setPremium(true)} />
           <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
@@ -149,7 +149,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Scan receipt</Text>
         <Text style={styles.sub}>
-          Зроби фото чеку. Позиції згрупуються за категоріями, і ти побачиш баланс по кожній.
+          Take a photo of the receipt. Items are grouped by category so you can see each balance.
         </Text>
 
         <PrimaryButton title="Take photo" onPress={() => pick(true)} />
@@ -180,7 +180,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
             {grouped.map((group) => (
               <SoftCard key={group.category}>
                 <View style={styles.groupHead}>
-                  <Text style={styles.section}>{categoryTitle(group.category)}</Text>
+                  <Text style={styles.section}>{categoryTitle(group.category, false)}</Text>
                   <Text style={styles.amount}>{formatMoney(group.total, currency)}</Text>
                 </View>
                 <Text style={styles.balanceHint}>
@@ -211,7 +211,9 @@ export function ReceiptScanScreen({ navigation }: Props) {
         <Text style={styles.section}>Category balances</Text>
         <SoftCard>
           {cycleCategoryBalances.every((c) => c.spent === 0) ? (
-            <Text style={styles.sub}>Поки немає витрат по категоріях — відскануй чек або додай spending.</Text>
+            <Text style={styles.sub}>
+              No category spending yet — scan a receipt or log an expense.
+            </Text>
           ) : (
             cycleCategoryBalances.map((row) => (
               <View key={row.category} style={styles.balanceRow}>

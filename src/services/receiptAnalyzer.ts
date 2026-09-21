@@ -41,13 +41,13 @@ function normalizeItem(
 /** Offline Premium demo recognizer (used when no OpenAI key is set). */
 function demoRecognize(): ReceiptScanResult {
   const samples = [
-    { name: 'Молоко 2.5%', amount: 42 },
-    { name: 'Хліб білий', amount: 28 },
-    { name: 'Сир твердий', amount: 96 },
-    { name: 'Кава Американо', amount: 65 },
+    { name: 'Milk 2.5%', amount: 42 },
+    { name: 'White bread', amount: 28 },
+    { name: 'Hard cheese', amount: 96 },
+    { name: 'Americano', amount: 65 },
     { name: 'Uber Trip', amount: 120 },
-    { name: 'Банани 1кг', amount: 55 },
-    { name: 'Йогурт', amount: 31 },
+    { name: 'Bananas 1kg', amount: 55 },
+    { name: 'Yogurt', amount: 31 },
   ];
   const items = samples.map((s, index) => ({
     id: `demo-${index}`,
