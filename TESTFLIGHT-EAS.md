@@ -43,7 +43,7 @@ On the Mac, after `git pull`:
 npx expo start
 ```
 
-On the phone: Expo Go, same Wi‑Fi, scan the QR.
+On the phone: Expo Go, same Wi‑Fi, scan the QR. That is preview only. TestFlight is a standalone production IPA; EAS may warn that Expo Go is the dev client — the build scripts set `EAS_BUILD_NO_EXPO_GO_WARNING=true`.
 
 ## Cloud build (phone or Mac)
 
