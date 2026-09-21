@@ -20,7 +20,7 @@ import { formatMoney } from '../services/formatting';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SharedBudget'>;
 
-export function SharedBudgetScreen({}: Props) {
+export function SharedBudgetScreen({ navigation }: Props) {
   const {
     store,
     activeCycle,
@@ -33,6 +33,7 @@ export function SharedBudgetScreen({}: Props) {
     leaveHousehold,
     renameLocalMember,
     syncHouseholdNow,
+    setPremium,
   } = useBudget();
 
   const household = store.household;
@@ -54,6 +55,22 @@ export function SharedBudgetScreen({}: Props) {
     }
     return Array.from(map.values()).sort((a, b) => b.total - a.total);
   }, [activeCycle?.expenses]);
+
+  if (!store.settings.isPremium && !household) {
+    return (
+      <ScreenBackground edges={['left', 'right', 'bottom']}>
+        <ScrollView contentContainerStyle={styles.pad}>
+          <Text style={styles.title}>Shared budget</Text>
+          <Text style={styles.sub}>
+            Plus: invite a partner with a code — one household budget, spends tagged by who logged
+            them.
+          </Text>
+          <PrimaryButton title="Unlock Plus (demo)" onPress={() => setPremium(true)} />
+          <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
+        </ScrollView>
+      </ScreenBackground>
+    );
+  }
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);

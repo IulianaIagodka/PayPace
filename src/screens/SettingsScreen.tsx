@@ -53,7 +53,7 @@ export function SettingsScreen({ navigation }: Props) {
           <Text style={styles.sub}>
             {household
               ? `Linked · ${household.members.map((m) => m.displayName).join(' & ')}`
-              : 'Invite a partner to the same cycle.'}
+              : 'Plus: invite a partner to the same cycle.'}
           </Text>
           <HudButton title="SHARED BUDGET" onPress={() => navigation.navigate('SharedBudget')} />
         </Panel>
@@ -104,8 +104,8 @@ export function SettingsScreen({ navigation }: Props) {
           <View style={styles.divider} />
           <Text style={styles.label}>PLUS</Text>
           <Text style={styles.sub}>
-            Free: budget, envelopes, bills, manual expenses, shared budget.{'\n'}
-            Plus: receipt scan, bank statements, spend by category, history.
+            Free: budget, envelopes, bills, manual expenses.{'\n'}
+            Plus: receipt scan, bank statements, spend by category, history, shared budget.
           </Text>
           {s.isPremium ? (
             <HudButton title="RESTORE FREE (DEMO)" onPress={() => setPremium(false)} variant="secondary" />
