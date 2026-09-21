@@ -46,7 +46,9 @@ export function AddExpenseScreen({ navigation }: Props) {
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>ADD EXPENSE</Text>
-        <Text style={styles.sub}>Log manually, or import from a receipt / statement.</Text>
+        <Text style={styles.sub}>
+          Log manually anytime. Receipt photo and bank statements are Plus.
+        </Text>
 
         <View style={styles.importRow}>
           <Pressable
@@ -55,7 +57,7 @@ export function AddExpenseScreen({ navigation }: Props) {
           >
             <Ionicons name="camera-outline" size={22} color={colors.resource} />
             <Text style={styles.importTitle}>PHOTO RECEIPT</Text>
-            <Text style={styles.importHint}>Camera or gallery</Text>
+            <Text style={styles.importHint}>Plus · camera / gallery</Text>
           </Pressable>
           <Pressable
             style={styles.importCard}
@@ -63,7 +65,7 @@ export function AddExpenseScreen({ navigation }: Props) {
           >
             <Ionicons name="document-text-outline" size={22} color={colors.resource} />
             <Text style={styles.importTitle}>UPLOAD FILE</Text>
-            <Text style={styles.importHint}>Bank statement</Text>
+            <Text style={styles.importHint}>Plus · bank statement</Text>
           </Pressable>
         </View>
 

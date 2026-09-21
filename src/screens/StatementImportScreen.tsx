@@ -28,7 +28,7 @@ import type { RootStackParamList } from '../navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'StatementImport'>;
 
 export function StatementImportScreen({ navigation, route }: Props) {
-  const { store, activeCycle, importExpensesByDate } = useBudget();
+  const { store, activeCycle, importExpensesByDate, setPremium } = useBudget();
   const currency = store.settings.currencyCode;
   const weekStartsOn = store.settings.weekStartsOn ?? 1;
   const horizon = route.params?.horizon ?? store.settings.paceHorizon ?? 'week';
@@ -71,6 +71,22 @@ export function StatementImportScreen({ navigation, route }: Props) {
     () => visibleItems.reduce((s, i) => s + i.amount, 0),
     [visibleItems],
   );
+
+  if (!store.settings.isPremium) {
+    return (
+      <ScreenBackground edges={['left', 'right', 'bottom']}>
+        <ScrollView contentContainerStyle={styles.pad}>
+          <Text style={styles.title}>UPLOAD STATEMENT</Text>
+          <Text style={styles.sub}>
+            Plus: import a bank statement, auto-categorize rows, and drop them into the right pay
+            cycle.
+          </Text>
+          <HudButton title="UNLOCK PLUS (DEMO)" onPress={() => setPremium(true)} />
+          <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
+        </ScrollView>
+      </ScreenBackground>
+    );
+  }
 
   const cycleItemCategory = (itemId: string) => {
     setResult((prev) => {

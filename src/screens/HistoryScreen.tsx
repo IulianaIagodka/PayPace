@@ -16,11 +16,11 @@ export function HistoryScreen({ navigation }: Props) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.pad}>
-          <Text style={styles.title}>History is Premium</Text>
+          <Text style={styles.title}>History is Plus</Text>
           <Text style={styles.sub}>
             Look back across finished pay cycles and how your safe-to-spend held up.
           </Text>
-          <PrimaryButton title="See Premium" onPress={() => navigation.navigate('MainTabs')} />
+          <PrimaryButton title="Back" onPress={() => navigation.goBack()} />
         </ScrollView>
       </ScreenBackground>
     );

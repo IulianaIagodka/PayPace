@@ -102,18 +102,24 @@ export function SettingsScreen({ navigation }: Props) {
           />
 
           <View style={styles.divider} />
-          <Text style={styles.label}>PREMIUM</Text>
+          <Text style={styles.label}>PLUS</Text>
+          <Text style={styles.sub}>
+            Free: budget, envelopes, bills, manual expenses, shared budget.{'\n'}
+            Plus: receipt scan, bank statements, spend by category, history.
+          </Text>
           {s.isPremium ? (
             <HudButton title="RESTORE FREE (DEMO)" onPress={() => setPremium(false)} variant="secondary" />
           ) : (
-            <>
-              <Text style={styles.sub}>Receipt scan unlock (demo).</Text>
-              <HudButton title="UPGRADE (DEMO)" onPress={() => setPremium(true)} />
-            </>
+            <HudButton title="UNLOCK PLUS (DEMO)" onPress={() => setPremium(true)} />
           )}
           <HudButton
             title="SCAN RECEIPT"
             onPress={() => navigation.navigate('ReceiptScan')}
+            variant="secondary"
+          />
+          <HudButton
+            title="CATEGORY SPEND"
+            onPress={() => navigation.navigate('CategoryBalances')}
             variant="secondary"
           />
 

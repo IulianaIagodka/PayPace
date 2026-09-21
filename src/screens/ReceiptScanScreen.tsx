@@ -76,10 +76,10 @@ export function ReceiptScanScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>Scan receipt</Text>
           <Text style={styles.sub}>
-            Premium: photograph a receipt — PayPace recognizes line items, groups them by category,
-            and shows each balance.
+            Plus: photograph a receipt — PayPace recognizes line items, groups them by category, and
+            shows each balance.
           </Text>
-          <PrimaryButton title="Unlock Premium (demo)" onPress={() => setPremium(true)} />
+          <PrimaryButton title="Unlock Plus (demo)" onPress={() => setPremium(true)} />
           <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
         </ScrollView>
       </ScreenBackground>

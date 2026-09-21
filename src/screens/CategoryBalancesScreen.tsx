@@ -20,8 +20,8 @@ export function CategoryBalancesScreen({ navigation }: Props) {
       <ScreenBackground edges={['left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>RESOURCE CELLS</Text>
-          <Text style={styles.sub}>Premium unlocks category load readouts.</Text>
-          <HudButton title="UPGRADE (DEMO)" onPress={() => setPremium(true)} />
+          <Text style={styles.sub}>Plus unlocks spend-by-category readouts.</Text>
+          <HudButton title="UNLOCK PLUS (DEMO)" onPress={() => setPremium(true)} />
         </ScrollView>
       </ScreenBackground>
     );
