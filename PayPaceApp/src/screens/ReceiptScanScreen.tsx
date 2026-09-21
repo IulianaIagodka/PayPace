@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PrimaryButton, ScreenBackground, SecondaryButton, SoftCard } from '../components/ui';
@@ -21,7 +22,7 @@ import {
   type ReceiptScanResult,
 } from '../services/receiptAnalyzer';
 import { useBudget } from '../store/BudgetContext';
-import { colors } from '../theme/colors';
+import { colors, paceGradient } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
 import type { ExpenseCategory } from '../models/types';
 import { SPENDING_CATEGORIES } from '../services/categories';
@@ -218,7 +219,12 @@ export function ReceiptScanScreen({ navigation }: Props) {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.lineName}>{row.title}</Text>
                   <View style={styles.barTrack}>
-                    <View style={[styles.barFill, { width: `${Math.max(row.share * 100, 4)}%` }]} />
+                    <LinearGradient
+                      colors={[...paceGradient]}
+                      start={{ x: 0, y: 0.5 }}
+                      end={{ x: 1, y: 0.5 }}
+                      style={[styles.barFill, { width: `${Math.max(row.share * 100, 4)}%` }]}
+                    />
                   </View>
                 </View>
                 <Text style={styles.amount}>{formatMoney(row.spent, currency)}</Text>
@@ -252,10 +258,10 @@ const styles = StyleSheet.create({
   barTrack: {
     height: 8,
     borderRadius: 99,
-    backgroundColor: 'rgba(46,51,49,0.08)',
+    backgroundColor: 'rgba(24, 42, 34, 0.08)',
     overflow: 'hidden',
     marginTop: 6,
   },
-  barFill: { height: '100%', backgroundColor: colors.accent, borderRadius: 99 },
+  barFill: { height: '100%', borderRadius: 99 },
   link: { color: colors.accent, fontWeight: '700', fontSize: 15 },
 });

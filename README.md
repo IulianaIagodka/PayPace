@@ -21,6 +21,10 @@ npm run build:ios:submit
 
 Details: [`PayPaceApp/TESTFLIGHT-EAS.md`](PayPaceApp/TESTFLIGHT-EAS.md)
 
+## Shared budget (couple sync)
+
+See [`PayPaceApp/SHARED-BUDGET.md`](PayPaceApp/SHARED-BUDGET.md) — invite code + Supabase sync.
+
 ## Native Swift → TestFlight
 
 See [`PayPace/TESTFLIGHT.md`](PayPace/TESTFLIGHT.md)
