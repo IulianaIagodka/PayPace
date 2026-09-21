@@ -24,6 +24,7 @@ export interface Bill {
   category?: ExpenseCategory;
   isRecurring: boolean;
   isPaid: boolean;
+  updatedAt?: string;
 }
 
 export interface DailyExpense {
@@ -32,6 +33,10 @@ export interface DailyExpense {
   amount: number;
   date: string; // ISO
   category?: ExpenseCategory;
+  /** Who logged this spend (shared household). */
+  memberId?: string;
+  memberName?: string;
+  updatedAt?: string;
 }
 
 export interface PayCycle {
@@ -48,6 +53,27 @@ export interface PayCycle {
   expenses: DailyExpense[];
   isActive: boolean;
   createdAt: string;
+  updatedAt?: string;
+}
+
+export type HouseholdMemberRole = 'owner' | 'partner';
+
+export interface HouseholdMember {
+  id: string;
+  displayName: string;
+  deviceId: string;
+  role: HouseholdMemberRole;
+  joinedAt: string;
+}
+
+export interface Household {
+  id: string;
+  name: string;
+  inviteCode: string;
+  members: HouseholdMember[];
+  createdAt: string;
+  updatedAt: string;
+  revision: number;
 }
 
 export interface AppSettings {
@@ -58,11 +84,25 @@ export interface AppSettings {
   billRemindersEnabled: boolean;
   paceWarningsEnabled: boolean;
   isPremium: boolean;
+  /** Display name used when logging shared spends. */
+  displayName: string;
 }
 
 export interface AppStoreData {
   settings: AppSettings;
   cycles: PayCycle[];
+  household: Household | null;
+  /** This device's member id inside household.members */
+  localMemberId: string | null;
+}
+
+/** Payload synced to the cloud for a shared household. */
+export interface SharedHouseholdPayload {
+  household: Household;
+  settings: Pick<AppSettings, 'currencyCode'>;
+  cycles: PayCycle[];
+  revision: number;
+  updatedAt: string;
 }
 
 export interface SafeSpendSnapshot {
@@ -87,9 +127,12 @@ export const defaultSettings: AppSettings = {
   billRemindersEnabled: true,
   paceWarningsEnabled: true,
   isPremium: false,
+  displayName: '',
 };
 
 export const emptyStore: AppStoreData = {
   settings: defaultSettings,
   cycles: [],
+  household: null,
+  localMemberId: null,
 };

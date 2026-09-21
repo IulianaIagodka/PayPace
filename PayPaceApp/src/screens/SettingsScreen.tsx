@@ -17,11 +17,15 @@ export function SettingsScreen({ navigation }: Props) {
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad}>
         <SoftCard>
-          <Text style={styles.brand}>PayPace</Text>
+          <Text style={styles.brand}>
+            <Text style={styles.brandPay}>Pay</Text>
+            <Text style={styles.brandPace}>pace</Text>
+          </Text>
           <Text style={styles.sub}>Know exactly what you can spend until payday.</Text>
         </SoftCard>
 
         <PrimaryButton title="Edit budget" onPress={() => navigation.navigate('PayCycle')} />
+        <PrimaryButton title="Shared budget" onPress={() => navigation.navigate('SharedBudget')} />
         <PrimaryButton title="Upcoming bills" onPress={() => navigation.navigate('Bills')} />
         <PrimaryButton title="Scan receipt (Premium)" onPress={() => navigation.navigate('ReceiptScan')} />
         <PrimaryButton title="Category balances (Premium)" onPress={() => navigation.navigate('CategoryBalances')} />
@@ -58,7 +62,7 @@ export function SettingsScreen({ navigation }: Props) {
             <>
               <Text style={styles.sub}>
                 Recurring bills, unlimited pay cycles, history, receipt scan, category balances,
-                widgets, advanced notifications.
+                shared budget extras, widgets, advanced notifications.
               </Text>
               <Text style={styles.price}>$2.99/month or $19.99/year</Text>
               <PrimaryButton title="Upgrade (demo unlock)" onPress={() => setPremium(true)} />
@@ -87,7 +91,9 @@ export function SettingsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   pad: { padding: 24, gap: 14, paddingBottom: 40 },
-  brand: { fontSize: 22, fontWeight: '700', color: colors.ink },
+  brand: { fontSize: 22, fontWeight: '700' },
+  brandPay: { color: colors.ink },
+  brandPace: { color: colors.accentMid },
   sub: { color: colors.inkSecondary, fontSize: 15, lineHeight: 21 },
   section: { color: colors.ink, fontWeight: '700', fontSize: 16, marginBottom: 4 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, minHeight: 52 },

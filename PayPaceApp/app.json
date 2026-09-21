@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F7F2E8"
+      "backgroundColor": "#FEFCF7"
     },
     "ios": {
       "supportsTablet": false,
@@ -24,7 +24,7 @@
     "android": {
       "package": "app.paypace.paypace",
       "adaptiveIcon": {
-        "backgroundColor": "#E8F0EB",
+        "backgroundColor": "#FEFCF7",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -47,7 +47,9 @@
       "eas": {
         "projectId": "5bddd7a8-b03e-4100-ba4c-2895cb5d4ccb"
       },
-      "openaiApiKey": ""
+      "openaiApiKey": "",
+      "supabaseUrl": "",
+      "supabaseAnonKey": ""
     },
     "owner": "iuliana.iagodka"
   }

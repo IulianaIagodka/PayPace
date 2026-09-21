@@ -20,8 +20,9 @@ import type { RootStackParamList } from '../navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export function HomeScreen({ navigation }: Props) {
-  const { activeCycle, snapshot, store, deleteExpense } = useBudget();
+  const { activeCycle, snapshot, store, deleteExpense, syncStatus } = useBudget();
   const currency = store.settings.currencyCode;
+  const household = store.household;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -74,6 +75,18 @@ export function HomeScreen({ navigation }: Props) {
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.paydayHint}>Payday {formatShortDate(activeCycle.nextPayday)}</Text>
+        {household ? (
+          <Pressable onPress={() => navigation.navigate('SharedBudget')} style={styles.sharedChip}>
+            <Text style={styles.sharedChipText}>
+              Shared · {household.members.map((m) => m.displayName).join(' & ')}
+              {syncStatus === 'syncing' ? ' · syncing' : ''}
+            </Text>
+          </Pressable>
+        ) : (
+          <Pressable onPress={() => navigation.navigate('SharedBudget')}>
+            <Text style={styles.sharedLink}>Invite partner to share this budget</Text>
+          </Pressable>
+        )}
 
         <SafeSpendHero
           safeToday={snapshot.safeToSpendToday}
@@ -90,11 +103,12 @@ export function HomeScreen({ navigation }: Props) {
         />
 
         <PrimaryButton title="Edit budget" onPress={() => navigation.navigate('PayCycle')} />
+        <SecondaryButton title="Shared budget" onPress={() => navigation.navigate('SharedBudget')} />
         <SecondaryButton title="Scan receipt (Premium)" onPress={() => navigation.navigate('ReceiptScan')} />
         <SecondaryButton title="Open settings" onPress={() => navigation.navigate('Settings')} />
 
         {snapshot.projectedShortfallDays != null && (
-          <SoftCard style={{ backgroundColor: 'rgba(219,158,97,0.18)' }}>
+          <SoftCard style={{ backgroundColor: 'rgba(196, 181, 160, 0.28)' }}>
             <Text style={styles.warning}>
               At your current pace, you may run short {snapshot.projectedShortfallDays} days before
               payday.
@@ -188,6 +202,15 @@ const styles = StyleSheet.create({
   link: { color: colors.accent, fontWeight: '600', fontSize: 15 },
   linkHit: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 },
   paydayHint: { color: colors.inkSecondary, fontSize: 13, fontWeight: '500' },
+  sharedChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.accentSoft,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  sharedChipText: { color: colors.accent, fontWeight: '700', fontSize: 13 },
+  sharedLink: { color: colors.accent, fontWeight: '600', fontSize: 14 },
   sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: '700' },
   sub: { color: colors.inkSecondary, fontSize: 15, lineHeight: 21 },
