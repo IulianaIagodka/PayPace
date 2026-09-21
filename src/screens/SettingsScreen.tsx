@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.panelDeep,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderRadius: 3,
+    borderRadius: 0,
     minWidth: 48,
     alignItems: 'center',
   },

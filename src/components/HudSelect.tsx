@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.panelDeep,
-    borderRadius: 4,
+    borderRadius: 0,
     paddingHorizontal: 14,
     paddingVertical: 14,
   },
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.panelAlt,
-    borderRadius: 4,
+    borderRadius: 0,
     overflow: 'hidden',
   },
   option: {

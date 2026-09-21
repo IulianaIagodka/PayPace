@@ -66,10 +66,10 @@ function TabIcon({
             width: 16,
             height: 2,
             backgroundColor: colors.resource,
-            borderRadius: 1,
+            borderRadius: 0,
             shadowColor: colors.resource,
-            shadowOpacity: 0.7,
-            shadowRadius: 3,
+            shadowOpacity: 0.35,
+            shadowRadius: 2,
           }}
         />
       ) : (
@@ -85,9 +85,9 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#141816',
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
+          backgroundColor: '#0A0C0A',
+          borderTopColor: colors.borderBright,
+          borderTopWidth: 1.5,
           height: 58,
           paddingBottom: 6,
           paddingTop: 4,

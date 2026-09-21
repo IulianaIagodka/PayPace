@@ -1,48 +1,47 @@
-/** PayPace HUD — Doom-inspired industrial, kept sparse for readability */
+/** PayPace HUD — harder Doom industrial, sparse for readability */
 export const colors = {
-  bg: '#090A09',
-  bgGrid: '#0E100E',
-  panel: '#171B18',
-  panelRaised: '#1E231F',
-  panelAlt: '#222722',
-  panelDeep: '#101310',
-  border: '#3A413B',
-  borderBright: '#5C655D',
-  borderSoft: '#1A1E1A',
-  metal: '#8E968E',
-  metalDim: '#5F675F',
+  bg: '#050605',
+  bgGrid: '#0A0C0A',
+  panel: '#121612',
+  panelRaised: '#1A1F1A',
+  panelAlt: '#1C211C',
+  panelDeep: '#0B0D0B',
+  border: '#4A524A',
+  borderBright: '#7A847A',
+  borderSoft: '#151915',
+  metal: '#9AA29A',
+  metalDim: '#5A625A',
 
-  resource: '#7CFF4D',
-  resourceDim: '#3D9E2E',
-  resourceGlow: 'rgba(124, 255, 77, 0.32)',
-  resourceSoft: 'rgba(124, 255, 77, 0.10)',
-  healthy: '#7CFF4D',
-  warning: '#E0A83A',
-  danger: '#D94A35',
-  critical: '#C41E1E',
+  resource: '#6CFF2A',
+  resourceDim: '#2E8A1C',
+  resourceGlow: 'rgba(108, 255, 42, 0.22)',
+  resourceSoft: 'rgba(108, 255, 42, 0.08)',
+  healthy: '#6CFF2A',
+  warning: '#E8A020',
+  danger: '#E8331A',
+  critical: '#B01010',
 
-  text: '#F0F2EC',
-  textSecondary: '#9AA19A',
-  textDim: '#636B63',
+  text: '#F2F4EE',
+  textSecondary: '#8E968E',
+  textDim: '#555D55',
   /** Neutral safe-to-spend readout (not a warning color). */
-  safeValue: '#E4EDE0',
-
+  safeValue: '#DCE6D8',
 
   // legacy aliases
-  bgTop: '#090A09',
-  bgMid: '#090A09',
-  bgBottom: '#090A09',
-  ink: '#F0F2EC',
-  inkSecondary: '#9AA19A',
-  accent: '#7CFF4D',
-  accentMid: '#7CFF4D',
-  accentLight: '#7CFF4D',
-  mint: '#222722',
-  accentSoft: 'rgba(124, 255, 77, 0.10)',
-  warm: '#E0A83A',
-  success: '#7CFF4D',
-  whiteSoft: '#171B18',
-  whiteSofter: '#222722',
+  bgTop: '#050605',
+  bgMid: '#050605',
+  bgBottom: '#050605',
+  ink: '#F2F4EE',
+  inkSecondary: '#8E968E',
+  accent: '#6CFF2A',
+  accentMid: '#6CFF2A',
+  accentLight: '#6CFF2A',
+  mint: '#1C211C',
+  accentSoft: 'rgba(108, 255, 42, 0.08)',
+  warm: '#E8A020',
+  success: '#6CFF2A',
+  whiteSoft: '#121612',
+  whiteSofter: '#1C211C',
 };
 
 export const spacing = {
@@ -75,7 +74,7 @@ export function colorForTone(tone: ResourceTone): string {
 
 /** Healthy bars tip amber on the last lit chunk (FPS HUD feel) */
 export function segmentColor(index: number, lit: number, tone: ResourceTone): string {
-  if (index >= lit) return '#121512';
+  if (index >= lit) return '#0C0E0C';
   if (tone === 'healthy' && lit > 1 && index === lit - 1) return colors.warning;
   return colorForTone(tone);
 }

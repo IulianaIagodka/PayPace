@@ -34,8 +34,8 @@ export function ScreenBackground({
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={['#111412', '#090A09', '#060706']}
-        locations={[0, 0.55, 1]}
+        colors={['#0C0E0C', '#050605', '#030403']}
+        locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.flex} edges={edges}>
@@ -62,12 +62,14 @@ export function Panel({
   return (
     <View style={[styles.panelWrap, glow && styles.panelGlow, style]}>
       <LinearGradient
-        colors={alt ? ['#252A26', '#1A1E1A'] : ['#1F241F', '#151915']}
+        colors={alt ? ['#1E231E', '#121612'] : ['#181D18', '#0E110E']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={[styles.panel, innerGlow && styles.panelInnerGlow]}
       >
         <View style={[styles.bevel, styles.bevelTL]} />
+        <View style={[styles.bevel, styles.bevelTR]} />
+        <View style={[styles.bevel, styles.bevelBL]} />
         <View style={[styles.bevel, styles.bevelBR]} />
         {children}
       </LinearGradient>
@@ -110,7 +112,7 @@ export function HudButton({
     >
       {variant === 'primary' ? (
         <LinearGradient
-          colors={['#24552A', '#143A1A']}
+          colors={['#1A3F1E', '#0C2410']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -469,14 +471,14 @@ const styles = StyleSheet.create({
   panelWrap: {},
   panelGlow: {
     shadowColor: colors.resource,
-    shadowOpacity: 0.4,
-    shadowRadius: 14,
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 6,
+    elevation: 3,
   },
   panel: {
-    borderRadius: 4,
-    borderWidth: 1,
+    borderRadius: 0,
+    borderWidth: 1.5,
     borderColor: colors.border,
     padding: 14,
     gap: 8,
@@ -488,12 +490,14 @@ const styles = StyleSheet.create({
   },
   bevel: {
     position: 'absolute',
-    width: 12,
-    height: 12,
+    width: 10,
+    height: 10,
     borderColor: colors.borderBright,
-    opacity: 0.55,
+    opacity: 0.85,
   },
   bevelTL: { top: 0, left: 0, borderTopWidth: 2, borderLeftWidth: 2 },
+  bevelTR: { top: 0, right: 0, borderTopWidth: 2, borderRightWidth: 2 },
+  bevelBL: { bottom: 0, left: 0, borderBottomWidth: 2, borderLeftWidth: 2 },
   bevelBR: { bottom: 0, right: 0, borderBottomWidth: 2, borderRightWidth: 2 },
   chip: {
     flexDirection: 'row',
@@ -504,12 +508,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.resourceSoft,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 2,
+    borderRadius: 0,
   },
   chipDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 0,
     backgroundColor: colors.resource,
   },
   chipText: {
@@ -517,10 +521,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: fonts.label,
     fontWeight: '700',
-    letterSpacing: 1.4,
+    letterSpacing: 1.6,
   },
   btn: {
-    borderRadius: 4,
+    borderRadius: 0,
     paddingVertical: 16,
     paddingHorizontal: 16,
     alignItems: 'center',
@@ -530,20 +534,20 @@ const styles = StyleSheet.create({
     minHeight: 54,
   },
   btnPrimary: {
-    backgroundColor: '#143A1A',
+    backgroundColor: '#0C2410',
     borderColor: colors.resource,
     shadowColor: colors.resource,
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
+    shadowOpacity: 0.28,
+    shadowRadius: 5,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 5,
+    elevation: 3,
   },
   btnSecondary: {
     backgroundColor: colors.panelAlt,
-    borderColor: colors.border,
+    borderColor: colors.borderBright,
   },
   btnDanger: {
-    backgroundColor: '#2A1210',
+    backgroundColor: '#220E0C',
     borderColor: colors.danger,
   },
   btnContent: {
@@ -555,20 +559,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: fonts.display,
     fontWeight: '700',
-    letterSpacing: 2,
+    letterSpacing: 2.4,
   },
   barTrack: {
     flexDirection: 'row',
-    gap: 3,
-    backgroundColor: '#0A0C0A',
-    borderWidth: 1,
+    gap: 2,
+    backgroundColor: '#050705',
+    borderWidth: 1.5,
     borderColor: colors.border,
-    borderRadius: 3,
+    borderRadius: 0,
     padding: 3,
   },
   barTrackCompact: { gap: 2, padding: 2 },
-  barSeg: { flex: 1, borderRadius: 1 },
-  barSegCompact: { borderRadius: 1 },
+  barSeg: { flex: 1, borderRadius: 0 },
+  barSegCompact: { borderRadius: 0 },
   module: { gap: 8 },
   moduleHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   moduleTitle: {
@@ -608,7 +612,7 @@ const styles = StyleSheet.create({
   emptyCell: {
     flex: 1,
     minHeight: 92,
-    borderRadius: 4,
+    borderRadius: 0,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     backgroundColor: colors.panelDeep,
@@ -625,8 +629,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.panelAlt,
-    borderRadius: 4,
-    borderWidth: 1,
+    borderRadius: 0,
+    borderWidth: 1.5,
     borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -653,7 +657,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.panel,
-    borderRadius: 4,
+    borderRadius: 0,
   },
   headerBtnText: {
     color: colors.textSecondary,

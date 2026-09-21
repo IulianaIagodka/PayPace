@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontFamily: fonts.display,
     fontWeight: '700',
-    letterSpacing: 3.5,
+    letterSpacing: 4.5,
   },
   availableBlock: { gap: 2 },
   label: {
