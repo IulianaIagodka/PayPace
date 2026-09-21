@@ -4,7 +4,8 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, Panel, ScreenBackground } from '../components/ui';
-import { WEEK_START_OPTIONS } from '../models/calculator';
+import { HudSelect } from '../components/HudSelect';
+import { WEEK_START_OPTIONS, type WeekStartsOn } from '../models/calculator';
 import { CURRENCIES } from '../services/currencies';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
@@ -20,11 +21,21 @@ export function SettingsScreen({ navigation }: Props) {
   const { store, updateSettings, setPremium, resetAll } = useBudget();
   const s = store.settings;
   const household = store.household;
-  const weekStartsOn = s.weekStartsOn ?? 1;
+  const weekStartsOn = (s.weekStartsOn ?? 1) as WeekStartsOn;
+
+  const currencyOptions = CURRENCIES.map((c) => ({
+    value: c.code,
+    label: `${c.symbol} · ${c.code} — ${c.name}`,
+  }));
+
+  const weekOptions = WEEK_START_OPTIONS.map((o) => ({
+    value: o.value,
+    label: `${o.short} — ${o.label}`,
+  }));
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.pad}>
+      <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.brand}>
           PAY<Text style={{ color: colors.resource }}>PACE</Text>
         </Text>
@@ -49,21 +60,13 @@ export function SettingsScreen({ navigation }: Props) {
 
         <Panel>
           <Text style={styles.section}>SYSTEM</Text>
-          <Text style={styles.label}>CURRENCY</Text>
-          {CURRENCIES.map((currency) => (
-            <Pressable
-              key={currency.code}
-              onPress={() => updateSettings({ currencyCode: currency.code })}
-              style={styles.row}
-            >
-              <Text style={styles.rowText}>
-                {currency.symbol} · {currency.code}
-              </Text>
-              <Text style={{ color: s.currencyCode === currency.code ? colors.resource : colors.textDim }}>
-                {s.currencyCode === currency.code ? '●' : '○'}
-              </Text>
-            </Pressable>
-          ))}
+
+          <HudSelect
+            label="CURRENCY"
+            value={s.currencyCode}
+            options={currencyOptions}
+            onChange={(code) => updateSettings({ currencyCode: code })}
+          />
 
           <View style={styles.divider} />
           <Text style={styles.label}>REMAINING HORIZON</Text>
@@ -89,24 +92,13 @@ export function SettingsScreen({ navigation }: Props) {
           </View>
 
           <View style={styles.divider} />
-          <Text style={styles.label}>WEEK STARTS ON</Text>
-          <Text style={styles.sub}>
-            Weekly safe-to-spend follows this calendar week. Use payday weekday if pay lands mid-week.
-          </Text>
-          <View style={styles.weekGrid}>
-            {WEEK_START_OPTIONS.map((opt) => {
-              const on = weekStartsOn === opt.value;
-              return (
-                <Pressable
-                  key={opt.value}
-                  onPress={() => updateSettings({ weekStartsOn: opt.value })}
-                  style={[styles.weekChip, on && styles.weekChipOn]}
-                >
-                  <Text style={[styles.weekChipText, on && styles.weekChipTextOn]}>{opt.short}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <HudSelect
+            label="WEEK STARTS ON"
+            value={weekStartsOn}
+            options={weekOptions}
+            hint="Weekly safe-to-spend follows this calendar week. Use payday weekday if pay lands mid-week."
+            onChange={(value) => updateSettings({ weekStartsOn: value })}
+          />
 
           <View style={styles.divider} />
           <Text style={styles.label}>PREMIUM</Text>
@@ -159,15 +151,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     fontFamily: fonts.label,
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  rowText: { color: colors.text, fontSize: 14, fontWeight: '600' },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: 12 },
   weekGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   weekChip: {
