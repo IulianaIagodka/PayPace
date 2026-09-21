@@ -1,6 +1,18 @@
-import { addDays, addMonths, differenceInCalendarDays, startOfDay } from 'date-fns';
+import { addDays, addMonths, differenceInCalendarDays, endOfWeek, startOfDay } from 'date-fns';
 import type { PayCycle, PaySchedule, SafeSpendSnapshot, TrajectoryLabel } from './types';
 import { asMoney, fromDateKey } from '../services/formatting';
+
+export type WeekStartsOn = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+export const WEEK_START_OPTIONS: Array<{ value: WeekStartsOn; label: string; short: string }> = [
+  { value: 1, label: 'Monday', short: 'MON' },
+  { value: 2, label: 'Tuesday', short: 'TUE' },
+  { value: 3, label: 'Wednesday', short: 'WED' },
+  { value: 4, label: 'Thursday', short: 'THU' },
+  { value: 5, label: 'Friday', short: 'FRI' },
+  { value: 6, label: 'Saturday', short: 'SAT' },
+  { value: 0, label: 'Sunday', short: 'SUN' },
+];
 
 export const scheduleOptions: { id: PaySchedule; title: string; subtitle: string }[] = [
   { id: 'monthly', title: 'Monthly', subtitle: 'Once a month' },
@@ -59,7 +71,18 @@ export function cycleMetrics(cycle: PayCycle, now = new Date()) {
   };
 }
 
-export function calculateSafeSpend(cycle: PayCycle, now = new Date()): SafeSpendSnapshot {
+/** Inclusive days from today through end of the configured calendar week. */
+export function daysRemainingInWeek(now = new Date(), weekStartsOn: WeekStartsOn = 1): number {
+  const today = startOfDay(now);
+  const weekEnd = startOfDay(endOfWeek(today, { weekStartsOn }));
+  return Math.max(differenceInCalendarDays(weekEnd, today) + 1, 1);
+}
+
+export function calculateSafeSpend(
+  cycle: PayCycle,
+  now = new Date(),
+  weekStartsOn: WeekStartsOn = 1,
+): SafeSpendSnapshot {
   const {
     daysUntilPayday,
     totalDaysInCycle,
@@ -75,6 +98,13 @@ export function calculateSafeSpend(cycle: PayCycle, now = new Date()): SafeSpend
   const daysToCover = Math.max(daysUntilPayday, 1);
   const safeToSpendToday = remainingUntilPayday > 0 ? remainingUntilPayday / daysToCover : 0;
 
+  const daysInWeek = daysRemainingInWeek(now, weekStartsOn);
+  const daysLeftInWeek = Math.min(daysInWeek, daysToCover);
+  const safeToSpendThisWeek =
+    remainingUntilPayday > 0
+      ? Math.min(safeToSpendToday * daysLeftInWeek, remainingUntilPayday)
+      : 0;
+
   let projectedShortfallDays: number | null = null;
   const averageDaily = spentThisCycle / Math.max(daysElapsed, 1);
   if (remainingUntilPayday < 0) {
@@ -86,9 +116,6 @@ export function calculateSafeSpend(cycle: PayCycle, now = new Date()): SafeSpend
     }
   }
 
-  const projectedEndBalance =
-    remainingUntilPayday - averageDaily * daysUntilPayday + (spentThisCycle > 0 ? 0 : 0);
-  // Simpler projection: remaining - (avg daily * days left)
   const projected = remainingUntilPayday - averageDaily * Math.max(daysUntilPayday, 0);
 
   let trajectory: TrajectoryLabel = 'ON TARGET';
@@ -103,6 +130,8 @@ export function calculateSafeSpend(cycle: PayCycle, now = new Date()): SafeSpend
   return {
     remainingUntilPayday,
     safeToSpendToday,
+    safeToSpendThisWeek,
+    daysLeftInWeek,
     daysUntilPayday,
     totalDaysInCycle,
     daysElapsed,

@@ -228,10 +228,12 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
   const snapshot = useMemo(
     () =>
       activeCycle
-        ? calculateSafeSpend(activeCycle)
+        ? calculateSafeSpend(activeCycle, new Date(), store.settings.weekStartsOn ?? 1)
         : {
             remainingUntilPayday: 0,
             safeToSpendToday: 0,
+            safeToSpendThisWeek: 0,
+            daysLeftInWeek: 0,
             daysUntilPayday: 0,
             totalDaysInCycle: 1,
             daysElapsed: 0,
@@ -245,7 +247,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
             trajectory: 'ON TARGET' as TrajectoryLabel,
             projectedEndBalance: 0,
           },
-    [activeCycle],
+    [activeCycle, store.settings.weekStartsOn],
   );
 
   const attribution = useCallback(() => {

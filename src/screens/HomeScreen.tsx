@@ -77,8 +77,7 @@ export function HomeScreen({ navigation }: Props) {
   const available = Math.max(snapshot.remainingUntilPayday, 0);
   const pct = Math.round(snapshot.resourcesRemainingRatio * 100);
   const safe = Math.max(snapshot.safeToSpendToday, 0);
-  const weekDays = Math.min(7, Math.max(snapshot.daysUntilPayday, 1));
-  const safeWeek = Math.min(safe * weekDays, available);
+  const safeWeek = Math.max(snapshot.safeToSpendThisWeek, 0);
 
   type GridItem = (typeof gridModules)[number] | null;
   const withPad: GridItem[] = [...gridModules, null];
@@ -128,6 +127,9 @@ export function HomeScreen({ navigation }: Props) {
                   {formatMoney(safeWeek, currency)}
                 </Text>
                 <Text style={styles.perUnit}>/ week</Text>
+                <Text style={styles.weekHint}>
+                  {snapshot.daysLeftInWeek}d left in week
+                </Text>
               </View>
             </View>
           </Panel>
@@ -259,6 +261,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     fontWeight: '700',
     letterSpacing: 1.2,
+  },
+  weekHint: {
+    color: colors.textDim,
+    fontSize: 11,
+    fontFamily: fonts.body,
+    marginTop: 2,
   },
   sub: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, fontFamily: fonts.body },
   alert: { borderColor: colors.warning },

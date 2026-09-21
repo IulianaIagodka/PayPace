@@ -4,9 +4,11 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, Panel, ScreenBackground } from '../components/ui';
+import { WEEK_START_OPTIONS } from '../models/calculator';
 import { CURRENCIES } from '../services/currencies';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
 type Props = CompositeScreenProps<
@@ -18,6 +20,7 @@ export function SettingsScreen({ navigation }: Props) {
   const { store, updateSettings, setPremium, resetAll } = useBudget();
   const s = store.settings;
   const household = store.household;
+  const weekStartsOn = s.weekStartsOn ?? 1;
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
@@ -63,6 +66,26 @@ export function SettingsScreen({ navigation }: Props) {
           ))}
 
           <View style={styles.divider} />
+          <Text style={styles.label}>WEEK STARTS ON</Text>
+          <Text style={styles.sub}>
+            Weekly safe-to-spend follows this calendar week. Use payday weekday if pay lands mid-week.
+          </Text>
+          <View style={styles.weekGrid}>
+            {WEEK_START_OPTIONS.map((opt) => {
+              const on = weekStartsOn === opt.value;
+              return (
+                <Pressable
+                  key={opt.value}
+                  onPress={() => updateSettings({ weekStartsOn: opt.value })}
+                  style={[styles.weekChip, on && styles.weekChipOn]}
+                >
+                  <Text style={[styles.weekChipText, on && styles.weekChipTextOn]}>{opt.short}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View style={styles.divider} />
           <Text style={styles.label}>PREMIUM</Text>
           {s.isPremium ? (
             <HudButton title="RESTORE FREE (DEMO)" onPress={() => setPremium(false)} variant="secondary" />
@@ -99,8 +122,20 @@ const styles = StyleSheet.create({
   pad: { padding: 20, gap: 14, paddingBottom: 40 },
   brand: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 3 },
   sub: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
-  section: { color: colors.text, fontWeight: '800', fontSize: 12, letterSpacing: 1.6, marginBottom: 4 },
-  label: { color: colors.textSecondary, fontWeight: '700', fontSize: 11, letterSpacing: 1.4 },
+  section: {
+    color: colors.text,
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 1.6,
+    marginBottom: 4,
+  },
+  label: {
+    color: colors.textSecondary,
+    fontWeight: '700',
+    fontSize: 11,
+    letterSpacing: 1.4,
+    fontFamily: fonts.label,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -111,4 +146,27 @@ const styles = StyleSheet.create({
   },
   rowText: { color: colors.text, fontSize: 14, fontWeight: '600' },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: 12 },
+  weekGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  weekChip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.panelDeep,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 3,
+    minWidth: 48,
+    alignItems: 'center',
+  },
+  weekChipOn: {
+    borderColor: colors.resource,
+    backgroundColor: colors.resourceSoft,
+  },
+  weekChipText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  weekChipTextOn: { color: colors.resource },
 });

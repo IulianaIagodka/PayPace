@@ -96,6 +96,8 @@ export interface AppSettings {
   paceWarningsEnabled: boolean;
   isPremium: boolean;
   displayName: string;
+  /** Week start: 0=Sun … 6=Sat (date-fns). Default Monday = 1. */
+  weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 }
 
 export interface AppStoreData {
@@ -118,6 +120,10 @@ export type TrajectoryLabel = 'WITH RESERVE' | 'ON TARGET' | 'LOW RESERVE' | 'DE
 export interface SafeSpendSnapshot {
   remainingUntilPayday: number;
   safeToSpendToday: number;
+  /** Remaining allowance for the current calendar week (weekStartsOn → +6). */
+  safeToSpendThisWeek: number;
+  /** Days left in the current week, capped by days until payday. */
+  daysLeftInWeek: number;
   daysUntilPayday: number;
   totalDaysInCycle: number;
   daysElapsed: number;
@@ -141,6 +147,7 @@ export const defaultSettings: AppSettings = {
   paceWarningsEnabled: true,
   isPremium: false,
   displayName: '',
+  weekStartsOn: 1,
 };
 
 export const emptyStore: AppStoreData = {
