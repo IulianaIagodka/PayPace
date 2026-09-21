@@ -2,7 +2,7 @@
 
 Payday → payday envelope budgeting. Money = energy.
 
-One Expo app at the **repo root**. Build with EAS (cloud) or on your Mac.
+One Expo app at the **repo root**. Develop from the **phone** or the **Mac**. Ship TestFlight from **EAS cloud** (phone or Mac) or a **local Mac** IPA.
 
 ## Setup
 
@@ -12,12 +12,15 @@ cd PayPace
 npm install
 ```
 
-## Local (Mac)
+`origin/main` is the source of truth. `git pull` before work on either device; commit and `git push` after. On the Mac, pull again before any build.
+
+## Preview
 
 ```bash
 npx expo start
-# then press i for iOS simulator, or scan QR with Expo Go / dev client
 ```
+
+Then `i` for the iOS simulator, or scan the QR with Expo Go on the phone (same Wi‑Fi).
 
 Native iOS folder (optional, for Xcode):
 
@@ -26,19 +29,16 @@ npx expo prebuild --platform ios
 npx expo run:ios
 ```
 
-## TestFlight (EAS)
+## TestFlight
+
+Do **not** put `eas-cli` in `package.json`. Full steps (phone vs Mac local vs cloud, credentials, keychain): [TESTFLIGHT-EAS.md](./TESTFLIGHT-EAS.md).
 
 ```bash
-npm install -g eas-cli   # once; do not put eas-cli in package.json
 npx eas-cli login
-npm run build:ios          # cloud build
-npm run build:ios:local     # Mac local IPA (needs Xcode + CocoaPods)
-npm run submit:ios         # upload latest cloud build to TestFlight
-# or
-npm run build:ios:submit
+npm run build:ios           # cloud (works from phone Cursor or Mac)
+npm run build:ios:submit    # cloud + upload to TestFlight
+npm run build:ios:local     # Mac only → IPA, then submit with --path
 ```
-
-Details: [TESTFLIGHT-EAS.md](./TESTFLIGHT-EAS.md)
 
 ## Shared budget
 
@@ -53,4 +53,5 @@ Couple sync via invite code: [SHARED-BUDGET.md](./SHARED-BUDGET.md)
 | `npm run test:shared` | Shared-budget E2E simulation |
 | `npm run build:ios` | EAS iOS production build (cloud) |
 | `npm run build:ios:local` | EAS iOS production build on this Mac |
-| `npm run submit:ios` | Submit latest build to TestFlight |
+| `npm run submit:ios` | Submit latest **cloud** build to TestFlight |
+| `npm run build:ios:submit` | Cloud build + auto-submit |

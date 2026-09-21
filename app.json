@@ -7,12 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "scheme": "paypace",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#010101"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.paypace.PayPace",
@@ -35,6 +29,18 @@
     },
     "plugins": [
       "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#010101",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#010101"
+          }
+        }
+      ],
       [
         "expo-image-picker",
         {
