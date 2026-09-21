@@ -15,12 +15,12 @@ export const WEEK_START_OPTIONS: Array<{ value: WeekStartsOn; label: string; sho
   { value: 0, label: 'Sunday', short: 'SUN' },
 ];
 
-export const scheduleOptions: { id: PaySchedule; title: string; subtitle: string }[] = [
-  { id: 'monthly', title: 'Monthly', subtitle: 'Once a month' },
-  { id: 'twiceMonthly', title: 'Twice monthly', subtitle: 'Two paydays each month' },
-  { id: 'everyTwoWeeks', title: 'Every 2 weeks', subtitle: 'Every 14 days' },
-  { id: 'weekly', title: 'Weekly', subtitle: 'Every 7 days' },
-  { id: 'custom', title: 'Custom / irregular', subtitle: 'You set each payday' },
+export const scheduleOptions: { id: PaySchedule; title: string }[] = [
+  { id: 'monthly', title: 'Monthly' },
+  { id: 'twiceMonthly', title: 'Twice monthly' },
+  { id: 'everyTwoWeeks', title: 'Every 2 weeks' },
+  { id: 'weekly', title: 'Weekly' },
+  { id: 'custom', title: 'Custom' },
 ];
 
 export function nextPaydayAfter(schedule: PaySchedule, from: Date): Date {

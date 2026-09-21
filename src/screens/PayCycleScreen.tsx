@@ -10,15 +10,14 @@ import {
   ScreenBackground,
   SoftCard,
 } from '../components/ui';
+import { HudSelect } from '../components/HudSelect';
 import { nextPaydayAfter, scheduleOptions } from '../models/calculator';
 import type { PaySchedule } from '../models/types';
-import { currencySymbol, formatMoney, fromDateKey, parseAmount, toDateKey } from '../services/formatting';
+import { asMoney, currencySymbol, formatMoney, fromDateKey, parseAmount, toDateKey } from '../services/formatting';
 import { defaultEnvelopes } from '../services/envelopes';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
-import { Pressable } from 'react-native';
-import { asMoney } from '../services/formatting';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PayCycle'>;
 
@@ -125,18 +124,12 @@ export function PayCycleScreen({ navigation }: Props) {
           keyboardType="number-pad"
         />
         <AmountField label="Expected paycheck" value={paycheck} onChangeText={setPaycheck} suffix={suffix} />
-        <Text style={styles.fieldLabel}>Pay schedule</Text>
-        {scheduleOptions.map((item) => (
-          <Pressable key={item.id} onPress={() => setSchedule(item.id)} style={styles.choice}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.choiceTitle}>{item.title}</Text>
-              <Text style={styles.sub}>{item.subtitle}</Text>
-            </View>
-            <Text style={{ color: schedule === item.id ? colors.accent : colors.inkSecondary }}>
-              {schedule === item.id ? '●' : '○'}
-            </Text>
-          </Pressable>
-        ))}
+        <HudSelect
+          label="PAY SCHEDULE"
+          value={schedule}
+          options={scheduleOptions.map((item) => ({ value: item.id, label: item.title }))}
+          onChange={setSchedule}
+        />
         <AmountField label="Savings" value={savings} onChangeText={setSavings} suffix={suffix} />
         <AmountField label="Emergency buffer" value={emergency} onChangeText={setEmergency} suffix={suffix} />
         <AmountField label="Spending buffer" value={buffer} onChangeText={setBuffer} suffix={suffix} />
@@ -162,13 +155,4 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, fontWeight: '700', color: colors.ink },
   sub: { color: colors.inkSecondary, fontSize: 14, lineHeight: 20 },
   ok: { color: colors.success, fontSize: 14 },
-  fieldLabel: { color: colors.inkSecondary, fontSize: 14, fontWeight: '500' },
-  choice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.whiteSoft,
-    borderRadius: 14,
-    padding: 14,
-  },
-  choiceTitle: { color: colors.ink, fontSize: 16, fontWeight: '600' },
 });

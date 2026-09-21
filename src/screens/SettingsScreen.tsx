@@ -25,12 +25,12 @@ export function SettingsScreen({ navigation }: Props) {
 
   const currencyOptions = CURRENCIES.map((c) => ({
     value: c.code,
-    label: `${c.symbol} · ${c.code} — ${c.name}`,
+    label: `${c.code} · ${c.symbol}`,
   }));
 
   const weekOptions = WEEK_START_OPTIONS.map((o) => ({
     value: o.value,
-    label: `${o.short} — ${o.label}`,
+    label: o.short,
   }));
 
   return (
@@ -97,7 +97,7 @@ export function SettingsScreen({ navigation }: Props) {
             label="WEEK STARTS ON"
             value={weekStartsOn}
             options={weekOptions}
-            hint="Weekly safe-to-spend follows this calendar week. Use payday weekday if pay lands mid-week."
+            hint="Calendar week for weekly remaining."
             onChange={(value) => updateSettings({ weekStartsOn: value })}
           />
 

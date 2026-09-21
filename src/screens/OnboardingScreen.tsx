@@ -19,6 +19,7 @@ import {
   ScreenBackground,
   SoftCard,
 } from '../components/ui';
+import { HudSelect } from '../components/HudSelect';
 import { defaultEnvelopes } from '../services/envelopes';
 import { calculateSafeSpend, scheduleOptions } from '../models/calculator';
 import type { Bill, ExpenseCategory, PayCycle, PaySchedule } from '../models/types';
@@ -185,18 +186,12 @@ export function OnboardingScreen() {
                 onChangeText={setPaycheck}
                 suffix={suffix}
               />
-              <Text style={styles.fieldLabel}>Pay schedule</Text>
-              {scheduleOptions.map((item) => (
-                <Pressable key={item.id} onPress={() => setSchedule(item.id)} style={styles.choice}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.rowTitle}>{item.title}</Text>
-                    <Text style={styles.subSmall}>{item.subtitle}</Text>
-                  </View>
-                  <Text style={{ color: schedule === item.id ? colors.accent : colors.inkSecondary }}>
-                    {schedule === item.id ? '●' : '○'}
-                  </Text>
-                </Pressable>
-              ))}
+              <HudSelect
+                label="PAY SCHEDULE"
+                value={schedule}
+                options={scheduleOptions.map((item) => ({ value: item.id, label: item.title }))}
+                onChange={setSchedule}
+              />
               <PrimaryButton title="Continue" onPress={() => setStep('bills')} />
             </View>
           )}
@@ -289,15 +284,6 @@ const styles = StyleSheet.create({
   brandPace: { color: colors.accentMid },
   title: { fontSize: 30, fontWeight: '700', color: colors.ink, lineHeight: 36 },
   sub: { fontSize: 16, color: colors.inkSecondary, lineHeight: 22 },
-  subSmall: { fontSize: 13, color: colors.inkSecondary },
-  fieldLabel: { color: colors.inkSecondary, fontSize: 14, fontWeight: '500' },
-  choice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.whiteSoft,
-    borderRadius: 14,
-    padding: 14,
-  },
   rowTitle: { color: colors.ink, fontSize: 16, fontWeight: '600' },
   chip: {
     backgroundColor: colors.whiteSoft,
