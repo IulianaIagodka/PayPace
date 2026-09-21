@@ -77,6 +77,8 @@ export function HomeScreen({ navigation }: Props) {
   const available = Math.max(snapshot.remainingUntilPayday, 0);
   const pct = Math.round(snapshot.resourcesRemainingRatio * 100);
   const safe = Math.max(snapshot.safeToSpendToday, 0);
+  const weekDays = Math.min(7, Math.max(snapshot.daysUntilPayday, 1));
+  const safeWeek = Math.min(safe * weekDays, available);
 
   type GridItem = (typeof gridModules)[number] | null;
   const withPad: GridItem[] = [...gridModules, null];
@@ -113,10 +115,21 @@ export function HomeScreen({ navigation }: Props) {
         <Animated.View style={{ opacity: heroPulse }}>
           <Panel glow innerGlow style={styles.heroPanel}>
             <Text style={styles.heroLabel}>SAFE TO SPEND</Text>
-            <Text style={[styles.safe, snapshot.isAtRisk && { color: colors.danger }]}>
-              {formatMoney(safe, currency)}
-              <Text style={styles.perDay}>/day</Text>
-            </Text>
+            <View style={styles.safeRow}>
+              <View style={styles.safeCol}>
+                <Text style={[styles.safe, snapshot.isAtRisk && { color: colors.danger }]}>
+                  {formatMoney(safe, currency)}
+                </Text>
+                <Text style={styles.perUnit}>/ day</Text>
+              </View>
+              <View style={styles.safeDivider} />
+              <View style={styles.safeCol}>
+                <Text style={[styles.safeWeek, snapshot.isAtRisk && { color: colors.danger }]}>
+                  {formatMoney(safeWeek, currency)}
+                </Text>
+                <Text style={styles.perUnit}>/ week</Text>
+              </View>
+            </View>
           </Panel>
         </Animated.View>
 
@@ -203,7 +216,7 @@ const styles = StyleSheet.create({
   heroPanel: {
     paddingVertical: 18,
     paddingHorizontal: 16,
-    gap: 4,
+    gap: 10,
   },
   heroLabel: {
     color: colors.resource,
@@ -212,18 +225,40 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 2.4,
   },
+  safeRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 14,
+  },
+  safeCol: {
+    flex: 1,
+    gap: 2,
+  },
+  safeDivider: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginVertical: 4,
+  },
   safe: {
     color: colors.text,
-    fontSize: 36,
+    fontSize: 32,
     fontFamily: fonts.display,
     fontWeight: '700',
     letterSpacing: -0.4,
   },
-  perDay: {
+  safeWeek: {
+    color: colors.text,
+    fontSize: 28,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  perUnit: {
     color: colors.textSecondary,
-    fontSize: 18,
+    fontSize: 13,
     fontFamily: fonts.label,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 1.2,
   },
   sub: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, fontFamily: fonts.body },
   alert: { borderColor: colors.warning },
