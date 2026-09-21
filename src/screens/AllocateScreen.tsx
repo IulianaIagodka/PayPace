@@ -34,9 +34,9 @@ export function AllocateScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>ALLOCATE RESOURCES</Text>
           <Text style={styles.sub}>
-            Plus: split safe-to-spend into category envelopes and track leftover in each.
+            Plus lets you split spending across categories and see what’s left in each one.
           </Text>
-          <HudButton title="UNLOCK PLUS (DEMO)" onPress={() => setPremium(true)} />
+          <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
           <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
         </ScrollView>
       </ScreenBackground>
@@ -73,10 +73,10 @@ export function AllocateScreen({ navigation }: Props) {
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>ALLOCATE RESOURCES</Text>
-        <Text style={styles.sub}>Configure loadout for this pay cycle.</Text>
+        <Text style={styles.sub}>Decide how much each category gets this pay cycle.</Text>
 
         <Panel>
-          <Text style={styles.label}>TOTAL SPEND POOL</Text>
+          <Text style={styles.label}>SPENDING POOL</Text>
           <Text style={styles.big}>{formatMoney(spendPool, currency)}</Text>
           <Text
             style={[
@@ -120,7 +120,7 @@ export function AllocateScreen({ navigation }: Props) {
           </Panel>
         ))}
 
-        <HudButton title="SAVE LOADOUT" onPress={save} />
+        <HudButton title="SAVE" onPress={save} />
         <HudButton title="CANCEL" onPress={() => navigation.goBack()} variant="secondary" />
       </ScrollView>
     </ScreenBackground>

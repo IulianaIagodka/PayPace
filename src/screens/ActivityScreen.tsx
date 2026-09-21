@@ -18,12 +18,12 @@ export function ActivityScreen({}: Props) {
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.pad}>
         <Text style={styles.title}>ACTIVITY</Text>
-        <Text style={styles.sub}>CONSUMED this cycle</Text>
+        <Text style={styles.sub}>Spent this pay cycle</Text>
         <Text style={styles.total}>{formatMoney(snapshot.spentThisCycle, currency)}</Text>
 
         <Panel>
           {expenses.length === 0 ? (
-            <Text style={styles.sub}>No drain events logged yet.</Text>
+            <Text style={styles.sub}>No expenses yet.</Text>
           ) : (
             expenses.map((e) => (
               <ExpenseRow
@@ -31,7 +31,7 @@ export function ActivityScreen({}: Props) {
                 expense={e}
                 currencyCode={currency}
                 onDelete={() =>
-                  Alert.alert('Remove expense?', e.name, [
+                  Alert.alert('Delete this expense?', e.name, [
                     { text: 'Cancel', style: 'cancel' },
                     {
                       text: 'Delete',

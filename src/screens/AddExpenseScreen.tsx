@@ -47,7 +47,7 @@ export function AddExpenseScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>ADD EXPENSE</Text>
         <Text style={styles.sub}>
-          Log manually anytime. Receipt photo and bank statements are Plus.
+          Log it yourself anytime. Photos and bank statements are Plus.
         </Text>
 
         <View style={styles.importRow}>
@@ -57,15 +57,15 @@ export function AddExpenseScreen({ navigation }: Props) {
           >
             <Ionicons name="camera-outline" size={22} color={colors.resource} />
             <Text style={styles.importTitle}>PHOTO RECEIPT</Text>
-            <Text style={styles.importHint}>Plus · camera / gallery</Text>
+            <Text style={styles.importHint}>Plus · camera or gallery</Text>
           </Pressable>
           <Pressable
             style={styles.importCard}
             onPress={() => navigation.navigate('StatementImport', { horizon: store.settings.paceHorizon ?? 'week' })}
           >
             <Ionicons name="document-text-outline" size={22} color={colors.resource} />
-            <Text style={styles.importTitle}>UPLOAD FILE</Text>
-            <Text style={styles.importHint}>Plus · bank statement</Text>
+            <Text style={styles.importTitle}>BANK FILE</Text>
+            <Text style={styles.importHint}>Plus · statement upload</Text>
           </Pressable>
         </View>
 
@@ -94,7 +94,7 @@ export function AddExpenseScreen({ navigation }: Props) {
           <TextInput
             value={note}
             onChangeText={setNote}
-            placeholder="What drained energy?"
+            placeholder="Coffee, groceries…"
             placeholderTextColor={colors.textDim}
             style={styles.note}
           />

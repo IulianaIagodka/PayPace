@@ -39,12 +39,12 @@ export function SettingsScreen({ navigation }: Props) {
         <Text style={styles.brand}>
           PAY<Text style={{ color: colors.resource }}>PACE</Text>
         </Text>
-        <Text style={styles.sub}>Money is energy. Configure the system.</Text>
+        <Text style={styles.sub}>Money is energy. Tune your payday budget here.</Text>
 
         <Panel>
           <Text style={styles.section}>BUDGET</Text>
           <HudButton title="ALLOCATE RESOURCES" onPress={() => navigation.navigate('Allocate')} />
-          <Text style={styles.sub}>Plus · category envelopes & leftover.</Text>
+          <Text style={styles.sub}>Plus · set how much each category gets.</Text>
           <HudButton title="EDIT CYCLE" onPress={() => navigation.navigate('PayCycle')} variant="secondary" />
           <HudButton title="BILLS" onPress={() => navigation.navigate('Bills')} variant="secondary" />
         </Panel>
@@ -54,7 +54,7 @@ export function SettingsScreen({ navigation }: Props) {
           <Text style={styles.sub}>
             {household
               ? `Linked · ${household.members.map((m) => m.displayName).join(' & ')}`
-              : 'Plus: invite a partner to the same cycle.'}
+              : 'Plus · share one budget with your partner.'}
           </Text>
           <HudButton title="SHARED BUDGET" onPress={() => navigation.navigate('SharedBudget')} />
         </Panel>
@@ -72,8 +72,8 @@ export function SettingsScreen({ navigation }: Props) {
           <View style={styles.divider} />
           <Text style={styles.label}>REMAINING HORIZON</Text>
           <Text style={styles.sub}>
-            WEEK uses the calendar week. UNTIL PAYDAY uses days left until your next payday —
-            categories follow the same window.
+            WEEK follows the calendar week. UNTIL PAYDAY counts the days left before payday. Category
+            remaining uses the same window.
           </Text>
           <View style={styles.weekGrid}>
             {([
@@ -98,21 +98,20 @@ export function SettingsScreen({ navigation }: Props) {
             label="WEEK STARTS ON"
             value={weekStartsOn}
             options={weekOptions}
-            hint="Calendar week for weekly remaining."
+            hint="Which day starts your calendar week."
             onChange={(value) => updateSettings({ weekStartsOn: value })}
           />
 
           <View style={styles.divider} />
           <Text style={styles.label}>PLUS</Text>
           <Text style={styles.sub}>
-            Free: available, safe-to-spend, bills, manual expenses.{'\n'}
-            Plus: category remaining (envelopes), allocate, receipt scan, statements, history,
-            shared budget.
+            Free: available balance, safe-to-spend, bills, and manual expenses.{'\n'}
+            Plus: leftover by category, receipt scan, bank statements, history, and shared budget.
           </Text>
           {s.isPremium ? (
-            <HudButton title="RESTORE FREE (DEMO)" onPress={() => setPremium(false)} variant="secondary" />
+            <HudButton title="BACK TO FREE (DEMO)" onPress={() => setPremium(false)} variant="secondary" />
           ) : (
-            <HudButton title="UNLOCK PLUS (DEMO)" onPress={() => setPremium(true)} />
+            <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
           )}
           <HudButton
             title="SCAN RECEIPT"
@@ -120,7 +119,7 @@ export function SettingsScreen({ navigation }: Props) {
             variant="secondary"
           />
           <HudButton
-            title="CATEGORY SPEND"
+            title="BY CATEGORY"
             onPress={() => navigation.navigate('CategoryBalances')}
             variant="secondary"
           />
@@ -130,7 +129,7 @@ export function SettingsScreen({ navigation }: Props) {
             title="START OVER"
             variant="danger"
             onPress={() =>
-              Alert.alert('Start over?', 'Clears local budget setup.', [
+              Alert.alert('Start over?', 'This clears the budget on this phone.', [
                 { text: 'Cancel', style: 'cancel' },
                 { text: 'Reset', style: 'destructive', onPress: () => resetAll() },
               ])

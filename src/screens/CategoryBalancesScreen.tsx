@@ -19,9 +19,9 @@ export function CategoryBalancesScreen({ navigation }: Props) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.pad}>
-          <Text style={styles.title}>RESOURCE CELLS</Text>
-          <Text style={styles.sub}>Plus unlocks spend-by-category readouts.</Text>
-          <HudButton title="UNLOCK PLUS (DEMO)" onPress={() => setPremium(true)} />
+          <Text style={styles.title}>BY CATEGORY</Text>
+          <Text style={styles.sub}>Plus shows how much you’ve spent in each category.</Text>
+          <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
         </ScrollView>
       </ScreenBackground>
     );
@@ -30,8 +30,8 @@ export function CategoryBalancesScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>RESOURCE CELLS</Text>
-        <Text style={styles.sub}>Consumed by category this cycle.</Text>
+        <Text style={styles.title}>BY CATEGORY</Text>
+        <Text style={styles.sub}>What you’ve spent in each category this pay cycle.</Text>
         <Panel>
           {rows.map((row) => (
             <View key={row.category} style={styles.row}>

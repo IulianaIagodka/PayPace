@@ -104,7 +104,9 @@ export function PayCycleScreen({ navigation }: Props) {
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Edit budget</Text>
-        <Text style={styles.sub}>Update balance, payday, buffers — safe-to-spend recalculates immediately.</Text>
+        <Text style={styles.sub}>
+          Update your balance, payday, or buffers — safe-to-spend recalculates right away.
+        </Text>
         <CycleProgress
           progress={snapshot.cycleProgress}
           daysElapsed={snapshot.daysElapsed}

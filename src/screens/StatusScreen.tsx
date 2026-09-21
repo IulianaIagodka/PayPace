@@ -51,16 +51,16 @@ export function StatusScreen({}: Props) {
 
         <Panel>
           <Row label="INCOME" value={formatMoney(income, currency)} />
-          <Row label="CONSUMED" value={formatMoney(snapshot.spentThisCycle, currency)} />
-          <Row label="RESOURCES REMAINING" value={formatMoney(Math.max(remaining, 0), currency)} />
-          <Row label="RESERVE" value={formatMoney(reserve, currency)} />
+          <Row label="SPENT" value={formatMoney(snapshot.spentThisCycle, currency)} />
+          <Row label="REMAINING" value={formatMoney(Math.max(remaining, 0), currency)} />
+          <Row label="RESERVED" value={formatMoney(reserve, currency)} />
           <Row
             label="SAFE TO SPEND / DAY"
             value={formatMoney(Math.max(snapshot.safeToSpendToday, 0), currency)}
             strong
           />
           <Row
-            label="PROJECTED END"
+            label="PROJECTED AT PAYDAY"
             value={formatMoney(snapshot.projectedEndBalance, currency)}
           />
         </Panel>

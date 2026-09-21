@@ -519,15 +519,15 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       if (code.length < 4) throw new Error('Enter the invite code');
       if (!isCloudSyncConfigured()) {
         throw new Error(
-          'Cloud sync is not configured yet. Add Supabase keys (see SHARED-BUDGET.md), then rebuild.',
+          'Cloud sync isn’t set up yet. Add your Supabase keys (see SHARED-BUDGET.md), then rebuild.',
         );
       }
       const remote = await cloudFetchByInviteCode(code);
-      if (!remote) throw new Error('Code not found. Check with your partner.');
+      if (!remote) throw new Error('That code wasn’t found. Double-check it with your partner.');
       const deviceId = await getDeviceId();
       const existingOnDevice = remote.household.members.find((m) => m.deviceId === deviceId);
       if (!existingOnDevice && remote.household.members.length >= 2) {
-        throw new Error('This household already has two people.');
+        throw new Error('This shared budget already has two people.');
       }
       let memberId = existingOnDevice?.id;
       let members = [...remote.household.members];

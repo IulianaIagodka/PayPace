@@ -62,10 +62,10 @@ export function SharedBudgetScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>Shared budget</Text>
           <Text style={styles.sub}>
-            Plus: invite a partner with a code — one household budget, spends tagged by who logged
-            them.
+            Plus lets you and a partner share one payday budget. Each expense is tagged with who
+            logged it.
           </Text>
-          <PrimaryButton title="Unlock Plus (demo)" onPress={() => setPremium(true)} />
+          <PrimaryButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
           <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
         </ScrollView>
       </ScreenBackground>
@@ -86,7 +86,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
   const copyCode = async () => {
     if (!household) return;
     await Clipboard.setStringAsync(household.inviteCode);
-    Alert.alert('Copied', `Code ${household.inviteCode} is on the clipboard.`);
+    Alert.alert('Copied', `Invite code ${household.inviteCode} is on your clipboard.`);
   };
 
   const shareCode = async () => {
@@ -102,7 +102,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>Shared budget</Text>
           <Text style={styles.sub}>
-            One budget for two. Both see spends, tagged with who logged them.
+            One budget for two. You both see the same balance, payday, bills, and spending.
           </Text>
 
           <SoftCard>
@@ -118,9 +118,9 @@ export function SharedBudgetScreen({ navigation }: Props) {
                 ? syncStatus === 'syncing'
                   ? 'Syncing…'
                   : syncStatus === 'error'
-                    ? `Sync issue: ${syncError ?? 'retry later'}`
-                    : 'Cloud sync on · updates every ~20s'
-                : 'Local only — add Supabase keys to sync between phones (SHARED-BUDGET.md)'}
+                    ? syncError ?? 'Sync hit a snag — try again.'
+                    : 'Cloud sync is on · updates about every 20 seconds'
+                : 'On this phone only — add Supabase keys to sync (see SHARED-BUDGET.md)'}
             </Text>
             {cloudSyncReady ? (
               <SecondaryButton title="Sync now" onPress={() => run(() => syncHouseholdNow())} />
@@ -136,17 +136,17 @@ export function SharedBudgetScreen({ navigation }: Props) {
                     {member.displayName}
                     {member.id === localMember?.id ? ' · you' : ''}
                   </Text>
-                  <Text style={styles.hint}>{member.role === 'owner' ? 'Created household' : 'Partner'}</Text>
+                  <Text style={styles.hint}>{member.role === 'owner' ? 'Started this budget' : 'Partner'}</Text>
                 </View>
               </View>
             ))}
             {household.members.length < 2 ? (
-              <Text style={styles.hint}>Waiting for partner to join with the code.</Text>
+              <Text style={styles.hint}>Waiting for your partner to join with the code.</Text>
             ) : null}
           </SoftCard>
 
           <SoftCard>
-            <Text style={styles.section}>Your name on spends</Text>
+            <Text style={styles.section}>Your name on expenses</Text>
             <TextInput
               value={name}
               onChangeText={setName}
@@ -164,7 +164,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
           <SoftCard>
             <Text style={styles.section}>Spending this cycle</Text>
             {spentByMember.length === 0 ? (
-              <Text style={styles.hint}>No shared spends yet.</Text>
+              <Text style={styles.hint}>No shared spending yet.</Text>
             ) : (
               spentByMember.map((row) => (
                 <View key={row.name} style={styles.memberRow}>
@@ -180,7 +180,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
             onPress={() =>
               Alert.alert(
                 'Leave shared budget?',
-                'Your phone keeps a local copy. Partner keeps the shared household.',
+                'This phone keeps a local copy. Your partner keeps the shared household.',
                 [
                   { text: 'Cancel', style: 'cancel' },
                   {
@@ -203,7 +203,8 @@ export function SharedBudgetScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Shared budget</Text>
         <Text style={styles.sub}>
-          Track the payday budget together. One balance, one safe-to-spend, spends tagged by name.
+          Share one payday budget with your partner. Same balance, same safe-to-spend — expenses
+          tagged by name.
         </Text>
 
         <SoftCard>
@@ -219,7 +220,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
         </SoftCard>
 
         <SoftCard>
-          <Text style={styles.section}>Create household</Text>
+          <Text style={styles.section}>Create a shared budget</Text>
           <Text style={styles.hint}>You’ll get a code to send your partner.</Text>
           <PrimaryButton
             title="Create shared budget"
@@ -229,7 +230,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
         </SoftCard>
 
         <SoftCard>
-          <Text style={styles.section}>Join partner</Text>
+          <Text style={styles.section}>Join with a code</Text>
           <TextInput
             value={code}
             onChangeText={setCode}
@@ -240,13 +241,14 @@ export function SharedBudgetScreen({ navigation }: Props) {
             autoCorrect={false}
           />
           <PrimaryButton
-            title="Join with code"
+            title="Join"
             disabled={!name.trim() || !code.trim() || busy}
             onPress={() => run(() => joinHousehold(code, name))}
           />
           {!cloudSyncReady ? (
             <Text style={styles.hint}>
-              Join needs cloud sync. Add Supabase URL + anon key, then rebuild (see SHARED-BUDGET.md).
+              Joining needs cloud sync. Add your Supabase URL and anon key, then rebuild (see
+              SHARED-BUDGET.md).
             </Text>
           ) : null}
         </SoftCard>

@@ -69,7 +69,7 @@ export function HomeScreen({ navigation }: Props) {
       <ScreenBackground>
         <View style={styles.pad}>
           <Text style={styles.brand}>PAYPACE</Text>
-          <Text style={styles.sub}>No active cycle. Configure resources in Settings.</Text>
+          <Text style={styles.sub}>No active budget yet. Set one up in Settings.</Text>
           <HudButton title="SETTINGS" onPress={() => navigation.navigate('Settings')} />
         </View>
       </ScreenBackground>
@@ -194,11 +194,11 @@ export function HomeScreen({ navigation }: Props) {
           <Panel alt>
             <Text style={styles.alertTitle}>CATEGORY REMAINING · PLUS</Text>
             <Text style={styles.alertBody}>
-              Unlock Plus to see envelope leftover by category (food, transport, kids…) and allocate
-              resources.
+              Plus shows how much is left in each category — food, transport, kids, and the rest —
+              and lets you set those amounts.
             </Text>
             <HudButton
-              title="UNLOCK PLUS (DEMO)"
+              title="TRY PLUS (DEMO)"
               onPress={() => setPremium(true)}
               variant="secondary"
             />

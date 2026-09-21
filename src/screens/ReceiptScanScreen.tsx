@@ -76,10 +76,9 @@ export function ReceiptScanScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>Scan receipt</Text>
           <Text style={styles.sub}>
-            Plus: photograph a receipt — PayPace recognizes line items, groups them by category, and
-            shows each balance.
+            Plus reads the receipt, sorts line items by category, and shows what’s left in each.
           </Text>
-          <PrimaryButton title="Unlock Plus (demo)" onPress={() => setPremium(true)} />
+          <PrimaryButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
           <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
         </ScrollView>
       </ScreenBackground>
@@ -91,7 +90,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permission needed', 'Allow camera/photos to scan a receipt.');
+      Alert.alert('Permission needed', 'Allow camera and photo access to scan a receipt.');
       return;
     }
 
@@ -130,7 +129,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
         category: item.category,
       })),
     );
-    Alert.alert('Saved', 'Receipt items added to this pay cycle.', [
+    Alert.alert('Saved', 'Those items are now in this pay cycle.', [
       { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
     ]);
   };
@@ -149,7 +148,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Scan receipt</Text>
         <Text style={styles.sub}>
-          Take a photo of the receipt. Items are grouped by category so you can see each balance.
+          Snap a photo. We’ll group the items by category so you can see each balance.
         </Text>
 
         <PrimaryButton title="Take photo" onPress={() => pick(true)} />
@@ -162,7 +161,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
         {scanning ? (
           <SoftCard>
             <ActivityIndicator color={colors.accent} />
-            <Text style={styles.sub}>Recognizing items…</Text>
+            <Text style={styles.sub}>Reading the receipt…</Text>
           </SoftCard>
         ) : null}
 
@@ -184,7 +183,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
                   <Text style={styles.amount}>{formatMoney(group.total, currency)}</Text>
                 </View>
                 <Text style={styles.balanceHint}>
-                  Category balance this cycle (incl. this receipt): {cycleCategory(group.category)}
+                  This category so far (including this receipt): {cycleCategory(group.category)}
                 </Text>
                 {group.items.map((item) => (
                   <Pressable
@@ -204,15 +203,15 @@ export function ReceiptScanScreen({ navigation }: Props) {
               </SoftCard>
             ))}
 
-            <PrimaryButton title="Add all to spending" onPress={saveAll} />
+            <PrimaryButton title="Add everything" onPress={saveAll} />
           </>
         ) : null}
 
-        <Text style={styles.section}>Category balances</Text>
+        <Text style={styles.section}>Spending by category</Text>
         <SoftCard>
           {cycleCategoryBalances.every((c) => c.spent === 0) ? (
             <Text style={styles.sub}>
-              No category spending yet — scan a receipt or log an expense.
+              Nothing categorized yet — scan a receipt or log an expense.
             </Text>
           ) : (
             cycleCategoryBalances.map((row) => (
@@ -230,7 +229,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
         </SoftCard>
 
         <Pressable onPress={() => navigation.navigate('CategoryBalances')}>
-          <Text style={styles.link}>See all category balances</Text>
+          <Text style={styles.link}>See all categories</Text>
         </Pressable>
       </ScrollView>
     </ScreenBackground>

@@ -78,10 +78,10 @@ export function StatementImportScreen({ navigation, route }: Props) {
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>UPLOAD STATEMENT</Text>
           <Text style={styles.sub}>
-            Plus: import a bank statement, auto-categorize rows, and drop them into the right pay
-            cycle.
+            Plus imports a bank statement, sorts the rows by category, and puts each one in the right
+            pay cycle.
           </Text>
-          <HudButton title="UNLOCK PLUS (DEMO)" onPress={() => setPremium(true)} />
+          <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
           <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
         </ScrollView>
       </ScreenBackground>
@@ -165,12 +165,12 @@ export function StatementImportScreen({ navigation, route }: Props) {
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>UPLOAD STATEMENT</Text>
         <Text style={styles.sub}>
-          Import bank export for this {horizon === 'week' ? 'week' : 'pay cycle until payday'}.
-          Dates decide which pay cycle each row lands in.
+          Import a bank export for this {horizon === 'week' ? 'week' : 'stretch until payday'}. Each
+          row lands in the pay cycle that matches its date.
         </Text>
 
         <Panel>
-          <Text style={styles.label}>HORIZON WINDOW</Text>
+          <Text style={styles.label}>DATE WINDOW</Text>
           <Text style={styles.fileName}>
             {formatShortDate(window.startKey)} → {formatShortDate(window.endKey)} ·{' '}
             {horizon === 'week' ? 'WEEK' : 'UNTIL PAYDAY'}
@@ -180,7 +180,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
             style={styles.filterRow}
           >
             <Text style={styles.meta}>
-              {filterToHorizon ? '●' : '○'} Only rows inside this{' '}
+              {filterToHorizon ? '●' : '○'} Only rows in this{' '}
               {horizon === 'week' ? 'week' : 'payday window'}
             </Text>
           </Pressable>
@@ -210,7 +210,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
 
         {cyclePreview.length ? (
           <Panel>
-            <Text style={styles.label}>WILL ADD TO CYCLES</Text>
+            <Text style={styles.label}>ADDS TO THESE CYCLES</Text>
             {cyclePreview.map((row) => (
               <View key={row.label} style={styles.cycleRow}>
                 <Text style={styles.rowTitle}>{row.label}</Text>

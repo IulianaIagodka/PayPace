@@ -5,11 +5,18 @@ Bundle ID: `app.paypace.PayPace`
 
 `origin/main` is the source of truth. Code from the **phone** (Cursor) or the **Mac**, then ship an IPA either **on this Mac** or **in EAS cloud**.
 
-Run all commands from the **repo root**. Do **not** add `eas-cli` to `package.json` (expo-doctor flags it). Use `npx eas-cli` or install once:
+Run all commands from the **repo root**. Do **not** add `eas-cli` to `package.json` (expo-doctor flags it). Use `npx eas-cli`.
+
+## Always pull before you build
+
+A local Mac build uses **whatever commit is checked out**. If you skip `git pull`, TestFlight can ship an old design and miss recent fixes (this is what happened with build 32).
 
 ```bash
-npm install -g eas-cli
+git checkout main
+git pull
 ```
+
+Then build.
 
 ## Keep phone and Mac in sync
 
@@ -24,6 +31,15 @@ The phone cannot compile an IPA itself. Push to `main` (or run the **iOS local M
 The Mac must be powered on, logged in (login keychain unlocked), and online. Cursor does not need to be open.
 
 Cloud EAS (`npm run build:ios`) still works from the phone without this Mac.
+
+## Secrets in the binary
+
+| Build path | Where keys come from |
+|------------|----------------------|
+| Local Mac (`build:ios:local*`) | `.env` in the repo root (gitignored), and/or EAS production env |
+| EAS cloud | EAS **production** environment variables |
+
+Needed for full features: `EXPO_PUBLIC_OPENAI_API_KEY`, `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`. See [README.md](./README.md) and [SHARED-BUDGET.md](./SHARED-BUDGET.md).
 
 ## One-time Mac setup
 
@@ -51,7 +67,7 @@ On the phone: Expo Go, same Wi‑Fi, scan the QR. That is preview only. TestFlig
 
 ## Cloud build (phone or Mac)
 
-EAS compiles on Expo’s servers. This is the path to use **from the phone** (Cursor agent / laptop without a local Xcode build).
+EAS compiles on Expo’s servers. This is the path to use **from the phone** (Cursor agent / laptop without a local Xcode build). Uses EAS build minutes.
 
 ```bash
 git pull
@@ -85,7 +101,7 @@ If the job fails on the distribution certificate, unlock the Mac keychain in the
 
 ## Local build (Mac only, in Terminal)
 
-Same production profile, compiled on this Mac. `--auto-submit` does **not** work with `--local`.
+Same production profile, compiled on this Mac — **no EAS cloud minutes**. `--auto-submit` does **not** work with `--local`.
 
 One command (pull → install → local IPA → TestFlight):
 
