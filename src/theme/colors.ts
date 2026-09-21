@@ -24,6 +24,9 @@ export const colors = {
   text: '#F0F2EC',
   textSecondary: '#9AA19A',
   textDim: '#636B63',
+  /** Neutral safe-to-spend readout (not a warning color). */
+  safeValue: '#E4EDE0',
+
 
   // legacy aliases
   bgTop: '#090A09',

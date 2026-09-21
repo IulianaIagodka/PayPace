@@ -247,6 +247,7 @@ export function CategoryCell({
   onPress,
   periodShare = 1,
   horizonLabel = 'CYCLE',
+  depleted = false,
 }: {
   title: string;
   iconKey: string;
@@ -259,11 +260,15 @@ export function CategoryCell({
   /** Fraction of cycle remaining that belongs to the selected week/month window. */
   periodShare?: number;
   horizonLabel?: string;
+  depleted?: boolean;
 }) {
   const cycleRemaining = Math.max(allocated - spent, 0);
   const periodRemaining = cycleRemaining * Math.max(0, Math.min(periodShare, 1));
   const remainingRatio = allocated > 0 ? cycleRemaining / allocated : 0;
   const enter = useRef(new Animated.Value(0)).current;
+  const muted = depleted || remainingRatio <= 0;
+  // Mid reserves tip amber; high reserves stay full green — status via bar behavior only.
+  const tipAmber = tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
 
   useEffect(() => {
     Animated.timing(enter, {
@@ -292,16 +297,20 @@ export function CategoryCell({
         ],
       }}
     >
-      <Pressable onPress={onPress} disabled={!onPress} style={{ flex: 1 }}>
+      <Pressable onPress={onPress} disabled={!onPress} style={{ flex: 1, opacity: muted ? 0.48 : 1 }}>
         <Panel style={styles.cell}>
           <View style={styles.cellTitleRow}>
-            <Ionicons name={iconName} size={15} color={colors.textSecondary} />
-            <Text style={styles.cellTitle} numberOfLines={1}>
+            <Ionicons
+              name={iconName}
+              size={15}
+              color={muted ? colors.textDim : colors.textSecondary}
+            />
+            <Text style={[styles.cellTitle, muted && { color: colors.textDim }]} numberOfLines={1}>
               {title}
             </Text>
-            <Text style={styles.cellHorizon}>{horizonLabel}</Text>
+            <Text style={styles.cellHorizon}>{muted ? 'EMPTY' : horizonLabel}</Text>
           </View>
-          <Text style={styles.cellAmount} numberOfLines={1}>
+          <Text style={[styles.cellAmount, muted && { color: colors.textDim }]} numberOfLines={1}>
             {formatMoney(periodRemaining, currencyCode)}
             <Text style={styles.cellAmountDim}>
               {' '}
@@ -313,7 +322,7 @@ export function CategoryCell({
             segments={8}
             height={9}
             compact
-            tipAmber={tone === 'healthy'}
+            tipAmber={tipAmber}
           />
         </Panel>
       </Pressable>

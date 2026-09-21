@@ -88,6 +88,10 @@ export function HomeScreen({ navigation }: Props) {
   const periodShare = isWeek ? snapshot.weekShare : snapshot.monthShare;
   const periodUnit = isWeek ? '/ week' : '/ month';
   const horizonLabel = isWeek ? 'WEEK' : 'MONTH';
+  // Keep SAFE TO SPEND neutral; SPENDING RATE HIGH card owns the warning signal.
+  // Red only when the buffer is already gone.
+  const safeColor =
+    snapshot.remainingUntilPayday < 0 ? colors.danger : colors.safeValue;
 
   type GridItem = (typeof gridModules)[number] | null;
   const withPad: GridItem[] = [...gridModules, null];
@@ -143,14 +147,14 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={styles.heroLabel}>SAFE TO SPEND</Text>
             <View style={styles.safeRow}>
               <View style={styles.safeCol}>
-                <Text style={[styles.safe, snapshot.isAtRisk && { color: colors.danger }]}>
+                <Text style={[styles.safe, { color: safeColor }]}>
                   {formatMoney(safe, currency)}
                 </Text>
                 <Text style={styles.perUnit}>/ day</Text>
               </View>
               <View style={styles.safeDivider} />
               <View style={styles.safeCol}>
-                <Text style={[styles.safeWeek, snapshot.isAtRisk && { color: colors.danger }]}>
+                <Text style={[styles.safeWeek, { color: safeColor }]}>
                   {formatMoney(periodSafe, currency)}
                 </Text>
                 <Text style={styles.perUnit}>{periodUnit}</Text>
@@ -185,6 +189,7 @@ export function HomeScreen({ navigation }: Props) {
                     allocated={mod.envelope.allocated}
                     currencyCode={currency}
                     tone={mod.tone}
+                    depleted={mod.depleted}
                     index={rowIndex * 2 + colIndex}
                     periodShare={periodShare}
                     horizonLabel={horizonLabel}
@@ -297,14 +302,14 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   safe: {
-    color: colors.text,
+    color: colors.safeValue,
     fontSize: 32,
     fontFamily: fonts.display,
     fontWeight: '700',
     letterSpacing: -0.4,
   },
   safeWeek: {
-    color: colors.text,
+    color: colors.safeValue,
     fontSize: 28,
     fontFamily: fonts.display,
     fontWeight: '700',

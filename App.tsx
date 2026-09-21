@@ -58,18 +58,18 @@ function TabIcon({
   focused: boolean;
 }) {
   return (
-    <View style={{ alignItems: 'center', gap: 3 }}>
-      <Ionicons name={name} size={20} color={focused ? colors.resource : colors.textDim} />
+    <View style={{ alignItems: 'center', gap: 2 }}>
+      <Ionicons name={name} size={18} color={focused ? colors.resource : colors.textDim} />
       {focused ? (
         <View
           style={{
-            width: 18,
+            width: 16,
             height: 2,
             backgroundColor: colors.resource,
             borderRadius: 1,
             shadowColor: colors.resource,
-            shadowOpacity: 0.8,
-            shadowRadius: 4,
+            shadowOpacity: 0.7,
+            shadowRadius: 3,
           }}
         />
       ) : (
@@ -88,17 +88,18 @@ function MainTabs() {
           backgroundColor: '#141816',
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 68,
-          paddingBottom: 10,
-          paddingTop: 8,
+          height: 58,
+          paddingBottom: 6,
+          paddingTop: 4,
         },
         tabBarActiveTintColor: colors.resource,
         tabBarInactiveTintColor: colors.textDim,
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 9,
           fontFamily: fonts.label,
           fontWeight: '700',
-          letterSpacing: 1.4,
+          letterSpacing: 1.2,
+          marginBottom: 0,
         },
       }}
     >
