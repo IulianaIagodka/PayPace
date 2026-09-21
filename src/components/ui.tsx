@@ -10,17 +10,30 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   colors,
   colorForTone,
-  ENVELOPE_ICONS,
+  ENVELOPE_ICON_NAMES,
+  segmentColor,
   toneForRatio,
   type ResourceTone,
 } from '../theme/colors';
 import { formatMoney, formatShortDate } from '../services/formatting';
 import type { Bill, DailyExpense } from '../models/types';
 import { fonts } from '../theme/fonts';
+
+function Rivets() {
+  return (
+    <>
+      <View style={[styles.rivet, styles.rivetTL]} />
+      <View style={[styles.rivet, styles.rivetTR]} />
+      <View style={[styles.rivet, styles.rivetBL]} />
+      <View style={[styles.rivet, styles.rivetBR]} />
+    </>
+  );
+}
 
 export function ScreenBackground({
   children,
@@ -32,17 +45,11 @@ export function ScreenBackground({
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={['#0D1812', '#070908', '#040605']}
-        locations={[0, 0.4, 1]}
+        colors={['#121614', '#0A0C0B', '#070807']}
+        locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
-      <View pointerEvents="none" style={styles.scanLines}>
-        {Array.from({ length: 28 }).map((_, i) => (
-          <View key={i} style={styles.scanLine} />
-        ))}
-      </View>
-      <View pointerEvents="none" style={styles.cornerFrameTL} />
-      <View pointerEvents="none" style={styles.cornerFrameBR} />
+      <View pointerEvents="none" style={styles.metalNoise} />
       <SafeAreaView style={styles.flex} edges={edges}>
         {children}
       </SafeAreaView>
@@ -50,27 +57,33 @@ export function ScreenBackground({
   );
 }
 
-/** Gunmetal panel with chamfered corner notches */
+/** Gunmetal panel with chamfered corners + rivets */
 export function Panel({
   children,
   style,
   alt,
   glow,
+  innerGlow,
 }: {
   children: React.ReactNode;
   style?: ViewStyle;
   alt?: boolean;
   glow?: boolean;
+  innerGlow?: boolean;
 }) {
   return (
     <View style={[styles.panelWrap, glow && styles.panelGlow, style]}>
-      <View style={[styles.panel, alt && styles.panelAlt]}>
-        <View style={[styles.chamfer, styles.chamferTL]} />
-        <View style={[styles.chamfer, styles.chamferTR]} />
-        <View style={[styles.chamfer, styles.chamferBL]} />
-        <View style={[styles.chamfer, styles.chamferBR]} />
+      <LinearGradient
+        colors={alt ? ['#2A312C', '#1E2420', '#181C19'] : ['#262C28', '#1A1F1C', '#151A17']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.15, y: 1 }}
+        style={[styles.panel, innerGlow && styles.panelInnerGlow]}
+      >
+        <View style={[styles.bevel, styles.bevelTL]} />
+        <View style={[styles.bevel, styles.bevelBR]} />
+        <Rivets />
         {children}
-      </View>
+      </LinearGradient>
     </View>
   );
 }
@@ -101,23 +114,33 @@ export function HudButton({
     >
       {variant === 'primary' ? (
         <LinearGradient
-          colors={['#1A3D22', '#0F2416']}
+          colors={['#2A5A30', '#163D1C', '#0F2A14']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <View style={[styles.btnNotch, styles.btnNotchL]} />
-      <View style={[styles.btnNotch, styles.btnNotchR]} />
-      <Text
-        style={[
-          styles.btnText,
-          variant === 'secondary' && { color: colors.text },
-          variant === 'danger' && { color: colors.text },
-        ]}
-      >
-        {title}
-      </Text>
+      <View style={styles.btnContent}>
+        {variant === 'primary' ? (
+          <Ionicons name="add" size={22} color={colors.resource} style={{ marginRight: 4 }} />
+        ) : null}
+        <Text
+          style={[
+            styles.btnText,
+            variant === 'secondary' && { color: colors.text },
+            variant === 'danger' && { color: colors.text },
+          ]}
+        >
+          {title.replace(/^\+\s*/, '')}
+        </Text>
+      </View>
+      {variant === 'primary' ? (
+        <View style={styles.btnStripes}>
+          {Array.from({ length: 7 }).map((_, i) => (
+            <View key={i} style={styles.btnStripe} />
+          ))}
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -135,13 +158,14 @@ export function SegmentedBar({
   height = 22,
   animateFrom,
   compact,
+  tipAmber = true,
 }: {
   ratio: number;
   segments?: number;
   height?: number;
-  /** When set, briefly animate from this ratio to `ratio`. */
   animateFrom?: number;
   compact?: boolean;
+  tipAmber?: boolean;
 }) {
   const clamped = Math.max(0, Math.min(ratio, 1));
   const anim = useRef(new Animated.Value(animateFrom ?? clamped)).current;
@@ -155,27 +179,33 @@ export function SegmentedBar({
   }, [clamped, anim]);
 
   const tone = toneForRatio(clamped);
-  const fill = colorForTone(tone);
   const lit = Math.round(clamped * segments);
 
   return (
     <View style={[styles.barTrack, { height }, compact && styles.barTrackCompact]}>
-      {Array.from({ length: segments }).map((_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.barSeg,
-            compact && styles.barSegCompact,
-            {
-              backgroundColor: i < lit ? fill : colors.borderSoft,
-              shadowColor: i < lit && tone === 'healthy' ? colors.resource : 'transparent',
-              shadowOpacity: i < lit ? 0.7 : 0,
-              shadowRadius: compact ? 3 : 5,
-              elevation: i < lit ? 2 : 0,
-            },
-          ]}
-        />
-      ))}
+      {Array.from({ length: segments }).map((_, i) => {
+        const bg =
+          tipAmber && tone === 'healthy'
+            ? segmentColor(i, lit, tone)
+            : i < lit
+              ? colorForTone(tone)
+              : '#151A16';
+        return (
+          <View
+            key={i}
+            style={[
+              styles.barSeg,
+              compact && styles.barSegCompact,
+              {
+                backgroundColor: bg,
+                shadowColor: i < lit && tone === 'healthy' ? colors.resource : 'transparent',
+                shadowOpacity: i < lit ? 0.65 : 0,
+                shadowRadius: compact ? 3 : 5,
+              },
+            ]}
+          />
+        );
+      })}
     </View>
   );
 }
@@ -217,7 +247,7 @@ export function EnvelopeModule({
   );
 }
 
-/** Compact 2-column category cell for the home loadout grid */
+/** Reference-style category cell: icon + title, spent/budget, bar, % */
 export function CategoryCell({
   title,
   iconKey,
@@ -237,6 +267,7 @@ export function CategoryCell({
   index?: number;
   onPress?: () => void;
 }) {
+  // Reference shows remaining / allocated with remaining %
   const remaining = Math.max(allocated - spent, 0);
   const remainingRatio = allocated > 0 ? remaining / allocated : 0;
   const pct = Math.round(remainingRatio * 100);
@@ -245,14 +276,14 @@ export function CategoryCell({
   useEffect(() => {
     Animated.timing(enter, {
       toValue: 1,
-      duration: 320,
-      delay: 80 + index * 55,
+      duration: 280,
+      delay: 60 + index * 45,
       useNativeDriver: true,
     }).start();
   }, [enter, index]);
 
   const fill = colorForTone(tone);
-  const icon = ENVELOPE_ICONS[iconKey] ?? ENVELOPE_ICONS.other;
+  const iconName = (ENVELOPE_ICON_NAMES[iconKey] ?? ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
 
   return (
     <Animated.View
@@ -263,7 +294,7 @@ export function CategoryCell({
           {
             translateY: enter.interpolate({
               inputRange: [0, 1],
-              outputRange: [12, 0],
+              outputRange: [10, 0],
             }),
           },
         ],
@@ -271,22 +302,35 @@ export function CategoryCell({
     >
       <Pressable onPress={onPress} disabled={!onPress} style={{ flex: 1 }}>
         <Panel style={styles.cell}>
-          <View style={styles.cellHead}>
-            <View style={[styles.cellIcon, { borderColor: fill }]}>
-              <Text style={[styles.cellIconText, { color: fill }]}>{icon}</Text>
+          <View style={styles.cellTop}>
+            <View style={styles.cellTitleRow}>
+              <Ionicons name={iconName} size={16} color={colors.textSecondary} />
+              <Text style={styles.cellTitle} numberOfLines={1}>
+                {title}
+              </Text>
             </View>
-            <Text style={styles.cellTitle} numberOfLines={1}>
-              {title}
+            <Text style={styles.cellAmount} numberOfLines={1}>
+              {formatMoney(remaining, currencyCode)}
+              <Text style={styles.cellAmountDim}> / {formatMoney(allocated, currencyCode)}</Text>
             </Text>
           </View>
-          <Text style={[styles.cellAmount, { color: fill }]} numberOfLines={1}>
-            {formatMoney(remaining, currencyCode)}
-          </Text>
-          <Text style={styles.cellMeta}>{pct}% LEFT</Text>
-          <SegmentedBar ratio={remainingRatio} segments={6} height={8} compact />
+          <View style={styles.cellBarRow}>
+            <View style={{ flex: 1 }}>
+              <SegmentedBar ratio={remainingRatio} segments={8} height={10} compact tipAmber />
+            </View>
+            <Text style={[styles.cellPct, { color: fill }]}>{pct}%</Text>
+          </View>
         </Panel>
       </Pressable>
     </Animated.View>
+  );
+}
+
+export function MottoSlot({ text }: { text: string }) {
+  return (
+    <View style={styles.mottoSlot}>
+      <Text style={styles.mottoSlotText}>{text}</Text>
+    </View>
   );
 }
 
@@ -361,7 +405,6 @@ export function BillRow({ bill, currencyCode }: { bill: Bill; currencyCode: stri
   );
 }
 
-/** Kept for older screens that still reference these. */
 export function SafeSpendHero({
   safeToday,
   remaining,
@@ -418,82 +461,75 @@ export function HeaderIconButton({ label, onPress }: { label: string; onPress: (
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   root: { flex: 1, backgroundColor: colors.bg },
-  scanLines: {
+  metalNoise: {
     ...StyleSheet.absoluteFill,
-    justifyContent: 'space-evenly',
-    opacity: 0.07,
-    paddingVertical: 8,
-  },
-  scanLine: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.resource,
-  },
-  cornerFrameTL: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    width: 28,
-    height: 28,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderColor: colors.borderBright,
-    opacity: 0.45,
-  },
-  cornerFrameBR: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    width: 28,
-    height: 28,
-    borderBottomWidth: 1,
-    borderRightWidth: 1,
-    borderColor: colors.borderBright,
-    opacity: 0.35,
+    opacity: 0.04,
+    backgroundColor: colors.metal,
   },
   panelWrap: {},
   panelGlow: {
     shadowColor: colors.resource,
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
+    shadowOpacity: 0.55,
+    shadowRadius: 18,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 6,
+    elevation: 8,
   },
   panel: {
-    backgroundColor: colors.panel,
-    borderRadius: 4,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 14,
     gap: 10,
     overflow: 'hidden',
   },
-  panelAlt: { backgroundColor: colors.panelAlt },
-  chamfer: {
-    position: 'absolute',
-    width: 10,
-    height: 10,
-    borderColor: colors.borderBright,
+  panelInnerGlow: {
+    borderColor: colors.resource,
+    borderWidth: 1.5,
+    shadowColor: colors.resource,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
   },
-  chamferTL: { top: 0, left: 0, borderTopWidth: 2, borderLeftWidth: 2 },
-  chamferTR: { top: 0, right: 0, borderTopWidth: 2, borderRightWidth: 2 },
-  chamferBL: { bottom: 0, left: 0, borderBottomWidth: 2, borderLeftWidth: 2 },
-  chamferBR: { bottom: 0, right: 0, borderBottomWidth: 2, borderRightWidth: 2 },
-  btn: {
-    borderRadius: 3,
-    paddingVertical: 17,
-    alignItems: 'center',
+  bevel: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderColor: colors.borderBright,
+    opacity: 0.7,
+  },
+  bevelTL: { top: 0, left: 0, borderTopWidth: 2, borderLeftWidth: 2 },
+  bevelBR: { bottom: 0, right: 0, borderBottomWidth: 2, borderRightWidth: 2 },
+  rivet: {
+    position: 'absolute',
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#4A544C',
     borderWidth: 1,
+    borderColor: '#2A322C',
+  },
+  rivetTL: { top: 6, left: 6 },
+  rivetTR: { top: 6, right: 6 },
+  rivetBL: { bottom: 6, left: 6 },
+  rivetBR: { bottom: 6, right: 6 },
+  btn: {
+    borderRadius: 6,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
     overflow: 'hidden',
     position: 'relative',
+    minHeight: 56,
   },
   btnPrimary: {
-    backgroundColor: '#14301A',
+    backgroundColor: '#163D1C',
     borderColor: colors.resource,
     shadowColor: colors.resource,
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
+    shadowOpacity: 0.65,
+    shadowRadius: 16,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 4,
+    elevation: 6,
   },
   btnSecondary: {
     backgroundColor: colors.panelAlt,
@@ -503,37 +539,47 @@ const styles = StyleSheet.create({
     backgroundColor: '#2A1210',
     borderColor: colors.danger,
   },
-  btnNotch: {
+  btnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  btnStripes: {
     position: 'absolute',
+    right: 0,
     top: 0,
     bottom: 0,
-    width: 8,
-    borderColor: colors.resource,
-    opacity: 0.7,
+    width: 48,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 4,
+    paddingRight: 8,
+    opacity: 0.35,
+    transform: [{ skewX: '-18deg' }],
   },
-  btnNotchL: { left: 0, borderLeftWidth: 3 },
-  btnNotchR: { right: 0, borderRightWidth: 3 },
+  btnStripe: {
+    width: 3,
+    height: '100%',
+    backgroundColor: colors.resource,
+  },
   btnText: {
     color: colors.resource,
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: fonts.display,
     fontWeight: '700',
-    letterSpacing: 2.2,
+    letterSpacing: 2.4,
   },
   barTrack: {
     flexDirection: 'row',
     gap: 3,
-    backgroundColor: '#070A08',
+    backgroundColor: '#0B0E0C',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 3,
+    borderRadius: 4,
     padding: 3,
   },
-  barTrackCompact: { gap: 2, padding: 2 },
-  barSeg: {
-    flex: 1,
-    borderRadius: 1,
-  },
+  barTrackCompact: { gap: 2, padding: 2, borderRadius: 3 },
+  barSeg: { flex: 1, borderRadius: 2 },
   barSegCompact: { borderRadius: 1 },
   module: { gap: 8 },
   moduleHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
@@ -547,39 +593,47 @@ const styles = StyleSheet.create({
   moduleAmount: { color: colors.text, fontSize: 13, fontWeight: '700', fontFamily: fonts.body },
   warnLabel: { color: colors.warning, fontSize: 11, letterSpacing: 0.8, fontWeight: '600' },
   criticalLabel: { color: colors.critical, fontSize: 11, letterSpacing: 1, fontWeight: '700' },
-  cell: { gap: 8, padding: 12, minHeight: 118 },
-  cellHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cellIcon: {
-    width: 26,
-    height: 26,
-    borderWidth: 1,
-    borderRadius: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.panelDeep,
-  },
-  cellIconText: { fontSize: 13, fontWeight: '700' },
+  cell: { gap: 10, paddingVertical: 12, paddingHorizontal: 12, minHeight: 96 },
+  cellTop: { gap: 6 },
+  cellTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   cellTitle: {
     flex: 1,
     color: colors.textSecondary,
-    fontSize: 11,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.4,
-  },
-  cellAmount: {
-    fontSize: 16,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-  },
-  cellMeta: {
-    color: colors.textDim,
-    fontSize: 10,
+    fontSize: 13,
     fontFamily: fonts.label,
     fontWeight: '700',
     letterSpacing: 1.2,
-    marginTop: -4,
+  },
+  cellAmount: {
+    fontSize: 13,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    color: colors.text,
+    letterSpacing: 0.2,
+  },
+  cellAmountDim: { color: colors.textDim, fontWeight: '600' },
+  cellBarRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cellPct: {
+    fontSize: 12,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    minWidth: 36,
+    textAlign: 'right',
+  },
+  mottoSlot: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    minHeight: 96,
+  },
+  mottoSlotText: {
+    color: colors.textDim,
+    fontSize: 11,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    lineHeight: 16,
+    textTransform: 'uppercase',
   },
   fieldLabel: {
     color: colors.textSecondary,
@@ -592,7 +646,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.panelAlt,
-    borderRadius: 4,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: 14,
@@ -620,7 +674,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.panel,
-    borderRadius: 4,
+    borderRadius: 6,
   },
   headerBtnText: {
     color: colors.textSecondary,

@@ -1,49 +1,49 @@
-/** PayPace HUD palette — industrial resource management */
+/** PayPace HUD palette — industrial gunmetal matching design reference */
 export const colors = {
-  bg: '#070908',
-  bgGrid: '#0C100E',
-  panel: '#121614',
-  panelRaised: '#171C19',
-  panelAlt: '#1B211D',
-  panelDeep: '#0E1210',
-  border: '#2E3832',
-  borderBright: '#3D4A42',
-  borderSoft: '#1A211D',
-  metal: '#8A948C',
-  metalDim: '#5C655E',
+  bg: '#0A0C0B',
+  bgGrid: '#0E110F',
+  panel: '#1A1F1C',
+  panelRaised: '#222824',
+  panelAlt: '#252B27',
+  panelDeep: '#121612',
+  border: '#3A433C',
+  borderBright: '#5A655C',
+  borderSoft: '#1E2420',
+  metal: '#9AA39A',
+  metalDim: '#6B746C',
 
-  resource: '#7DFF56',
+  resource: '#7CFF4D',
   resourceDim: '#3FA82E',
-  resourceGlow: 'rgba(125, 255, 86, 0.22)',
-  resourceSoft: 'rgba(125, 255, 86, 0.10)',
-  healthy: '#52D273',
-  warning: '#F2B544',
+  resourceGlow: 'rgba(124, 255, 77, 0.35)',
+  resourceSoft: 'rgba(124, 255, 77, 0.12)',
+  healthy: '#7CFF4D',
+  warning: '#E8B84A',
   danger: '#E85A3F',
   critical: '#D92525',
 
-  text: '#E8EDE6',
-  textSecondary: '#8F978F',
-  textDim: '#5E665F',
+  text: '#F2F4EE',
+  textSecondary: '#9AA39A',
+  textDim: '#6B746C',
 
-  // legacy aliases used by older screens during migration
-  bgTop: '#070908',
-  bgMid: '#070908',
-  bgBottom: '#070908',
-  ink: '#E8EDE6',
-  inkSecondary: '#8F978F',
-  accent: '#7DFF56',
-  accentMid: '#52D273',
-  accentLight: '#52D273',
-  mint: '#1B211D',
-  accentSoft: 'rgba(125, 255, 86, 0.12)',
-  warm: '#F2B544',
-  success: '#52D273',
-  whiteSoft: '#121614',
-  whiteSofter: '#1B211D',
+  // legacy aliases
+  bgTop: '#0A0C0B',
+  bgMid: '#0A0C0B',
+  bgBottom: '#0A0C0B',
+  ink: '#F2F4EE',
+  inkSecondary: '#9AA39A',
+  accent: '#7CFF4D',
+  accentMid: '#7CFF4D',
+  accentLight: '#7CFF4D',
+  mint: '#252B27',
+  accentSoft: 'rgba(124, 255, 77, 0.12)',
+  warm: '#E8B84A',
+  success: '#7CFF4D',
+  whiteSoft: '#1A1F1C',
+  whiteSofter: '#252B27',
 };
 
 export const spacing = {
-  screen: 18,
+  screen: 16,
 };
 
 export type ResourceTone = 'healthy' | 'warning' | 'danger' | 'critical' | 'empty';
@@ -70,13 +70,20 @@ export function colorForTone(tone: ResourceTone): string {
   }
 }
 
+/** Last lit segment tips amber on healthy bars (reference look) */
+export function segmentColor(index: number, lit: number, tone: ResourceTone): string {
+  if (index >= lit) return '#151A16';
+  if (tone === 'healthy' && lit > 1 && index === lit - 1) return colors.warning;
+  return colorForTone(tone);
+}
+
 export const paceGradient = [colors.resource, colors.healthy, colors.warning, colors.danger] as const;
 
-export const ENVELOPE_ICONS: Record<string, string> = {
-  food: '⬡',
-  transport: '▷',
-  kids: '◫',
-  fun: '◇',
-  home: '⌂',
-  other: '▣',
+export const ENVELOPE_ICON_NAMES: Record<string, string> = {
+  food: 'restaurant-outline',
+  transport: 'bus-outline',
+  kids: 'people-outline',
+  fun: 'game-controller-outline',
+  home: 'home-outline',
+  other: 'grid-outline',
 };

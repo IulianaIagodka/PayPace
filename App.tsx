@@ -1,10 +1,11 @@
 import React from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 import {
   useFonts,
   Orbitron_600SemiBold,
@@ -48,30 +49,31 @@ const navTheme = {
   },
 };
 
-function TabIcon({ glyph, focused }: { glyph: string; focused: boolean }) {
+function TabIcon({
+  name,
+  focused,
+}: {
+  name: keyof typeof Ionicons.glyphMap;
+  focused: boolean;
+}) {
   return (
-    <View
-      style={{
-        width: 28,
-        height: 22,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: focused ? 1 : 0,
-        borderColor: focused ? colors.resource : 'transparent',
-        borderRadius: 2,
-        backgroundColor: focused ? colors.resourceSoft : 'transparent',
-      }}
-    >
-      <Text
-        style={{
-          color: focused ? colors.resource : colors.textDim,
-          fontSize: 11,
-          fontWeight: '800',
-          letterSpacing: 0.5,
-        }}
-      >
-        {glyph}
-      </Text>
+    <View style={{ alignItems: 'center', gap: 3 }}>
+      <Ionicons name={name} size={20} color={focused ? colors.resource : colors.textDim} />
+      {focused ? (
+        <View
+          style={{
+            width: 18,
+            height: 2,
+            backgroundColor: colors.resource,
+            borderRadius: 1,
+            shadowColor: colors.resource,
+            shadowOpacity: 0.8,
+            shadowRadius: 4,
+          }}
+        />
+      ) : (
+        <View style={{ height: 2 }} />
+      )}
     </View>
   );
 }
@@ -82,11 +84,11 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.panel,
+          backgroundColor: '#141816',
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 64,
-          paddingBottom: 8,
+          height: 68,
+          paddingBottom: 10,
           paddingTop: 8,
         },
         tabBarActiveTintColor: colors.resource,
@@ -104,7 +106,7 @@ function MainTabs() {
         component={HomeScreen}
         options={{
           title: 'HOME',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="▣" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -112,7 +114,7 @@ function MainTabs() {
         component={ActivityScreen}
         options={{
           title: 'ACTIVITY',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="☰" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="list" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -120,7 +122,7 @@ function MainTabs() {
         component={StatusScreen}
         options={{
           title: 'STATUS',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="▦" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="stats-chart" focused={focused} />,
         }}
       />
       <Tab.Screen
@@ -128,7 +130,7 @@ function MainTabs() {
         component={SettingsScreen}
         options={{
           title: 'SETTINGS',
-          tabBarIcon: ({ focused }) => <TabIcon glyph="⚙" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="settings-sharp" focused={focused} />,
         }}
       />
     </Tab.Navigator>
