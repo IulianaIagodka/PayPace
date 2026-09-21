@@ -59,7 +59,7 @@ export function AddExpenseScreen({ navigation }: Props) {
           </Pressable>
           <Pressable
             style={styles.importCard}
-            onPress={() => navigation.navigate('StatementImport')}
+            onPress={() => navigation.navigate('StatementImport', { horizon: store.settings.paceHorizon ?? 'week' })}
           >
             <Ionicons name="document-text-outline" size={22} color={colors.resource} />
             <Text style={styles.importTitle}>UPLOAD FILE</Text>

@@ -12,13 +12,14 @@ import * as DocumentPicker from 'expo-document-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, Panel, ScreenBackground } from '../components/ui';
 import { categoryTitle, SPENDING_CATEGORIES } from '../services/categories';
-import { formatMoney } from '../services/formatting';
+import { formatMoney, formatShortDate, toDateKey } from '../services/formatting';
 import {
   analyzeStatementFile,
   type StatementImportResult,
   type StatementLineItem,
 } from '../services/statementAnalyzer';
 import { categoryToEnvelopeKey } from '../services/envelopes';
+import { dateInHorizon, findCycleForDate, horizonWindow } from '../services/cycleMatching';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -26,17 +27,48 @@ import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'StatementImport'>;
 
-export function StatementImportScreen({ navigation }: Props) {
-  const { store, addExpenses } = useBudget();
+export function StatementImportScreen({ navigation, route }: Props) {
+  const { store, activeCycle, importExpensesByDate } = useBudget();
   const currency = store.settings.currencyCode;
+  const weekStartsOn = store.settings.weekStartsOn ?? 1;
+  const horizon = route.params?.horizon ?? store.settings.paceHorizon ?? 'week';
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [fileLabel, setFileLabel] = useState<string | null>(null);
   const [result, setResult] = useState<StatementImportResult | null>(null);
+  const [filterToHorizon, setFilterToHorizon] = useState(true);
+
+  const window = horizonWindow(horizon, weekStartsOn);
+
+  const visibleItems = useMemo(() => {
+    const items = result?.items ?? [];
+    if (!filterToHorizon) return items;
+    return items.filter((item) => {
+      const date = item.date ?? toDateKey(new Date());
+      return dateInHorizon(date, horizon, weekStartsOn);
+    });
+  }, [result, filterToHorizon, horizon, weekStartsOn]);
+
+  const cyclePreview = useMemo(() => {
+    const map = new Map<string, { label: string; count: number; total: number }>();
+    for (const item of visibleItems) {
+      const date = item.date ?? toDateKey(new Date());
+      const cycle = findCycleForDate(store.cycles, date, activeCycle);
+      const key = cycle?.id ?? 'none';
+      const label = cycle
+        ? `${formatShortDate(cycle.startDate)} → ${formatShortDate(cycle.nextPayday)}`
+        : 'No matching cycle';
+      const prev = map.get(key) ?? { label, count: 0, total: 0 };
+      prev.count += 1;
+      prev.total += item.amount;
+      map.set(key, prev);
+    }
+    return Array.from(map.values());
+  }, [visibleItems, store.cycles, activeCycle]);
 
   const total = useMemo(
-    () => (result?.items ?? []).reduce((s, i) => s + i.amount, 0),
-    [result],
+    () => visibleItems.reduce((s, i) => s + i.amount, 0),
+    [visibleItems],
   );
 
   const cycleItemCategory = (itemId: string) => {
@@ -89,11 +121,11 @@ export function StatementImportScreen({ navigation }: Props) {
   };
 
   const saveAll = async () => {
-    if (!result?.items.length) return;
+    if (!visibleItems.length) return;
     setSaving(true);
     try {
-      await addExpenses(
-        result.items.map((item: StatementLineItem) => ({
+      const { cycleCount, itemCount } = await importExpensesByDate(
+        visibleItems.map((item: StatementLineItem) => ({
           name: item.name,
           amount: item.amount,
           date: item.date,
@@ -101,9 +133,11 @@ export function StatementImportScreen({ navigation }: Props) {
           envelopeKey: categoryToEnvelopeKey(item.category),
         })),
       );
-      Alert.alert('Saved', `${result.items.length} transactions added.`, [
-        { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
-      ]);
+      Alert.alert(
+        'Saved',
+        `${itemCount} expenses added across ${cycleCount} pay cycle${cycleCount === 1 ? '' : 's'}.`,
+        [{ text: 'OK', onPress: () => navigation.navigate('MainTabs') }],
+      );
     } finally {
       setSaving(false);
     }
@@ -114,8 +148,25 @@ export function StatementImportScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>UPLOAD STATEMENT</Text>
         <Text style={styles.sub}>
-          CSV / bank export / PDF. PayPace maps rows to categories. Tap a row to change category.
+          Import bank export for this {horizon}. Dates decide which pay cycle (month) each row lands
+          in.
         </Text>
+
+        <Panel>
+          <Text style={styles.label}>HORIZON WINDOW</Text>
+          <Text style={styles.fileName}>
+            {formatShortDate(window.startKey)} → {formatShortDate(window.endKey)} ·{' '}
+            {horizon.toUpperCase()}
+          </Text>
+          <Pressable
+            onPress={() => setFilterToHorizon((v) => !v)}
+            style={styles.filterRow}
+          >
+            <Text style={styles.meta}>
+              {filterToHorizon ? '●' : '○'} Only rows inside this {horizon}
+            </Text>
+          </Pressable>
+        </Panel>
 
         <HudButton title="CHOOSE FILE" onPress={pickFile} disabled={busy} />
 
@@ -125,8 +176,8 @@ export function StatementImportScreen({ navigation }: Props) {
             <Text style={styles.fileName}>{fileLabel}</Text>
             {result ? (
               <Text style={styles.meta}>
-                {result.source === 'parsed' ? 'PARSED' : 'DEMO PARSE'} · {result.items.length} items ·{' '}
-                {formatMoney(total, currency)}
+                {result.source === 'parsed' ? 'PARSED' : 'DEMO PARSE'} · {visibleItems.length}/
+                {result.items.length} shown · {formatMoney(total, currency)}
               </Text>
             ) : null}
           </Panel>
@@ -139,21 +190,42 @@ export function StatementImportScreen({ navigation }: Props) {
           </Panel>
         ) : null}
 
-        {result?.items.map((item) => (
-          <Pressable key={item.id} onPress={() => cycleItemCategory(item.id)} style={styles.row}>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={styles.rowTitle}>{item.name}</Text>
-              <Text style={styles.meta}>
-                {categoryTitle(item.category, false)} · tap to change
-              </Text>
-            </View>
-            <Text style={styles.rowAmount}>{formatMoney(item.amount, currency)}</Text>
-          </Pressable>
-        ))}
+        {cyclePreview.length ? (
+          <Panel>
+            <Text style={styles.label}>WILL ADD TO CYCLES</Text>
+            {cyclePreview.map((row) => (
+              <View key={row.label} style={styles.cycleRow}>
+                <Text style={styles.rowTitle}>{row.label}</Text>
+                <Text style={styles.meta}>
+                  {row.count} · {formatMoney(row.total, currency)}
+                </Text>
+              </View>
+            ))}
+          </Panel>
+        ) : null}
 
-        {result?.items.length ? (
+        {visibleItems.map((item) => {
+          const date = item.date ?? toDateKey(new Date());
+          const cycle = findCycleForDate(store.cycles, date, activeCycle);
+          return (
+            <Pressable key={item.id} onPress={() => cycleItemCategory(item.id)} style={styles.row}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={styles.rowTitle}>{item.name}</Text>
+                <Text style={styles.meta}>
+                  {formatShortDate(date)} · {categoryTitle(item.category, false)}
+                  {cycle
+                    ? ` · cycle ${formatShortDate(cycle.startDate)}`
+                    : ' · no cycle match'}
+                </Text>
+              </View>
+              <Text style={styles.rowAmount}>{formatMoney(item.amount, currency)}</Text>
+            </Pressable>
+          );
+        })}
+
+        {visibleItems.length ? (
           <HudButton
-            title={saving ? 'IMPORTING…' : `IMPORT ${result.items.length} EXPENSES`}
+            title={saving ? 'IMPORTING…' : `IMPORT ${visibleItems.length} EXPENSES`}
             onPress={saveAll}
             disabled={saving}
           />
@@ -184,6 +256,13 @@ const styles = StyleSheet.create({
   },
   fileName: { color: colors.text, fontSize: 15, fontWeight: '600' },
   meta: { color: colors.textDim, fontSize: 12, fontFamily: fonts.body },
+  filterRow: { paddingTop: 8 },
+  cycleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+    paddingVertical: 4,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

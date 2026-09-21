@@ -25,6 +25,7 @@ import {
 } from '../models/types';
 import { loadStore, saveStore } from '../services/persistence';
 import { asMoney, toDateKey } from '../services/formatting';
+import { findCycleForDate } from '../services/cycleMatching';
 import { getDeviceId } from '../services/deviceIdentity';
 import { generateInviteCode, normalizeInviteCode } from '../services/inviteCode';
 import { mergeSharedPayloads, toSharedPayload } from '../services/householdMerge';
@@ -55,6 +56,10 @@ type BudgetContextValue = {
   addExpenses: (
     expenses: Array<Omit<DailyExpense, 'id' | 'date'> & { id?: string; date?: string }>,
   ) => Promise<void>;
+  /** Route each expense into the pay cycle that owns its date. */
+  importExpensesByDate: (
+    expenses: Array<Omit<DailyExpense, 'id' | 'date'> & { id?: string; date?: string }>,
+  ) => Promise<{ cycleCount: number; itemCount: number }>;
   deleteExpense: (id: string) => Promise<void>;
   replaceActiveCycle: (cycle: PayCycle) => Promise<void>;
   resetAll: () => Promise<void>;
@@ -393,6 +398,48 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
             : c,
         ),
       });
+    },
+    importExpensesByDate: async (expenses) => {
+      if (expenses.length === 0) return { cycleCount: 0, itemCount: 0 };
+      const attr = attribution();
+      const fallback = activeCycle ?? store.cycles[0] ?? null;
+      const byCycle = new Map<string, DailyExpense[]>();
+
+      for (const expense of expenses) {
+        const amount = Math.max(asMoney(expense.amount), 0);
+        if (amount <= 0) continue;
+        const date = expense.date ?? toDateKey(new Date());
+        const target = findCycleForDate(store.cycles, date, fallback);
+        if (!target) continue;
+        const next: DailyExpense = {
+          ...expense,
+          ...attr,
+          amount,
+          envelopeKey: expense.envelopeKey ?? categoryToEnvelopeKey(expense.category),
+          id: expense.id ?? newId(),
+          date,
+        };
+        const list = byCycle.get(target.id) ?? [];
+        list.push(next);
+        byCycle.set(target.id, list);
+      }
+
+      if (!byCycle.size) return { cycleCount: 0, itemCount: 0 };
+
+      let itemCount = 0;
+      const cycles = store.cycles.map((c) => {
+        const batch = byCycle.get(c.id);
+        if (!batch?.length) return c;
+        itemCount += batch.length;
+        return withCycleTouch({
+          ...c,
+          envelopes: ensureEnvelopes(c),
+          expenses: [...batch, ...c.expenses],
+        });
+      });
+
+      await commit({ ...store, cycles });
+      return { cycleCount: byCycle.size, itemCount };
     },
     deleteExpense: async (id) => {
       if (!activeCycle) return;
