@@ -1,15 +1,14 @@
 import React from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, Panel, ScreenBackground } from '../components/ui';
 import { HudSelect } from '../components/HudSelect';
-import { WEEK_START_OPTIONS, type WeekStartsOn } from '../models/calculator';
+import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../models/calculator';
 import { CURRENCIES } from '../services/currencies';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { fonts } from '../theme/fonts';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
 type Props = CompositeScreenProps<
@@ -17,11 +16,17 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
+const HORIZON_OPTIONS: Array<{ value: PaceHorizon; label: string }> = [
+  { value: 'week', label: 'Week' },
+  { value: 'month', label: 'Until payday' },
+];
+
 export function SettingsScreen({ navigation }: Props) {
   const { store, updateSettings, setPremium, resetAll } = useBudget();
   const s = store.settings;
   const household = store.household;
   const weekStartsOn = (s.weekStartsOn ?? 1) as WeekStartsOn;
+  const paceHorizon = (s.paceHorizon ?? 'week') as PaceHorizon;
 
   const currencyOptions = CURRENCIES.map((c) => ({
     value: c.code,
@@ -70,28 +75,13 @@ export function SettingsScreen({ navigation }: Props) {
           />
 
           <View style={styles.divider} />
-          <Text style={styles.label}>REMAINING HORIZON</Text>
-          <Text style={styles.sub}>
-            WEEK follows the calendar week. UNTIL PAYDAY counts the days left before payday. Category
-            remaining uses the same window.
-          </Text>
-          <View style={styles.weekGrid}>
-            {([
-              { value: 'week' as const, short: 'WEEK' },
-              { value: 'month' as const, short: 'UNTIL PAYDAY' },
-            ]).map((opt) => {
-              const on = (s.paceHorizon ?? 'week') === opt.value;
-              return (
-                <Pressable
-                  key={opt.value}
-                  onPress={() => updateSettings({ paceHorizon: opt.value })}
-                  style={[styles.weekChip, on && styles.weekChipOn]}
-                >
-                  <Text style={[styles.weekChipText, on && styles.weekChipTextOn]}>{opt.short}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <HudSelect
+            label="REMAINING HORIZON"
+            value={paceHorizon}
+            options={HORIZON_OPTIONS}
+            hint="Week follows the calendar week. Until payday counts the days left before payday."
+            onChange={(value) => updateSettings({ paceHorizon: value })}
+          />
 
           <View style={styles.divider} />
           <HudSelect
@@ -113,16 +103,6 @@ export function SettingsScreen({ navigation }: Props) {
           ) : (
             <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
           )}
-          <HudButton
-            title="SCAN RECEIPT"
-            onPress={() => navigation.navigate('ReceiptScan')}
-            variant="secondary"
-          />
-          <HudButton
-            title="BY CATEGORY"
-            onPress={() => navigation.navigate('CategoryBalances')}
-            variant="secondary"
-          />
 
           <View style={styles.divider} />
           <HudButton
@@ -157,30 +137,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 11,
     letterSpacing: 1.4,
-    fontFamily: fonts.label,
   },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: 12 },
-  weekGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  weekChip: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.panelDeep,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 0,
-    minWidth: 48,
-    alignItems: 'center',
-  },
-  weekChipOn: {
-    borderColor: colors.resource,
-    backgroundColor: colors.resourceSoft,
-  },
-  weekChipText: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  weekChipTextOn: { color: colors.resource },
 });
