@@ -152,7 +152,7 @@ export interface SafeSpendSnapshot {
 
 export const defaultSettings: AppSettings = {
   hasCompletedOnboarding: false,
-  currencyCode: 'PLN',
+  currencyCode: 'USD',
   notificationsEnabled: false,
   morningReminderEnabled: true,
   billRemindersEnabled: true,

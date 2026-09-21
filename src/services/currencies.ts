@@ -7,20 +7,18 @@ export type CurrencyOption = {
 };
 
 /**
- * Currencies for the top App Store / subscription-spend markets,
- * plus UAH for PayPace’s home market.
- *
- * Global top spenders typically: US, Japan, China, UK, Korea,
- * Eurozone (DE/FR/IT…), Canada, Australia, Brazil, Mexico.
+ * Currencies for major markets + UAH/PLN.
+ * Default for new installs: device country currency when supported, else USD.
  */
 export const CURRENCIES: CurrencyOption[] = [
-  { code: 'UAH', symbol: 'грн', name: 'Україна — гривня', symbolAfter: true },
   { code: 'USD', symbol: '$', name: 'USA — dollar', symbolAfter: false },
+  { code: 'EUR', symbol: '€', name: 'Eurozone — euro', symbolAfter: false },
+  { code: 'PLN', symbol: 'zł', name: 'Poland — złoty', symbolAfter: true },
+  { code: 'UAH', symbol: 'грн', name: 'Україна — гривня', symbolAfter: true },
+  { code: 'GBP', symbol: '£', name: 'United Kingdom — pound', symbolAfter: false },
   { code: 'JPY', symbol: '¥', name: 'Japan — yen', symbolAfter: false },
   { code: 'CNY', symbol: '¥', name: 'China — yuan', symbolAfter: false },
-  { code: 'GBP', symbol: '£', name: 'United Kingdom — pound', symbolAfter: false },
   { code: 'KRW', symbol: '₩', name: 'South Korea — won', symbolAfter: false },
-  { code: 'EUR', symbol: '€', name: 'Eurozone — euro', symbolAfter: false },
   { code: 'CAD', symbol: 'C$', name: 'Canada — dollar', symbolAfter: false },
   { code: 'AUD', symbol: 'A$', name: 'Australia — dollar', symbolAfter: false },
   { code: 'BRL', symbol: 'R$', name: 'Brazil — real', symbolAfter: false },
@@ -28,6 +26,47 @@ export const CURRENCIES: CurrencyOption[] = [
 ];
 
 const byCode = Object.fromEntries(CURRENCIES.map((c) => [c.code, c]));
+
+/** ISO region → currency for markets we support. */
+const REGION_CURRENCY: Record<string, string> = {
+  US: 'USD',
+  PR: 'USD',
+  GU: 'USD',
+  AS: 'USD',
+  VI: 'USD',
+  PL: 'PLN',
+  UA: 'UAH',
+  GB: 'GBP',
+  UK: 'GBP',
+  JP: 'JPY',
+  CN: 'CNY',
+  KR: 'KRW',
+  CA: 'CAD',
+  AU: 'AUD',
+  BR: 'BRL',
+  MX: 'MXN',
+  // Eurozone (common)
+  DE: 'EUR',
+  FR: 'EUR',
+  IT: 'EUR',
+  ES: 'EUR',
+  NL: 'EUR',
+  BE: 'EUR',
+  AT: 'EUR',
+  PT: 'EUR',
+  IE: 'EUR',
+  FI: 'EUR',
+  GR: 'EUR',
+  SK: 'EUR',
+  SI: 'EUR',
+  LT: 'EUR',
+  LV: 'EUR',
+  EE: 'EUR',
+  LU: 'EUR',
+  MT: 'EUR',
+  CY: 'EUR',
+  HR: 'EUR',
+};
 
 export function getCurrency(code: string): CurrencyOption {
   return (
@@ -38,4 +77,27 @@ export function getCurrency(code: string): CurrencyOption {
       symbolAfter: true,
     }
   );
+}
+
+export function isSupportedCurrency(code: string): boolean {
+  return Boolean(byCode[code]);
+}
+
+/**
+ * Prefer the device/region currency when we support it; otherwise USD ($).
+ */
+export function detectDefaultCurrency(): string {
+  try {
+    const locale =
+      (typeof Intl !== 'undefined' && Intl.DateTimeFormat().resolvedOptions().locale) ||
+      (typeof navigator !== 'undefined' ? navigator.language : '') ||
+      'en-US';
+    const parts = locale.replace('_', '-').split('-');
+    const region = (parts[1] || parts[0] || '').toUpperCase();
+    const mapped = REGION_CURRENCY[region];
+    if (mapped && isSupportedCurrency(mapped)) return mapped;
+  } catch {
+    // ignore
+  }
+  return 'USD';
 }

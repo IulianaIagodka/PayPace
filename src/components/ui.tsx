@@ -334,7 +334,7 @@ export function AmountField({
   label,
   value,
   onChangeText,
-  suffix = 'PLN',
+  suffix = 'USD',
   ...rest
 }: {
   label: string;

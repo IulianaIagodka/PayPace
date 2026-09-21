@@ -5,7 +5,7 @@ export function currencySymbol(code: string): string {
   return getCurrency(code).symbol;
 }
 
-export function formatMoney(amount: number, code = 'UAH'): string {
+export function formatMoney(amount: number, code = 'USD'): string {
   const rounded = Math.round(asMoney(amount));
   const abs = Math.abs(rounded).toLocaleString('uk-UA');
   const sign = rounded < 0 ? '−' : '';
