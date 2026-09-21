@@ -50,6 +50,17 @@ else
   echo "No .env found — relying on EAS production env vars if configured."
 fi
 
+if [[ -n "${EXPO_PUBLIC_OPENAI_API_KEY:-}" ]]; then
+  echo "OpenAI key: present (${#EXPO_PUBLIC_OPENAI_API_KEY} chars)"
+else
+  echo "WARNING: EXPO_PUBLIC_OPENAI_API_KEY is empty — receipt scan will fail until you rebuild with a key."
+fi
+if [[ -n "${EXPO_PUBLIC_SUPABASE_URL:-}" && -n "${EXPO_PUBLIC_SUPABASE_ANON_KEY:-}" ]]; then
+  echo "Supabase: present"
+else
+  echo "WARNING: Supabase env incomplete — shared budget sync will not work."
+fi
+
 if [[ "$DO_PULL" -eq 1 ]]; then
   echo "→ git pull"
   git pull --ff-only

@@ -20,6 +20,20 @@ function extraConfig() {
   return (Constants.expoConfig?.extra ?? {}) as Record<string, string | undefined>;
 }
 
+/** OpenAI key from Metro inlined env or app.config.js → extra. */
+export function resolveOpenAiApiKey(): string | undefined {
+  const candidates = [
+    process.env.EXPO_PUBLIC_OPENAI_API_KEY,
+    extraConfig().openaiApiKey,
+    extraConfig().EXPO_PUBLIC_OPENAI_API_KEY,
+  ];
+  for (const value of candidates) {
+    const trimmed = value?.trim();
+    if (trimmed) return trimmed;
+  }
+  return undefined;
+}
+
 function isCategory(value: unknown): value is ExpenseCategory {
   return typeof value === 'string' && (SPENDING_CATEGORIES as string[]).includes(value);
 }
@@ -38,7 +52,7 @@ function normalizeItem(
   return { id, name, amount, category };
 }
 
-/** Offline Premium demo recognizer (used when no OpenAI key is set). */
+/** Offline demo recognizer — only when explicitly requested (dev / missing key tests). */
 function demoRecognize(): ReceiptScanResult {
   const samples = [
     { name: 'Milk 2.5%', amount: 42 },
@@ -93,14 +107,27 @@ Keep product names as printed. Amounts must be numbers.`;
   });
 
   if (!response.ok) {
-    throw new Error(`AI receipt scan failed (${response.status})`);
+    let detail = '';
+    try {
+      const errJson = (await response.json()) as { error?: { message?: string } };
+      detail = errJson.error?.message ? `: ${errJson.error.message}` : '';
+    } catch {
+      // ignore parse errors
+    }
+    if (response.status === 401) {
+      throw new Error(`OpenAI rejected the API key (401)${detail}`);
+    }
+    if (response.status === 429) {
+      throw new Error(`OpenAI rate limit or billing issue (429)${detail}`);
+    }
+    throw new Error(`Receipt scan failed (${response.status})${detail}`);
   }
 
   const json = (await response.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
   };
   const content = json.choices?.[0]?.message?.content;
-  if (!content) throw new Error('Empty AI response');
+  if (!content) throw new Error('Empty AI response — try a clearer photo.');
 
   const parsed = JSON.parse(content) as {
     merchant?: string;
@@ -112,7 +139,7 @@ Keep product names as printed. Amounts must be numbers.`;
     .map((row, index) => normalizeItem(row.name, row.amount, row.category, `ai-${index}`))
     .filter(Boolean) as ReceiptLineItem[];
 
-  if (!items.length) throw new Error('No line items found');
+  if (!items.length) throw new Error('No line items found — try a sharper photo of the receipt.');
 
   return {
     merchant: parsed.merchant,
@@ -123,27 +150,28 @@ Keep product names as printed. Amounts must be numbers.`;
 }
 
 /**
- * Analyze a receipt photo. Prefer base64 from ImagePicker — avoids FileSystem encoding issues.
- * Without an OpenAI key, returns a categorized demo scan so Premium UX works offline.
+ * Analyze a receipt photo. Prefer base64 from ImagePicker.
+ * Throws on missing key / missing image data / AI failure (no silent demo in production).
+ * Pass `allowDemo: true` only for intentional offline demos.
  */
 export async function analyzeReceiptPhoto(
   _uri: string,
   base64?: string | null,
+  options?: { allowDemo?: boolean },
 ): Promise<ReceiptScanResult> {
-  const apiKey =
-    process.env.EXPO_PUBLIC_OPENAI_API_KEY ||
-    extraConfig().openaiApiKey ||
-    extraConfig().EXPO_PUBLIC_OPENAI_API_KEY;
+  const apiKey = resolveOpenAiApiKey();
+  const allowDemo = options?.allowDemo === true;
 
-  // Short delay so Premium UI can show a recognition state
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  if (apiKey && base64) {
-    try {
-      return await recognizeWithOpenAI(base64, apiKey);
-    } catch {
-      // Keep Premium UX working in TestFlight without network / failed AI
-    }
+  if (!apiKey) {
+    if (allowDemo) return demoRecognize();
+    throw new Error(
+      'Receipt scan needs an OpenAI API key. Add EXPO_PUBLIC_OPENAI_API_KEY to .env or EAS production env, then rebuild.',
+    );
   }
-  return demoRecognize();
+
+  if (!base64) {
+    throw new Error('Could not read the photo data. Try another photo or the gallery.');
+  }
+
+  return recognizeWithOpenAI(base64, apiKey);
 }

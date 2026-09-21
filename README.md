@@ -24,9 +24,11 @@ EXPO_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 ```
 
-For cloud / phone EAS builds, set the same names as **production** env vars on [expo.dev](https://expo.dev) (or `npx eas-cli env:create` / `env:update`).
+`app.config.js` copies these into the binary at build time. For cloud / phone EAS builds, set the same names as **production** env vars on [expo.dev](https://expo.dev).
 
-Shared-budget SQL + steps: [SHARED-BUDGET.md](./SHARED-BUDGET.md).
+After changing keys, **rebuild** — an old TestFlight build will not pick up new secrets.
+
+If receipt scan fails, the app now shows the real error (missing key, billing, bad photo) instead of a silent demo receipt.
 
 ## Free vs Plus
 
