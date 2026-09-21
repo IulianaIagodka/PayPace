@@ -48,8 +48,8 @@ export function HomeScreen({ navigation }: Props) {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(heroPulse, { toValue: 1, duration: 1600, useNativeDriver: true }),
-        Animated.timing(heroPulse, { toValue: 0.85, duration: 1600, useNativeDriver: true }),
+        Animated.timing(heroPulse, { toValue: 1, duration: 2200, useNativeDriver: true }),
+        Animated.timing(heroPulse, { toValue: 0.92, duration: 2200, useNativeDriver: true }),
       ]),
     ).start();
   }, [heroPulse]);

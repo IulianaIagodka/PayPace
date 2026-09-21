@@ -123,7 +123,7 @@ export function HudButton({
     >
       {variant === 'primary' ? (
         <LinearGradient
-          colors={['#2A4A14', '#0E1C08']}
+          colors={['#1E3318', '#10180E']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -198,8 +198,8 @@ export function SegmentedBar({
               {
                 backgroundColor: bg,
                 shadowColor: i < lit && tone === 'healthy' ? colors.resource : 'transparent',
-                shadowOpacity: i < lit ? 0.5 : 0,
-                shadowRadius: compact ? 2 : 4,
+                shadowOpacity: i < lit ? 0.18 : 0,
+                shadowRadius: compact ? 1 : 2,
               },
             ]}
           />
@@ -501,8 +501,8 @@ const styles = StyleSheet.create({
   panelWrap: {},
   panelGlow: {
     shadowColor: colors.resource,
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
+    shadowOpacity: 0.14,
+    shadowRadius: 5,
     shadowOffset: { width: 0, height: 0 },
     elevation: 4,
   },
@@ -576,11 +576,11 @@ const styles = StyleSheet.create({
     minHeight: 54,
   },
   btnPrimary: {
-    backgroundColor: '#0E1C08',
+    backgroundColor: '#10180E',
     borderColor: colors.resource,
     shadowColor: colors.resource,
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
+    shadowOpacity: 0.16,
+    shadowRadius: 3,
     shadowOffset: { width: 0, height: 0 },
     elevation: 4,
   },

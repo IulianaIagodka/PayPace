@@ -1,4 +1,4 @@
-/** PayPace HUD — Doom status-bar industrial */
+/** PayPace HUD — Doom industrial, evening-friendly (less acid neon) */
 export const colors = {
   bg: '#0A0806',
   bgGrid: '#120E0A',
@@ -12,38 +12,38 @@ export const colors = {
   metal: '#B0A080',
   metalDim: '#6A6050',
 
-  /** Toxic Doom green — health / live resources */
-  resource: '#55FF00',
-  resourceDim: '#2A8A00',
-  resourceGlow: 'rgba(85, 255, 0, 0.28)',
-  resourceSoft: 'rgba(85, 255, 0, 0.1)',
-  healthy: '#55FF00',
-  /** Classic Doom ammo / readout yellow */
-  warning: '#FFCC00',
+  /** Muted olive resource green — readable, not eye-searing */
+  resource: '#6FAF45',
+  resourceDim: '#3D6E28',
+  resourceGlow: 'rgba(111, 175, 69, 0.22)',
+  resourceSoft: 'rgba(111, 175, 69, 0.10)',
+  healthy: '#6FAF45',
+  /** Soft amber — not neon yellow */
+  warning: '#D4A84A',
   /** Industrial alert red — not blood */
-  danger: '#D94A30',
-  critical: '#A83828',
+  danger: '#C45A42',
+  critical: '#9A3A2C',
 
-  text: '#E8E0D0',
+  text: '#E4DCD0',
   textSecondary: '#9A9080',
   textDim: '#5A5048',
-  /** Big counters — Doom yellow digits */
-  safeValue: '#FFDD33',
-  ammo: '#FFDD33',
+  /** Calm readout — warm off-white, not acid yellow */
+  safeValue: '#E0D8C4',
+  ammo: '#D8C890',
 
   // legacy aliases
   bgTop: '#0A0806',
   bgMid: '#0A0806',
   bgBottom: '#0A0806',
-  ink: '#E8E0D0',
+  ink: '#E4DCD0',
   inkSecondary: '#9A9080',
-  accent: '#55FF00',
-  accentMid: '#55FF00',
-  accentLight: '#55FF00',
+  accent: '#6FAF45',
+  accentMid: '#6FAF45',
+  accentLight: '#6FAF45',
   mint: '#2A241C',
-  accentSoft: 'rgba(85, 255, 0, 0.1)',
-  warm: '#FFCC00',
-  success: '#55FF00',
+  accentSoft: 'rgba(111, 175, 69, 0.10)',
+  warm: '#D4A84A',
+  success: '#6FAF45',
   whiteSoft: '#1A1612',
   whiteSofter: '#2A241C',
 };

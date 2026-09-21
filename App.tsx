@@ -68,8 +68,8 @@ function TabIcon({
             backgroundColor: colors.resource,
             borderRadius: 0,
             shadowColor: colors.resource,
-            shadowOpacity: 0.35,
-            shadowRadius: 2,
+            shadowOpacity: 0.15,
+            shadowRadius: 1,
           }}
         />
       ) : (
