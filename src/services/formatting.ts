@@ -5,9 +5,22 @@ export function currencySymbol(code: string): string {
   return getCurrency(code).symbol;
 }
 
-export function formatMoney(amount: number, code = 'USD'): string {
-  const rounded = Math.round(asMoney(amount));
-  const abs = Math.abs(rounded).toLocaleString('uk-UA');
+export function formatMoney(
+  amount: number,
+  code = 'USD',
+  opts?: { decimals?: number },
+): string {
+  const value = asMoney(amount);
+  const decimals = opts?.decimals;
+  const rounded =
+    decimals == null ? Math.round(value) : Number(value.toFixed(decimals));
+  const abs =
+    decimals == null
+      ? Math.abs(rounded).toLocaleString('uk-UA')
+      : Math.abs(rounded).toLocaleString('uk-UA', {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
+        });
   const sign = rounded < 0 ? '−' : '';
   const { symbol, symbolAfter } = getCurrency(code);
   if (symbolAfter) return `${sign}${abs} ${symbol}`;

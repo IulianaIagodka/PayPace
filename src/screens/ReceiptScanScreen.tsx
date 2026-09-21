@@ -134,13 +134,14 @@ export function ReceiptScanScreen({ navigation }: Props) {
     ]);
   };
 
+  const money = (amount: number) => formatMoney(amount, currency, { decimals: 2 });
+
   const cycleCategory = (category: ExpenseCategory) =>
-    formatMoney(
+    money(
       (activeCycle?.expenses ?? [])
         .filter((e) => (e.category ?? 'other') === category)
         .reduce((sum, e) => sum + e.amount, 0) +
         (grouped.find((g) => g.category === category)?.total ?? 0),
-      currency,
     );
 
   return (
@@ -172,7 +173,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
                 {result.merchant ?? 'Receipt'} · {result.source === 'ai' ? 'AI' : 'Demo scan'}
               </Text>
               <Text style={styles.sub}>
-                Total recognized: {formatMoney(result.total ?? 0, currency)}
+                Total recognized: {money(result.total ?? 0)}
               </Text>
             </SoftCard>
 
@@ -180,7 +181,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
               <SoftCard key={group.category}>
                 <View style={styles.groupHead}>
                   <Text style={styles.section}>{categoryTitle(group.category, false)}</Text>
-                  <Text style={styles.amount}>{formatMoney(group.total, currency)}</Text>
+                  <Text style={styles.amount}>{money(group.total)}</Text>
                 </View>
                 <Text style={styles.balanceHint}>
                   This category so far (including this receipt): {cycleCategory(group.category)}
@@ -197,7 +198,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
                       <Text style={styles.lineName}>{item.name}</Text>
                       <Text style={styles.tapHint}>Tap to change category</Text>
                     </View>
-                    <Text style={styles.lineAmount}>{formatMoney(item.amount, currency)}</Text>
+                    <Text style={styles.lineAmount}>{money(item.amount)}</Text>
                   </Pressable>
                 ))}
               </SoftCard>

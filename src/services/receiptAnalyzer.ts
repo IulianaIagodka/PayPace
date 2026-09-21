@@ -38,6 +38,17 @@ function isCategory(value: unknown): value is ExpenseCategory {
   return typeof value === 'string' && (SPENDING_CATEGORIES as string[]).includes(value);
 }
 
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+const DISCOUNT_NAME =
+  /\b(opust|rabat|discount|zni[zż]ka|promo|bonus)\b/i;
+
+function looksLikeDiscountLine(name: string): boolean {
+  return DISCOUNT_NAME.test(name.trim());
+}
+
 function normalizeItem(
   nameRaw: unknown,
   amountRaw: unknown,
@@ -45,11 +56,57 @@ function normalizeItem(
   id: string,
 ): ReceiptLineItem | null {
   const name = String(nameRaw ?? '').trim();
-  const amount = Number(amountRaw);
+  const amount = roundMoney(Number(amountRaw));
   if (!name || !Number.isFinite(amount) || amount <= 0) return null;
+  if (looksLikeDiscountLine(name)) return null;
   const guessed = guessCategory(name);
   const category = guessed !== 'other' ? guessed : isCategory(categoryRaw) ? categoryRaw : 'other';
   return { id, name, amount, category };
+}
+
+/**
+ * If line items don't add up to the printed total (common when AI uses
+ * pre-discount prices), scale them so they match SUMA / TOTAL.
+ */
+export function reconcileItemsToTotal(
+  items: ReceiptLineItem[],
+  totalRaw: unknown,
+): { items: ReceiptLineItem[]; total: number } {
+  const itemsSum = roundMoney(items.reduce((s, i) => s + i.amount, 0));
+  const printed = Number(totalRaw);
+  const total =
+    Number.isFinite(printed) && printed > 0 ? roundMoney(printed) : itemsSum;
+
+  if (!items.length) return { items, total };
+
+  const gap = Math.abs(itemsSum - total);
+  // Ignore tiny float noise; only fix real mismatches (e.g. discounts ignored).
+  if (gap < 0.05 || itemsSum <= 0) {
+    return { items, total: total > 0 ? total : itemsSum };
+  }
+
+  const scale = total / itemsSum;
+  const scaled = items.map((item, index) => ({
+    ...item,
+    id: item.id || `ai-${index}`,
+    amount: roundMoney(item.amount * scale),
+  }));
+
+  // Fix leftover cents on the largest line so the sum matches exactly.
+  const scaledSum = roundMoney(scaled.reduce((s, i) => s + i.amount, 0));
+  const drift = roundMoney(total - scaledSum);
+  if (drift !== 0 && scaled.length) {
+    let biggest = 0;
+    for (let i = 1; i < scaled.length; i++) {
+      if (scaled[i].amount > scaled[biggest].amount) biggest = i;
+    }
+    scaled[biggest] = {
+      ...scaled[biggest],
+      amount: roundMoney(scaled[biggest].amount + drift),
+    };
+  }
+
+  return { items: scaled, total };
 }
 
 /** Offline demo recognizer — only when explicitly requested (dev / missing key tests). */
@@ -78,9 +135,18 @@ function demoRecognize(): ReceiptScanResult {
 }
 
 async function recognizeWithOpenAI(base64: string, apiKey: string): Promise<ReceiptScanResult> {
-  const prompt = `Extract receipt line items as JSON only:
+  const prompt = `Extract this receipt into JSON only:
 {"merchant":"string","total":number,"items":[{"name":"string","amount":number,"category":"groceries|food|transport|subscriptions|utilities|childcare|rent|loan|other"}]}
-Keep product names as printed. Amounts must be numbers.`;
+
+Rules:
+- Use the FINAL amount paid for each product AFTER discounts (OPUST, RABAT, zniżka, promo).
+- Do NOT list discount / OPUST / RABAT lines as separate items.
+- For qty × price lines, amount = quantity × unit price − that line's discount.
+- Keep product names as printed (any language).
+- "total" must be the receipt grand total (SUMA / TOTAL / do zapłaty) — usually the bold total near the bottom.
+- The sum of item amounts must equal "total" (within 0.01).
+- Amounts are numbers with up to 2 decimals (use comma or dot from the receipt correctly).
+- Ignore tax-only, card, change, and payment-method lines.`;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -135,15 +201,17 @@ Keep product names as printed. Amounts must be numbers.`;
     items?: Array<{ name?: string; amount?: number; category?: string }>;
   };
 
-  const items = (parsed.items ?? [])
+  const rawItems = (parsed.items ?? [])
     .map((row, index) => normalizeItem(row.name, row.amount, row.category, `ai-${index}`))
     .filter(Boolean) as ReceiptLineItem[];
 
-  if (!items.length) throw new Error('No line items found — try a sharper photo of the receipt.');
+  if (!rawItems.length) throw new Error('No line items found — try a sharper photo of the receipt.');
+
+  const { items, total } = reconcileItemsToTotal(rawItems, parsed.total);
 
   return {
     merchant: parsed.merchant,
-    total: Number(parsed.total) || items.reduce((sum, item) => sum + item.amount, 0),
+    total,
     items,
     source: 'ai',
   };
