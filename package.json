@@ -47,6 +47,7 @@
     "postinstall": "patch-package",
     "build:ios": "EAS_BUILD_NO_EXPO_GO_WARNING=true npx eas-cli build --platform ios --profile production",
     "build:ios:local": "EAS_BUILD_NO_EXPO_GO_WARNING=true npx eas-cli build --platform ios --profile production --local",
+    "build:ios:local:submit": "bash scripts/build-ios-local.sh",
     "submit:ios": "npx eas-cli submit --platform ios --profile production --latest",
     "build:ios:submit": "EAS_BUILD_NO_EXPO_GO_WARNING=true npx eas-cli build --platform ios --profile production --auto-submit"
   },

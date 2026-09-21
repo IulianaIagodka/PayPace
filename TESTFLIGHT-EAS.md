@@ -87,6 +87,16 @@ If the job fails on the distribution certificate, unlock the Mac keychain in the
 
 Same production profile, compiled on this Mac. `--auto-submit` does **not** work with `--local`.
 
+One command (pull → install → local IPA → TestFlight):
+
+```bash
+npm run build:ios:local:submit
+```
+
+Uses `scripts/build-ios-local.sh` (loads `.env` if present). Options: `--no-pull`, `--no-submit`.
+
+Manual steps if you prefer:
+
 ```bash
 git pull
 npm install

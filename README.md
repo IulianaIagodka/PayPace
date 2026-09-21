@@ -53,5 +53,6 @@ Couple sync via invite code: [SHARED-BUDGET.md](./SHARED-BUDGET.md)
 | `npm run test:shared` | Shared-budget E2E simulation |
 | `npm run build:ios` | EAS iOS production build (cloud) |
 | `npm run build:ios:local` | EAS iOS production build on this Mac |
+| `npm run build:ios:local:submit` | Local Mac IPA + TestFlight (one script) |
 | `npm run submit:ios` | Submit latest **cloud** build to TestFlight |
 | `npm run build:ios:submit` | Cloud build + auto-submit |
