@@ -81,7 +81,7 @@ From the phone:
 
 The job checks out `main`, `npm ci`, `eas build --local --output PayPace.ipa`, then `eas submit --path PayPace.ipa`. Watch the log in the GitHub app.
 
-If the job fails on the distribution certificate, unlock the Mac keychain (log in at the GUI, or `security unlock-keychain`) and re-run the workflow. Optional: set repo secret `EXPO_TOKEN` (expo.dev → Access tokens) if `eas-cli` is not already logged in as the Mac user.
+If the job fails on the distribution certificate, unlock the Mac keychain in the GUI (`security unlock-keychain`) and re-run. Do not call `security show-keychain-info` from the runner — a LaunchAgent cannot talk to the login keychain and the job dies immediately.
 
 ## Local build (Mac only, in Terminal)
 
