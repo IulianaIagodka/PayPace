@@ -28,7 +28,7 @@ type Props = CompositeScreenProps<
 const GRID_KEYS = ['food', 'transport', 'kids', 'fun', 'home'] as const;
 
 export function HomeScreen({ navigation }: Props) {
-  const { activeCycle, snapshot, store } = useBudget();
+  const { activeCycle, snapshot, store, setPremium } = useBudget();
   const currency = store.settings.currencyCode;
   const horizon: PaceHorizon = store.settings.paceHorizon ?? 'week';
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
@@ -163,32 +163,47 @@ export function HomeScreen({ navigation }: Props) {
           </Panel>
         ) : null}
 
-        <View style={styles.grid}>
-          {rows.map((row, rowIndex) => (
-            <View key={rowIndex} style={styles.gridRow}>
-              {row.map((mod, colIndex) =>
-                mod == null ? (
-                  <EmptyCell key="empty" />
-                ) : (
-                  <CategoryCell
-                    key={mod.envelope.id}
-                    title={mod.envelope.title}
-                    iconKey={mod.envelope.key}
-                    spent={mod.spent}
-                    allocated={mod.envelope.allocated}
-                    currencyCode={currency}
-                    tone={mod.tone}
-                    depleted={mod.depleted}
-                    index={rowIndex * 2 + colIndex}
-                    periodShare={periodShare}
-                    horizonLabel={horizonLabel}
-                    onPress={() => navigation.navigate('AddExpense')}
-                  />
-                ),
-              )}
-            </View>
-          ))}
-        </View>
+        {store.settings.isPremium ? (
+          <View style={styles.grid}>
+            {rows.map((row, rowIndex) => (
+              <View key={rowIndex} style={styles.gridRow}>
+                {row.map((mod, colIndex) =>
+                  mod == null ? (
+                    <EmptyCell key="empty" />
+                  ) : (
+                    <CategoryCell
+                      key={mod.envelope.id}
+                      title={mod.envelope.title}
+                      iconKey={mod.envelope.key}
+                      spent={mod.spent}
+                      allocated={mod.envelope.allocated}
+                      currencyCode={currency}
+                      tone={mod.tone}
+                      depleted={mod.depleted}
+                      index={rowIndex * 2 + colIndex}
+                      periodShare={periodShare}
+                      horizonLabel={horizonLabel}
+                      onPress={() => navigation.navigate('AddExpense')}
+                    />
+                  ),
+                )}
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Panel alt>
+            <Text style={styles.alertTitle}>CATEGORY REMAINING · PLUS</Text>
+            <Text style={styles.alertBody}>
+              Unlock Plus to see envelope leftover by category (food, transport, kids…) and allocate
+              resources.
+            </Text>
+            <HudButton
+              title="UNLOCK PLUS (DEMO)"
+              onPress={() => setPremium(true)}
+              variant="secondary"
+            />
+          </Panel>
+        )}
 
         <HudButton title="+ ADD EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
       </ScrollView>

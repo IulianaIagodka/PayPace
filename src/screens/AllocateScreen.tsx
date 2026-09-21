@@ -13,7 +13,7 @@ import type { RootStackParamList } from '../navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'Allocate'>;
 
 export function AllocateScreen({ navigation }: Props) {
-  const { activeCycle, setEnvelopes, store } = useBudget();
+  const { activeCycle, setEnvelopes, store, setPremium } = useBudget();
   const suffix = currencySymbol(store.settings.currencyCode);
   const currency = store.settings.currencyCode;
 
@@ -27,6 +27,21 @@ export function AllocateScreen({ navigation }: Props) {
   const [draft, setDraft] = useState<Envelope[]>(() =>
     activeCycle ? ensureEnvelopes(activeCycle).map((e) => ({ ...e })) : [],
   );
+
+  if (!store.settings.isPremium) {
+    return (
+      <ScreenBackground edges={['left', 'right', 'bottom']}>
+        <ScrollView contentContainerStyle={styles.pad}>
+          <Text style={styles.title}>ALLOCATE RESOURCES</Text>
+          <Text style={styles.sub}>
+            Plus: split safe-to-spend into category envelopes and track leftover in each.
+          </Text>
+          <HudButton title="UNLOCK PLUS (DEMO)" onPress={() => setPremium(true)} />
+          <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
+        </ScrollView>
+      </ScreenBackground>
+    );
+  }
 
   if (!activeCycle) {
     return (
