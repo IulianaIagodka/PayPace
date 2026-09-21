@@ -19,7 +19,11 @@ Two Cursor sessions on `main` without pull/push will diverge.
 2. After changes: commit and `git push`
 3. On the Mac, `git pull` again **before** any build
 
-The phone cannot compile an IPA. From the phone you push code (and can start a **cloud** build). The Mac pulls, then builds locally or also in the cloud.
+The phone cannot compile an IPA itself. Push to `main` (or run the **iOS local Mac** workflow from the GitHub app) and the **self-hosted runner on this Mac** builds the IPA with Xcode, then uploads TestFlight.
+
+The Mac must be powered on, logged in (login keychain unlocked), and online. Cursor does not need to be open.
+
+Cloud EAS (`npm run build:ios`) still works from the phone without this Mac.
 
 ## One-time Mac setup
 
@@ -66,7 +70,20 @@ npm run build:ios:submit
 
 The binary shows up in App Store Connect → TestFlight after processing (about 10–15 minutes).
 
-## Local build (Mac only)
+## Remote build on this Mac (GitHub runner)
+
+One-time on the Mac: a GitHub Actions runner labeled `paypace-mac` (`~/actions-runner`, LaunchAgent). Workflow: [`.github/workflows/ios-local-mac.yml`](./.github/workflows/ios-local-mac.yml).
+
+From the phone:
+
+1. Commit and push to `main` (markdown-only pushes are skipped), or
+2. GitHub app → **Actions** → **iOS local Mac** → **Run workflow** (optional TestFlight upload)
+
+The job checks out `main`, `npm ci`, `eas build --local --output PayPace.ipa`, then `eas submit --path PayPace.ipa`. Watch the log in the GitHub app.
+
+If the job fails on the distribution certificate, unlock the Mac keychain (log in at the GUI, or `security unlock-keychain`) and re-run the workflow. Optional: set repo secret `EXPO_TOKEN` (expo.dev → Access tokens) if `eas-cli` is not already logged in as the Mac user.
+
+## Local build (Mac only, in Terminal)
 
 Same production profile, compiled on this Mac. `--auto-submit` does **not** work with `--local`.
 

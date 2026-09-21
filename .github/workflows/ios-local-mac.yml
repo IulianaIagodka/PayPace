@@ -1,0 +1,49 @@
+name: iOS local Mac
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'SHARED-BUDGET.md'
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: Upload the IPA to TestFlight
+        type: boolean
+        default: true
+
+concurrency:
+  group: ios-mac-local
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: [self-hosted, macOS, paypace-mac]
+    timeout-minutes: 90
+    env:
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+      EAS_BUILD_NO_EXPO_GO_WARNING: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tooling
+        run: |
+          node -v
+          npm -v
+          xcodebuild -version
+          pod --version
+          security show-keychain-info ~/Library/Keychains/login.keychain-db
+
+      - name: Install JS deps
+        run: npm ci
+
+      - name: EAS local production IPA
+        run: |
+          npx eas-cli build --platform ios --profile production --local --non-interactive --output "$GITHUB_WORKSPACE/PayPace.ipa"
+
+      - name: Submit to TestFlight
+        if: github.event_name == 'push' || inputs.submit
+        run: |
+          npx eas-cli submit --platform ios --profile production --path "$GITHUB_WORKSPACE/PayPace.ipa" --non-interactive
