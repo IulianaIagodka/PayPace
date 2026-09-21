@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -28,7 +28,7 @@ type Props = CompositeScreenProps<
 const GRID_KEYS = ['food', 'transport', 'kids', 'fun', 'home'] as const;
 
 export function HomeScreen({ navigation }: Props) {
-  const { activeCycle, snapshot, store, updateSettings } = useBudget();
+  const { activeCycle, snapshot, store } = useBudget();
   const currency = store.settings.currencyCode;
   const horizon: PaceHorizon = store.settings.paceHorizon ?? 'week';
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
@@ -123,23 +123,6 @@ export function HomeScreen({ navigation }: Props) {
         <View style={styles.metaRow}>
           <Text style={styles.meta}>{pct}% remaining</Text>
           <Text style={styles.meta}>{snapshot.daysUntilPayday} days left</Text>
-        </View>
-
-        <View style={styles.horizonRow}>
-          {(['week', 'month'] as PaceHorizon[]).map((h) => {
-            const on = horizon === h;
-            return (
-              <Pressable
-                key={h}
-                onPress={() => updateSettings({ paceHorizon: h })}
-                style={[styles.horizonChip, on && styles.horizonChipOn]}
-              >
-                <Text style={[styles.horizonChipText, on && styles.horizonChipTextOn]}>
-                  {h === 'week' ? 'WEEK' : 'UNTIL PAYDAY'}
-                </Text>
-              </Pressable>
-            );
-          })}
         </View>
 
         <Animated.View style={{ opacity: heroPulse }}>
@@ -251,28 +234,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.body,
   },
-  horizonRow: { flexDirection: 'row', gap: 8 },
-  horizonChip: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.panelDeep,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 3,
-  },
-  horizonChipOn: {
-    borderColor: colors.resource,
-    backgroundColor: colors.resourceSoft,
-  },
-  horizonChipText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.6,
-  },
-  horizonChipTextOn: { color: colors.resource },
   heroPanel: {
     paddingVertical: 18,
     paddingHorizontal: 16,
