@@ -23,7 +23,7 @@ The phone cannot compile an IPA. From the phone you push code (and can start a *
 
 ## One-time Mac setup
 
-Needs: Xcode, CocoaPods (`pod --version`), Expo login, Apple Developer.
+Needs: Xcode (26.3 works with the `expo-modules-jsi` patch in `patches/`; Expo’s official minimum is 26.4 / Swift 6.3), CocoaPods (`pod --version`), Expo login, Apple Developer.
 
 ```bash
 npm install
@@ -84,6 +84,12 @@ Submit the IPA path printed at the end of the build:
 ```bash
 npx eas-cli submit --platform ios --profile production --path ./your-build.ipa
 ```
+
+### If local build fails: RuntimeScheduler / SWIFT_RETURNS_RETAINED
+
+Xcode 26.2–26.3 (Swift 6.2) rejects `SWIFT_RETURNS_RETAINED` on `RuntimeScheduler` constructors in `expo-modules-jsi`. SDK 57’s official Xcode floor is 26.4; Sequoia often cannot install that.
+
+The repo already patches this (`patches/expo-modules-jsi+57.1.0.patch`, applied on `npm install`). After pulling, run `npm install` before `npm run build:ios:local`.
 
 ### If local build fails: certificate not imported
 

@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "patch-package": "^8.0.1",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -35,6 +36,7 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test:shared": "node --experimental-strip-types scripts/sharedBudget.e2e.mts",
+    "postinstall": "patch-package",
     "build:ios": "npx eas-cli build --platform ios --profile production",
     "build:ios:local": "npx eas-cli build --platform ios --profile production --local",
     "submit:ios": "npx eas-cli submit --platform ios --profile production --latest",
