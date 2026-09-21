@@ -124,15 +124,16 @@ export interface SafeSpendSnapshot {
   safeToSpendToday: number;
   /** Remaining allowance for the current calendar week (weekStartsOn → +6). */
   safeToSpendThisWeek: number;
-  /** Remaining allowance for the current calendar month. */
+  /** Remaining allowance until next payday (pay-cycle window, not calendar month). */
   safeToSpendThisMonth: number;
   /** Days left in the current week, capped by days until payday. */
   daysLeftInWeek: number;
-  /** Days left in the current month, capped by days until payday. */
+  /** Days left until payday (same as daysUntilPayday when > 0, else 1). */
   daysLeftInMonth: number;
   /**
    * Share of the remaining cycle that belongs to the selected horizon window
    * (daysLeftInPeriod / daysToCover). Categories multiply remaining by this.
+   * Month/until-payday share is always 1.
    */
   weekShare: number;
   monthShare: number;

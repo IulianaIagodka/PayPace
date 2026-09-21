@@ -1,4 +1,4 @@
-import { endOfMonth, endOfWeek, isWithinInterval, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
+import { addDays, endOfWeek, isWithinInterval, startOfDay, startOfWeek } from 'date-fns';
 import type { PayCycle } from '../models/types';
 import type { WeekStartsOn } from '../models/calculator';
 import { fromDateKey, toDateKey } from './formatting';
@@ -23,16 +23,23 @@ export function findCycleForDate(
   return fallback;
 }
 
+/**
+ * WEEK = configured calendar week.
+ * MONTH = remaining pay window (today → payday), not calendar month.
+ */
 export function horizonWindow(
   horizon: 'week' | 'month',
   weekStartsOn: WeekStartsOn = 1,
   now = new Date(),
+  paydayKey?: string | null,
 ): { start: Date; end: Date; startKey: string; endKey: string } {
   const today = startOfDay(now);
   if (horizon === 'month') {
-    const start = startOfMonth(today);
-    const end = endOfMonth(today);
-    return { start, end, startKey: toDateKey(start), endKey: toDateKey(end) };
+    const payday = paydayKey ? fromDateKey(paydayKey) : addDays(today, 30);
+    // Inclusive window through the day before payday when payday is exclusive in cycles,
+    // but for import filters include up to payday date itself if same day.
+    const end = payday < today ? today : payday;
+    return { start: today, end, startKey: toDateKey(today), endKey: toDateKey(end) };
   }
   const start = startOfWeek(today, { weekStartsOn });
   const end = endOfWeek(today, { weekStartsOn });
@@ -44,8 +51,9 @@ export function dateInHorizon(
   horizon: 'week' | 'month',
   weekStartsOn: WeekStartsOn = 1,
   now = new Date(),
+  paydayKey?: string | null,
 ): boolean {
-  const { start, end } = horizonWindow(horizon, weekStartsOn, now);
+  const { start, end } = horizonWindow(horizon, weekStartsOn, now, paydayKey);
   const day = fromDateKey(dateKey);
   return isWithinInterval(day, { start, end });
 }

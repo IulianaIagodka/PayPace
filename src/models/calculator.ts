@@ -1,4 +1,4 @@
-import { addDays, addMonths, differenceInCalendarDays, endOfMonth, endOfWeek, startOfDay } from 'date-fns';
+import { addDays, addMonths, differenceInCalendarDays, endOfWeek, startOfDay } from 'date-fns';
 import type { PayCycle, PaySchedule, SafeSpendSnapshot, TrajectoryLabel } from './types';
 import { asMoney, fromDateKey } from '../services/formatting';
 
@@ -79,13 +79,6 @@ export function daysRemainingInWeek(now = new Date(), weekStartsOn: WeekStartsOn
   return Math.max(differenceInCalendarDays(weekEnd, today) + 1, 1);
 }
 
-/** Inclusive days from today through end of the calendar month. */
-export function daysRemainingInMonth(now = new Date()): number {
-  const today = startOfDay(now);
-  const monthEnd = startOfDay(endOfMonth(today));
-  return Math.max(differenceInCalendarDays(monthEnd, today) + 1, 1);
-}
-
 export function calculateSafeSpend(
   cycle: PayCycle,
   now = new Date(),
@@ -107,18 +100,16 @@ export function calculateSafeSpend(
   const safeToSpendToday = remainingUntilPayday > 0 ? remainingUntilPayday / daysToCover : 0;
 
   const daysLeftInWeek = Math.min(daysRemainingInWeek(now, weekStartsOn), daysToCover);
-  const daysLeftInMonth = Math.min(daysRemainingInMonth(now), daysToCover);
+  // MONTH = remaining pay-cycle window (days until payday), not calendar month.
+  const daysLeftInMonth = daysToCover;
   const weekShare = daysLeftInWeek / daysToCover;
-  const monthShare = daysLeftInMonth / daysToCover;
+  const monthShare = 1;
 
   const safeToSpendThisWeek =
     remainingUntilPayday > 0
       ? Math.min(safeToSpendToday * daysLeftInWeek, remainingUntilPayday)
       : 0;
-  const safeToSpendThisMonth =
-    remainingUntilPayday > 0
-      ? Math.min(safeToSpendToday * daysLeftInMonth, remainingUntilPayday)
-      : 0;
+  const safeToSpendThisMonth = remainingUntilPayday > 0 ? remainingUntilPayday : 0;
 
   let projectedShortfallDays: number | null = null;
   const averageDaily = spentThisCycle / Math.max(daysElapsed, 1);

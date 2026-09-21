@@ -38,16 +38,17 @@ export function StatementImportScreen({ navigation, route }: Props) {
   const [result, setResult] = useState<StatementImportResult | null>(null);
   const [filterToHorizon, setFilterToHorizon] = useState(true);
 
-  const window = horizonWindow(horizon, weekStartsOn);
+  const paydayKey = activeCycle?.nextPayday ?? null;
+  const window = horizonWindow(horizon, weekStartsOn, new Date(), paydayKey);
 
   const visibleItems = useMemo(() => {
     const items = result?.items ?? [];
     if (!filterToHorizon) return items;
     return items.filter((item) => {
       const date = item.date ?? toDateKey(new Date());
-      return dateInHorizon(date, horizon, weekStartsOn);
+      return dateInHorizon(date, horizon, weekStartsOn, new Date(), paydayKey);
     });
-  }, [result, filterToHorizon, horizon, weekStartsOn]);
+  }, [result, filterToHorizon, horizon, weekStartsOn, paydayKey]);
 
   const cyclePreview = useMemo(() => {
     const map = new Map<string, { label: string; count: number; total: number }>();
@@ -148,22 +149,23 @@ export function StatementImportScreen({ navigation, route }: Props) {
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>UPLOAD STATEMENT</Text>
         <Text style={styles.sub}>
-          Import bank export for this {horizon}. Dates decide which pay cycle (month) each row lands
-          in.
+          Import bank export for this {horizon === 'week' ? 'week' : 'pay cycle until payday'}.
+          Dates decide which pay cycle each row lands in.
         </Text>
 
         <Panel>
           <Text style={styles.label}>HORIZON WINDOW</Text>
           <Text style={styles.fileName}>
             {formatShortDate(window.startKey)} → {formatShortDate(window.endKey)} ·{' '}
-            {horizon.toUpperCase()}
+            {horizon === 'week' ? 'WEEK' : 'UNTIL PAYDAY'}
           </Text>
           <Pressable
             onPress={() => setFilterToHorizon((v) => !v)}
             style={styles.filterRow}
           >
             <Text style={styles.meta}>
-              {filterToHorizon ? '●' : '○'} Only rows inside this {horizon}
+              {filterToHorizon ? '●' : '○'} Only rows inside this{' '}
+              {horizon === 'week' ? 'week' : 'payday window'}
             </Text>
           </Pressable>
         </Panel>

@@ -86,8 +86,8 @@ export function HomeScreen({ navigation }: Props) {
   );
   const periodDays = isWeek ? snapshot.daysLeftInWeek : snapshot.daysLeftInMonth;
   const periodShare = isWeek ? snapshot.weekShare : snapshot.monthShare;
-  const periodUnit = isWeek ? '/ week' : '/ month';
-  const horizonLabel = isWeek ? 'WEEK' : 'MONTH';
+  const periodUnit = isWeek ? '/ week' : '/ until payday';
+  const horizonLabel = isWeek ? 'WEEK' : 'CYCLE';
   // Keep SAFE TO SPEND neutral; SPENDING RATE HIGH card owns the warning signal.
   // Red only when the buffer is already gone.
   const safeColor =
@@ -135,7 +135,7 @@ export function HomeScreen({ navigation }: Props) {
                 style={[styles.horizonChip, on && styles.horizonChipOn]}
               >
                 <Text style={[styles.horizonChipText, on && styles.horizonChipTextOn]}>
-                  {h === 'week' ? 'WEEK' : 'MONTH'}
+                  {h === 'week' ? 'WEEK' : 'UNTIL PAYDAY'}
                 </Text>
               </Pressable>
             );
@@ -158,7 +158,11 @@ export function HomeScreen({ navigation }: Props) {
                   {formatMoney(periodSafe, currency)}
                 </Text>
                 <Text style={styles.perUnit}>{periodUnit}</Text>
-                <Text style={styles.weekHint}>{periodDays}d left in {isWeek ? 'week' : 'month'}</Text>
+                <Text style={styles.weekHint}>
+                  {isWeek
+                    ? `${periodDays}d left in week`
+                    : `${snapshot.daysUntilPayday}d until payday`}
+                </Text>
               </View>
             </View>
           </Panel>
@@ -202,7 +206,7 @@ export function HomeScreen({ navigation }: Props) {
         </View>
 
         <HudButton
-          title={isWeek ? 'IMPORT WEEK STATEMENT' : 'IMPORT MONTH STATEMENT'}
+          title={isWeek ? 'IMPORT WEEK STATEMENT' : 'IMPORT CYCLE STATEMENT'}
           onPress={() => navigation.navigate('StatementImport', { horizon })}
           variant="secondary"
         />
