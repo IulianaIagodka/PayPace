@@ -25,7 +25,6 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "eas-cli": "^24.7.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -35,9 +34,10 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test:shared": "node --experimental-strip-types scripts/sharedBudget.e2e.mts",
-    "build:ios": "eas build --platform ios --profile production",
-    "submit:ios": "eas submit --platform ios --profile production --latest",
-    "build:ios:submit": "eas build --platform ios --profile production --auto-submit"
+    "build:ios": "npx eas-cli build --platform ios --profile production",
+    "build:ios:local": "npx eas-cli build --platform ios --profile production --local",
+    "submit:ios": "npx eas-cli submit --platform ios --profile production --latest",
+    "build:ios:submit": "npx eas-cli build --platform ios --profile production --auto-submit"
   },
   "private": true
 }

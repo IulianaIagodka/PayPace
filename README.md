@@ -26,12 +26,14 @@ npx expo prebuild --platform ios
 npx expo run:ios
 ```
 
-## Cloud TestFlight (EAS)
+## TestFlight (EAS)
 
 ```bash
+npm install -g eas-cli   # once; do not put eas-cli in package.json
 npx eas-cli login
 npm run build:ios          # cloud build
-npm run submit:ios         # upload to TestFlight
+npm run build:ios:local     # Mac local IPA (needs Xcode + CocoaPods)
+npm run submit:ios         # upload latest cloud build to TestFlight
 # or
 npm run build:ios:submit
 ```
@@ -49,5 +51,6 @@ Couple sync via invite code: [SHARED-BUDGET.md](./SHARED-BUDGET.md)
 | `npm start` | Expo dev server |
 | `npm run typecheck` | TypeScript |
 | `npm run test:shared` | Shared-budget E2E simulation |
-| `npm run build:ios` | EAS iOS production build |
+| `npm run build:ios` | EAS iOS production build (cloud) |
+| `npm run build:ios:local` | EAS iOS production build on this Mac |
 | `npm run submit:ios` | Submit latest build to TestFlight |
