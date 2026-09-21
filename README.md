@@ -28,12 +28,18 @@ npx expo run:ios
 
 ## Cloud TestFlight (EAS)
 
+From **Cursor Cloud Agent** (`EXPO_TOKEN` secret): ask explicitly to build/submit — builds are not started automatically.
+
+```bash
+npm run build:ios:submit
+```
+
+From a Mac:
+
 ```bash
 npx eas-cli login
-npm run build:ios          # cloud build
-npm run submit:ios         # upload to TestFlight
-# or
-npm run build:ios:submit
+npm run build:ios
+npm run submit:ios
 ```
 
 Details: [TESTFLIGHT-EAS.md](./TESTFLIGHT-EAS.md)
