@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
+  Animated,
   Pressable,
   StyleSheet,
   Text,
@@ -8,9 +9,8 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, paceGradient } from '../theme/colors';
+import { colors, colorForTone, toneForRatio, type ResourceTone } from '../theme/colors';
 import { formatMoney, formatShortDate } from '../services/formatting';
 import type { Bill, DailyExpense } from '../models/types';
 
@@ -22,70 +22,151 @@ export function ScreenBackground({
   edges?: ('top' | 'right' | 'bottom' | 'left')[];
 }) {
   return (
-    <LinearGradient colors={[colors.bgTop, colors.bgMid, colors.bgBottom]} style={styles.flex}>
-      <View pointerEvents="none" style={styles.atmosphere}>
-        <View style={[styles.blob, styles.blobMint]} />
-        <View style={[styles.blob, styles.blobForest]} />
-      </View>
+    <View style={styles.root}>
       <SafeAreaView style={styles.flex} edges={edges}>
         {children}
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
-export function HeaderIconButton({
-  label,
-  onPress,
+export function Panel({
+  children,
+  style,
+  alt,
 }: {
-  label: string;
-  onPress: () => void;
+  children: React.ReactNode;
+  style?: ViewStyle;
+  alt?: boolean;
 }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={12}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
-    >
-      <Text style={styles.headerBtnText}>{label}</Text>
-    </Pressable>
-  );
+  return <View style={[styles.panel, alt && styles.panelAlt, style]}>{children}</View>;
 }
 
-export function PrimaryButton({
+export function HudButton({
   title,
   onPress,
   disabled,
+  variant = 'primary',
 }: {
   title: string;
   onPress: () => void;
   disabled?: boolean;
+  variant?: 'primary' | 'secondary' | 'danger';
 }) {
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
-        styles.primaryBtn,
-        disabled && { opacity: 0.4 },
-        pressed && { transform: [{ scale: 0.98 }] },
+        styles.btn,
+        variant === 'primary' && styles.btnPrimary,
+        variant === 'secondary' && styles.btnSecondary,
+        variant === 'danger' && styles.btnDanger,
+        disabled && { opacity: 0.35 },
+        pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
       ]}
     >
-      <Text style={styles.primaryBtnText}>{title}</Text>
+      <Text
+        style={[
+          styles.btnText,
+          variant === 'secondary' && { color: colors.text },
+          variant === 'danger' && { color: colors.text },
+        ]}
+      >
+        {title}
+      </Text>
     </Pressable>
   );
 }
 
+/** @deprecated alias */
+export const PrimaryButton = HudButton;
 export function SecondaryButton({ title, onPress }: { title: string; onPress: () => void }) {
+  return <HudButton title={title} onPress={onPress} variant="secondary" />;
+}
+export const SoftCard = Panel;
+
+export function SegmentedBar({
+  ratio,
+  segments = 10,
+  height = 22,
+  animateFrom,
+}: {
+  ratio: number;
+  segments?: number;
+  height?: number;
+  /** When set, briefly animate from this ratio to `ratio`. */
+  animateFrom?: number;
+}) {
+  const clamped = Math.max(0, Math.min(ratio, 1));
+  const anim = useRef(new Animated.Value(animateFrom ?? clamped)).current;
+
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: clamped,
+      duration: 180,
+      useNativeDriver: false,
+    }).start();
+  }, [clamped, anim]);
+
+  const tone = toneForRatio(clamped);
+  const fill = colorForTone(tone);
+  const lit = Math.round(clamped * segments);
+
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.85 }]}
-    >
-      <Text style={styles.secondaryBtnText}>{title}</Text>
-    </Pressable>
+    <View style={[styles.barTrack, { height }]}>
+      {Array.from({ length: segments }).map((_, i) => (
+        <View
+          key={i}
+          style={[
+            styles.barSeg,
+            {
+              backgroundColor: i < lit ? fill : colors.borderSoft,
+              shadowColor: i < lit && tone === 'healthy' ? colors.resource : 'transparent',
+              shadowOpacity: i < lit ? 0.55 : 0,
+              shadowRadius: 4,
+            },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+export function EnvelopeModule({
+  title,
+  spent,
+  allocated,
+  currencyCode,
+  tone,
+  warning,
+  depleted,
+}: {
+  title: string;
+  spent: number;
+  allocated: number;
+  currencyCode: string;
+  tone: ResourceTone;
+  warning?: boolean;
+  depleted?: boolean;
+}) {
+  const remainingRatio = allocated > 0 ? Math.max(allocated - spent, 0) / allocated : 0;
+  return (
+    <Panel style={styles.module}>
+      <View style={styles.moduleHead}>
+        <Text style={styles.moduleTitle}>{title}</Text>
+        <Text style={[styles.moduleAmount, { color: colorForTone(tone) }]}>
+          {formatMoney(spent, currencyCode)} / {formatMoney(allocated, currencyCode)}
+        </Text>
+      </View>
+      <SegmentedBar ratio={remainingRatio} segments={8} height={12} />
+      {depleted ? <Text style={styles.criticalLabel}>DEPLETED</Text> : null}
+      {warning && !depleted ? (
+        <Text style={styles.warnLabel}>
+          WARNING · reserve at {Math.round(remainingRatio * 100)}%
+        </Text>
+      ) : null}
+    </Panel>
   );
 }
 
@@ -93,7 +174,7 @@ export function AmountField({
   label,
   value,
   onChangeText,
-  suffix = 'грн',
+  suffix = 'PLN',
   ...rest
 }: {
   label: string;
@@ -110,95 +191,12 @@ export function AmountField({
           onChangeText={onChangeText}
           keyboardType="decimal-pad"
           placeholder="0"
-          placeholderTextColor={colors.inkSecondary}
+          placeholderTextColor={colors.textDim}
           style={styles.fieldInput}
           {...rest}
         />
         <Text style={styles.suffix}>{suffix}</Text>
       </View>
-    </View>
-  );
-}
-
-export function SoftCard({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
-  return <View style={[styles.card, style]}>{children}</View>;
-}
-
-export function SafeSpendHero({
-  safeToday,
-  remaining,
-  daysUntil,
-  currencyCode,
-  isAtRisk,
-}: {
-  safeToday: number;
-  remaining: number;
-  daysUntil: number;
-  currencyCode: string;
-  isAtRisk: boolean;
-}) {
-  const daysLabel =
-    daysUntil === 0
-      ? 'Payday is today'
-      : daysUntil === 1
-        ? '1 day until payday'
-        : `${daysUntil} days until payday`;
-
-  return (
-    <View style={{ gap: 14 }}>
-      <Text style={styles.heroEyebrow}>You can safely spend</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-        <Text style={[styles.heroAmount, isAtRisk && { color: colors.danger }]}>
-          {formatMoney(Math.max(safeToday, 0), currencyCode)}
-        </Text>
-        <Text style={styles.heroToday}>today</Text>
-      </View>
-      <Text style={styles.heroRemaining}>
-        {formatMoney(remaining, currencyCode)} left until payday
-      </Text>
-      <Text style={styles.heroDays}>{daysLabel}</Text>
-    </View>
-  );
-}
-
-export function CycleProgress({
-  progress,
-  daysElapsed,
-  totalDays,
-}: {
-  progress: number;
-  daysElapsed: number;
-  totalDays: number;
-}) {
-  const widthPct = `${Math.max(Math.round(progress * 100), 4)}%` as `${number}%`;
-  return (
-    <View style={{ gap: 10 }}>
-      <View style={styles.progressTrack}>
-        <LinearGradient
-          colors={[...paceGradient]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={[styles.progressFill, { width: widthPct }]}
-        />
-      </View>
-      <View style={styles.progressMeta}>
-        <Text style={styles.meta}>Pay cycle</Text>
-        <Text style={styles.meta}>
-          {Math.min(daysElapsed, totalDays)} of {totalDays} days
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-export function BillRow({ bill, currencyCode }: { bill: Bill; currencyCode: string }) {
-  return (
-    <View style={styles.row}>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text style={styles.rowTitle}>{bill.name}</Text>
-        <Text style={styles.meta}>{formatShortDate(bill.dueDate)}</Text>
-      </View>
-      <Text style={styles.rowAmount}>{formatMoney(bill.amount, currencyCode)}</Text>
     </View>
   );
 }
@@ -223,105 +221,173 @@ export function ExpenseRow({
       </View>
       <Text style={styles.rowAmount}>{formatMoney(expense.amount, currencyCode)}</Text>
       {onDelete ? (
-        <Pressable
-          onPress={onDelete}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel={`Delete ${expense.name}`}
-          style={styles.deleteBtn}
-        >
-          <Text style={styles.deleteText}>Delete</Text>
+        <Pressable onPress={onDelete} hitSlop={10} style={styles.deleteBtn}>
+          <Text style={styles.deleteText}>DEL</Text>
         </Pressable>
       ) : null}
     </View>
   );
 }
 
+export function BillRow({ bill, currencyCode }: { bill: Bill; currencyCode: string }) {
+  return (
+    <View style={styles.row}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={styles.rowTitle}>{bill.name}</Text>
+        <Text style={styles.meta}>{formatShortDate(bill.dueDate)}</Text>
+      </View>
+      <Text style={styles.rowAmount}>{formatMoney(bill.amount, currencyCode)}</Text>
+    </View>
+  );
+}
+
+/** Kept for older screens that still reference these. */
+export function SafeSpendHero({
+  safeToday,
+  remaining,
+  daysUntil,
+  currencyCode,
+  isAtRisk,
+}: {
+  safeToday: number;
+  remaining: number;
+  daysUntil: number;
+  currencyCode: string;
+  isAtRisk: boolean;
+}) {
+  return (
+    <View style={{ gap: 10 }}>
+      <Text style={styles.fieldLabel}>SAFE TO SPEND</Text>
+      <Text style={[styles.heroAmount, isAtRisk && { color: colors.danger }]}>
+        {formatMoney(Math.max(safeToday, 0), currencyCode)}
+      </Text>
+      <Text style={styles.meta}>
+        {formatMoney(remaining, currencyCode)} resources · {daysUntil} days left
+      </Text>
+    </View>
+  );
+}
+
+export function CycleProgress({
+  progress,
+  daysElapsed,
+  totalDays,
+}: {
+  progress: number;
+  daysElapsed: number;
+  totalDays: number;
+}) {
+  return (
+    <View style={{ gap: 8 }}>
+      <SegmentedBar ratio={1 - progress} segments={12} height={10} />
+      <Text style={styles.meta}>
+        {daysElapsed} / {totalDays} days
+      </Text>
+    </View>
+  );
+}
+
+export function HeaderIconButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={styles.headerBtn}>
+      <Text style={styles.headerBtnText}>{label}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  atmosphere: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
-  blob: { position: 'absolute', borderRadius: 999, opacity: 0.55 },
-  blobMint: {
-    width: 280,
-    height: 280,
-    backgroundColor: colors.mint,
-    top: -80,
-    right: -60,
+  root: { flex: 1, backgroundColor: colors.bg },
+  panel: {
+    backgroundColor: colors.panel,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 14,
+    gap: 10,
   },
-  blobForest: {
-    width: 240,
-    height: 240,
-    backgroundColor: colors.accentLight,
-    bottom: 40,
-    left: -90,
-    opacity: 0.35,
-  },
-  headerBtn: {
-    minHeight: 44,
-    minWidth: 44,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 14,
-    backgroundColor: colors.accentSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerBtnText: { color: colors.accent, fontWeight: '700', fontSize: 14 },
-  primaryBtn: {
-    backgroundColor: colors.accent,
-    borderRadius: 18,
+  panelAlt: { backgroundColor: colors.panelAlt },
+  btn: {
+    borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
+    borderWidth: 1,
   },
-  primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  secondaryBtn: {
-    backgroundColor: colors.accentSoft,
-    borderRadius: 18,
-    paddingVertical: 16,
-    alignItems: 'center',
+  btnPrimary: {
+    backgroundColor: '#14301A',
+    borderColor: colors.resource,
   },
-  secondaryBtnText: { color: colors.accent, fontSize: 16, fontWeight: '600' },
-  fieldLabel: { color: colors.inkSecondary, fontSize: 14, fontWeight: '500' },
+  btnSecondary: {
+    backgroundColor: colors.panelAlt,
+    borderColor: colors.border,
+  },
+  btnDanger: {
+    backgroundColor: '#2A1210',
+    borderColor: colors.danger,
+  },
+  btnText: {
+    color: colors.resource,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+  },
+  barTrack: {
+    flexDirection: 'row',
+    gap: 3,
+    backgroundColor: '#0A0C0B',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 3,
+  },
+  barSeg: {
+    flex: 1,
+    borderRadius: 3,
+  },
+  module: { gap: 8 },
+  moduleHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  moduleTitle: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+  },
+  moduleAmount: { color: colors.text, fontSize: 13, fontWeight: '700' },
+  warnLabel: { color: colors.warning, fontSize: 11, letterSpacing: 0.8, fontWeight: '600' },
+  criticalLabel: { color: colors.critical, fontSize: 11, letterSpacing: 1, fontWeight: '700' },
+  fieldLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+  },
   fieldBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.whiteSoft,
-    borderRadius: 16,
-    paddingHorizontal: 16,
+    backgroundColor: colors.panelAlt,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  fieldInput: { flex: 1, fontSize: 22, fontWeight: '600', color: colors.ink },
-  suffix: { color: colors.inkSecondary, fontSize: 18, fontWeight: '500' },
-  card: {
-    backgroundColor: colors.whiteSofter,
-    borderRadius: 18,
-    padding: 16,
-    gap: 10,
-  },
-  heroEyebrow: { color: colors.inkSecondary, fontSize: 18, fontWeight: '500' },
-  heroAmount: { color: colors.ink, fontSize: 48, fontWeight: '700' },
-  heroToday: { color: colors.inkSecondary, fontSize: 22, fontWeight: '500' },
-  heroRemaining: { color: colors.ink, fontSize: 16, fontWeight: '600' },
-  heroDays: { color: colors.inkSecondary, fontSize: 15 },
-  progressTrack: {
-    height: 12,
-    borderRadius: 99,
-    backgroundColor: 'rgba(24, 42, 34, 0.08)',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 99,
-  },
-  progressMeta: { flexDirection: 'row', justifyContent: 'space-between' },
-  meta: { color: colors.inkSecondary, fontSize: 13, fontWeight: '500' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 },
-  rowTitle: { color: colors.ink, fontSize: 16, fontWeight: '600' },
-  rowAmount: { color: colors.ink, fontSize: 16, fontWeight: '600' },
-  deleteBtn: {
-    minHeight: 44,
+  fieldInput: { flex: 1, fontSize: 22, fontWeight: '700', color: colors.text },
+  suffix: { color: colors.textSecondary, fontSize: 16, fontWeight: '600' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+  rowTitle: { color: colors.text, fontSize: 15, fontWeight: '600' },
+  rowAmount: { color: colors.text, fontSize: 15, fontWeight: '700' },
+  meta: { color: colors.textSecondary, fontSize: 12 },
+  deleteBtn: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 4 },
+  deleteText: { color: colors.danger, fontWeight: '700', fontSize: 12, letterSpacing: 1 },
+  heroAmount: { color: colors.text, fontSize: 40, fontWeight: '800' },
+  headerBtn: {
+    minHeight: 40,
+    paddingHorizontal: 10,
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.panel,
+    borderRadius: 10,
   },
-  deleteText: { color: colors.danger, fontWeight: '600', fontSize: 14 },
+  headerBtnText: { color: colors.textSecondary, fontWeight: '700', fontSize: 11, letterSpacing: 1 },
 });

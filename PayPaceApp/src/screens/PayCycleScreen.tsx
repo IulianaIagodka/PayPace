@@ -13,10 +13,12 @@ import {
 import { nextPaydayAfter, scheduleOptions } from '../models/calculator';
 import type { PaySchedule } from '../models/types';
 import { currencySymbol, formatMoney, fromDateKey, parseAmount, toDateKey } from '../services/formatting';
+import { defaultEnvelopes } from '../services/envelopes';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
 import { Pressable } from 'react-native';
+import { asMoney } from '../services/formatting';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PayCycle'>;
 
@@ -63,32 +65,40 @@ export function PayCycleScreen({ navigation }: Props) {
       nextPayday: toDateKey(nextPayday),
     }));
     setSaved(true);
-    navigation.navigate('Home');
+    navigation.navigate('MainTabs');
   };
 
   const startNext = async () => {
     const payday = nextPaydayAfter(schedule, fromDateKey(activeCycle.nextPayday));
+    const balanceN = (parseAmount(balance) ?? 0) + (parseAmount(paycheck) ?? 0);
+    const savingsN = parseAmount(savings) ?? 0;
+    const emergencyN = parseAmount(emergency) ?? 0;
+    const bufferN = parseAmount(buffer) ?? 0;
+    const bills = store.settings.isPremium
+      ? activeCycle.bills
+          .filter((b) => b.isRecurring)
+          .map((b) => ({ ...b, id: newId(), isPaid: false }))
+      : [];
+    const unpaid = bills.reduce((s, b) => s + asMoney(b.amount), 0);
+    const pool = Math.max(balanceN - unpaid - savingsN - emergencyN - bufferN, 0);
     await replaceActiveCycle({
       id: newId(),
       schedule,
       startDate: toDateKey(fromDateKey(activeCycle.nextPayday)),
       nextPayday: toDateKey(payday),
-      currentBalance: (parseAmount(balance) ?? 0) + (parseAmount(paycheck) ?? 0),
+      currentBalance: balanceN,
       expectedPaycheck: parseAmount(paycheck) ?? 0,
-      savingsGoal: parseAmount(savings) ?? 0,
-      emergencyBuffer: parseAmount(emergency) ?? 0,
-      spendingBuffer: parseAmount(buffer) ?? 0,
-      bills: store.settings.isPremium
-        ? activeCycle.bills
-            .filter((b) => b.isRecurring)
-            .map((b) => ({ ...b, id: newId(), isPaid: false }))
-        : [],
+      savingsGoal: savingsN,
+      emergencyBuffer: emergencyN,
+      spendingBuffer: bufferN,
+      bills,
       expenses: [],
+      envelopes: defaultEnvelopes(pool),
       isActive: true,
       createdAt: new Date().toISOString(),
     });
     setSaved(true);
-    navigation.navigate('Home');
+    navigation.navigate('MainTabs');
   };
 
   return (

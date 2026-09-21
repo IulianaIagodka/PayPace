@@ -1,5 +1,5 @@
 import { addDays, addMonths, differenceInCalendarDays, startOfDay } from 'date-fns';
-import type { PayCycle, PaySchedule, SafeSpendSnapshot } from './types';
+import type { PayCycle, PaySchedule, SafeSpendSnapshot, TrajectoryLabel } from './types';
 import { asMoney, fromDateKey } from '../services/formatting';
 
 export const scheduleOptions: { id: PaySchedule; title: string; subtitle: string }[] = [
@@ -70,25 +70,35 @@ export function calculateSafeSpend(cycle: PayCycle, now = new Date()): SafeSpend
     reservedTotal,
   } = cycleMetrics(cycle, now);
 
-  // Money left for discretionary spending until payday
-  const remainingUntilPayday = balance - unpaidBillsTotal - reservedTotal - spentThisCycle;
-
-  // Spread remaining across days left (at least 1 so payday-today still shows a number)
+  const spendPool = balance - unpaidBillsTotal - reservedTotal;
+  const remainingUntilPayday = spendPool - spentThisCycle;
   const daysToCover = Math.max(daysUntilPayday, 1);
   const safeToSpendToday = remainingUntilPayday > 0 ? remainingUntilPayday / daysToCover : 0;
 
   let projectedShortfallDays: number | null = null;
+  const averageDaily = spentThisCycle / Math.max(daysElapsed, 1);
   if (remainingUntilPayday < 0) {
     projectedShortfallDays = daysUntilPayday;
-  } else if (spentThisCycle > 0 && daysUntilPayday > 0) {
-    const averageDaily = spentThisCycle / Math.max(daysElapsed, 1);
-    if (averageDaily > 0) {
-      const daysAffordable = remainingUntilPayday / averageDaily;
-      if (daysAffordable < daysUntilPayday) {
-        projectedShortfallDays = Math.max(daysUntilPayday - Math.floor(daysAffordable), 1);
-      }
+  } else if (spentThisCycle > 0 && daysUntilPayday > 0 && averageDaily > 0) {
+    const daysAffordable = remainingUntilPayday / averageDaily;
+    if (daysAffordable < daysUntilPayday) {
+      projectedShortfallDays = Math.max(daysUntilPayday - Math.floor(daysAffordable), 1);
     }
   }
+
+  const projectedEndBalance =
+    remainingUntilPayday - averageDaily * daysUntilPayday + (spentThisCycle > 0 ? 0 : 0);
+  // Simpler projection: remaining - (avg daily * days left)
+  const projected = remainingUntilPayday - averageDaily * Math.max(daysUntilPayday, 0);
+
+  let trajectory: TrajectoryLabel = 'ON TARGET';
+  if (projected < 0 || remainingUntilPayday < 0) trajectory = 'DEFICIT';
+  else if (projectedShortfallDays != null) trajectory = 'LOW RESERVE';
+  else if (projected > safeToSpendToday * 2) trajectory = 'WITH RESERVE';
+  else trajectory = 'ON TARGET';
+
+  const capacity = Math.max(spendPool, 1);
+  const resourcesRemainingRatio = Math.max(Math.min(remainingUntilPayday / capacity, 1), 0);
 
   return {
     remainingUntilPayday,
@@ -102,5 +112,8 @@ export function calculateSafeSpend(cycle: PayCycle, now = new Date()): SafeSpend
     reservedTotal,
     isAtRisk: remainingUntilPayday < 0 || projectedShortfallDays != null,
     projectedShortfallDays,
+    resourcesRemainingRatio,
+    trajectory,
+    projectedEndBalance: projected,
   };
 }

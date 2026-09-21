@@ -20,7 +20,7 @@ export function HistoryScreen({ navigation }: Props) {
           <Text style={styles.sub}>
             Look back across finished pay cycles and how your safe-to-spend held up.
           </Text>
-          <PrimaryButton title="See Premium" onPress={() => navigation.navigate('Settings')} />
+          <PrimaryButton title="See Premium" onPress={() => navigation.navigate('MainTabs')} />
         </ScrollView>
       </ScreenBackground>
     );

@@ -19,9 +19,10 @@ import {
   ScreenBackground,
   SoftCard,
 } from '../components/ui';
+import { defaultEnvelopes } from '../services/envelopes';
 import { calculateSafeSpend, scheduleOptions } from '../models/calculator';
 import type { Bill, ExpenseCategory, PayCycle, PaySchedule } from '../models/types';
-import { currencySymbol, parseAmount, parsePositiveAmount, toDateKey } from '../services/formatting';
+import { asMoney, currencySymbol, parseAmount, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 
@@ -56,24 +57,30 @@ export function OnboardingScreen() {
     return startOfDay(addDays(new Date(), days));
   }, [daysUntil]);
 
-  const draftCycle: PayCycle = useMemo(
-    () => ({
+  const draftCycle: PayCycle = useMemo(() => {
+    const balanceN = parseAmount(balance) ?? 0;
+    const billsList = bills;
+    const unpaid = billsList.filter((b) => !b.isPaid).reduce((s, b) => s + asMoney(b.amount), 0);
+    const reserved =
+      (parseAmount(savings) ?? 0) + (parseAmount(emergency) ?? 0) + (parseAmount(buffer) ?? 0);
+    const pool = Math.max(balanceN - unpaid - reserved, 0);
+    return {
       id: newId(),
       schedule,
       startDate: toDateKey(new Date()),
       nextPayday: toDateKey(nextPayday),
-      currentBalance: parseAmount(balance) ?? 0,
+      currentBalance: balanceN,
       expectedPaycheck: parseAmount(paycheck) ?? 0,
       savingsGoal: parseAmount(savings) ?? 0,
       emergencyBuffer: parseAmount(emergency) ?? 0,
       spendingBuffer: parseAmount(buffer) ?? 0,
-      bills,
+      bills: billsList,
       expenses: [],
+      envelopes: defaultEnvelopes(pool),
       isActive: true,
       createdAt: new Date().toISOString(),
-    }),
-    [balance, paycheck, savings, emergency, buffer, bills, schedule, nextPayday],
-  );
+    };
+  }, [balance, paycheck, savings, emergency, buffer, bills, schedule, nextPayday]);
 
   const snap = calculateSafeSpend(draftCycle);
 

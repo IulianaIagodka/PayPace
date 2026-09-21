@@ -1,33 +1,64 @@
-/** Brand palette sampled from the Paypace app icon. */
+/** PayPace HUD palette — industrial resource management */
 export const colors = {
-  // Cream → soft mint wash (icon background / pale segment)
-  bgTop: '#FEFCF7',
-  bgMid: '#F2F6EE',
-  bgBottom: '#E8E3D9',
+  bg: '#0B0D0C',
+  panel: '#151917',
+  panelAlt: '#202622',
+  border: '#2A312C',
+  borderSoft: '#1C221E',
 
-  // "Pay" ink + muted green-gray
-  ink: '#182A22',
-  inkSecondary: '#5A6B62',
+  resource: '#7DFF56',
+  healthy: '#52D273',
+  warning: '#F2B544',
+  danger: '#E85A3F',
+  critical: '#D92525',
 
-  // Progress segments: forest → mid → lime → mint
-  accent: '#2D6B52',
-  accentMid: '#58AA7A',
-  accentLight: '#B1DCAE',
-  mint: '#E9F6DA',
-  accentSoft: 'rgba(45, 107, 82, 0.14)',
+  text: '#F0F2EA',
+  textSecondary: '#9A9F98',
+  textDim: '#6B716C',
 
-  // Warm sand from the recessed track (not terracotta)
-  warm: '#C4B5A0',
-  danger: '#B85147',
-  success: '#58AA7A',
-
-  whiteSoft: 'rgba(255,255,255,0.78)',
-  whiteSofter: 'rgba(255,255,255,0.62)',
+  // legacy aliases used by older screens during migration
+  bgTop: '#0B0D0C',
+  bgMid: '#0B0D0C',
+  bgBottom: '#0B0D0C',
+  ink: '#F0F2EA',
+  inkSecondary: '#9A9F98',
+  accent: '#7DFF56',
+  accentMid: '#52D273',
+  accentLight: '#52D273',
+  mint: '#202622',
+  accentSoft: 'rgba(125, 255, 86, 0.12)',
+  warm: '#F2B544',
+  success: '#52D273',
+  whiteSoft: '#151917',
+  whiteSofter: '#202622',
 };
-
-/** Left→right fill matching the icon progress pills. */
-export const paceGradient = ['#2D6B52', '#58AA7A', '#B1DCAE', '#E9F6DA'] as const;
 
 export const spacing = {
-  screen: 24,
+  screen: 20,
 };
+
+export type ResourceTone = 'healthy' | 'warning' | 'danger' | 'critical' | 'empty';
+
+export function toneForRatio(remainingRatio: number): ResourceTone {
+  if (remainingRatio <= 0) return 'critical';
+  if (remainingRatio < 0.15) return 'danger';
+  if (remainingRatio < 0.35) return 'warning';
+  return 'healthy';
+}
+
+export function colorForTone(tone: ResourceTone): string {
+  switch (tone) {
+    case 'healthy':
+      return colors.resource;
+    case 'warning':
+      return colors.warning;
+    case 'danger':
+      return colors.danger;
+    case 'critical':
+      return colors.critical;
+    default:
+      return colors.border;
+  }
+}
+
+export const paceGradient = [colors.resource, colors.healthy, colors.warning, colors.danger] as const;

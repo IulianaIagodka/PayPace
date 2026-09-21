@@ -16,11 +16,21 @@ export type ExpenseCategory =
   | 'food'
   | 'other';
 
+export type EnvelopeKey = 'food' | 'transport' | 'kids' | 'fun' | 'home' | 'other';
+
+export interface Envelope {
+  id: string;
+  key: EnvelopeKey;
+  title: string;
+  category: ExpenseCategory;
+  allocated: number;
+}
+
 export interface Bill {
   id: string;
   name: string;
   amount: number;
-  dueDate: string; // ISO
+  dueDate: string;
   category?: ExpenseCategory;
   isRecurring: boolean;
   isPaid: boolean;
@@ -31,9 +41,9 @@ export interface DailyExpense {
   id: string;
   name: string;
   amount: number;
-  date: string; // ISO
+  date: string;
   category?: ExpenseCategory;
-  /** Who logged this spend (shared household). */
+  envelopeKey?: EnvelopeKey;
   memberId?: string;
   memberName?: string;
   updatedAt?: string;
@@ -51,6 +61,7 @@ export interface PayCycle {
   spendingBuffer: number;
   bills: Bill[];
   expenses: DailyExpense[];
+  envelopes: Envelope[];
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -84,7 +95,6 @@ export interface AppSettings {
   billRemindersEnabled: boolean;
   paceWarningsEnabled: boolean;
   isPremium: boolean;
-  /** Display name used when logging shared spends. */
   displayName: string;
 }
 
@@ -92,11 +102,9 @@ export interface AppStoreData {
   settings: AppSettings;
   cycles: PayCycle[];
   household: Household | null;
-  /** This device's member id inside household.members */
   localMemberId: string | null;
 }
 
-/** Payload synced to the cloud for a shared household. */
 export interface SharedHouseholdPayload {
   household: Household;
   settings: Pick<AppSettings, 'currencyCode'>;
@@ -104,6 +112,8 @@ export interface SharedHouseholdPayload {
   revision: number;
   updatedAt: string;
 }
+
+export type TrajectoryLabel = 'WITH RESERVE' | 'ON TARGET' | 'LOW RESERVE' | 'DEFICIT';
 
 export interface SafeSpendSnapshot {
   remainingUntilPayday: number;
@@ -117,11 +127,14 @@ export interface SafeSpendSnapshot {
   reservedTotal: number;
   isAtRisk: boolean;
   projectedShortfallDays: number | null;
+  resourcesRemainingRatio: number;
+  trajectory: TrajectoryLabel;
+  projectedEndBalance: number;
 }
 
 export const defaultSettings: AppSettings = {
   hasCompletedOnboarding: false,
-  currencyCode: 'UAH',
+  currencyCode: 'PLN',
   notificationsEnabled: false,
   morningReminderEnabled: true,
   billRemindersEnabled: true,

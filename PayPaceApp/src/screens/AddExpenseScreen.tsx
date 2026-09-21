@@ -1,123 +1,113 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import {
-  AmountField,
-  ExpenseRow,
-  PrimaryButton,
-  ScreenBackground,
-  SoftCard,
-} from '../components/ui';
-import { currencySymbol, formatMoney, parsePositiveAmount, toDateKey } from '../services/formatting';
-import { guessCategory } from '../services/categories';
+import { AmountField, HudButton, Panel, ScreenBackground } from '../components/ui';
+import { currencySymbol, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { ensureEnvelopes } from '../services/envelopes';
+import type { EnvelopeKey } from '../models/types';
 import type { RootStackParamList } from '../navigation/types';
-import { calculateSafeSpend } from '../models/calculator';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
 
 export function AddExpenseScreen({ navigation }: Props) {
-  const { addExpense, deleteExpense, store, activeCycle } = useBudget();
+  const { addExpense, store, activeCycle } = useBudget();
   const suffix = currencySymbol(store.settings.currencyCode);
-  const [name, setName] = useState('');
+  const envelopes = activeCycle ? ensureEnvelopes(activeCycle) : [];
   const [amount, setAmount] = useState('');
-  const [confirm, setConfirm] = useState<number | null>(null);
+  const [note, setNote] = useState('');
+  const [envelopeKey, setEnvelopeKey] = useState<EnvelopeKey>(envelopes[0]?.key ?? 'other');
+  const [busy, setBusy] = useState(false);
+
+  const selected = envelopes.find((e) => e.key === envelopeKey) ?? envelopes[0];
 
   const onAdd = async () => {
     const value = parsePositiveAmount(amount);
-    if (!name.trim() || value == null || !activeCycle) return;
-    const trimmed = name.trim();
-    const category = guessCategory(trimmed);
-    await addExpense({ name: trimmed, amount: value, date: toDateKey(new Date()), category });
-    const after = calculateSafeSpend({
-      ...activeCycle,
-      expenses: [
-        { id: 'temp', name: trimmed, amount: value, date: toDateKey(new Date()), category },
-        ...activeCycle.expenses,
-      ],
-    });
-    setConfirm(after.safeToSpendToday);
-    setName('');
-    setAmount('');
+    if (value == null || !selected) return;
+    setBusy(true);
+    try {
+      await addExpense({
+        name: note.trim() || selected.title,
+        amount: value,
+        date: toDateKey(new Date()),
+        category: selected.category,
+        envelopeKey: selected.key,
+      });
+      navigation.goBack();
+    } finally {
+      setBusy(false);
+    }
   };
-
-  const expenses = activeCycle?.expenses ?? [];
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Add spending</Text>
-        <Text style={styles.sub}>Name and amount. Or scan a receipt from the home button.</Text>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder="What did you spend on?"
-          placeholderTextColor={colors.inkSecondary}
-          style={styles.textField}
-        />
-        <AmountField label="Amount" value={amount} onChangeText={setAmount} suffix={suffix} />
-        {confirm != null && (
-          <SoftCard style={{ backgroundColor: colors.accentSoft }}>
-            <Text style={styles.sub}>Logged</Text>
-            <Text style={styles.confirm}>
-              Safe today: {formatMoney(confirm, store.settings.currencyCode)}
-            </Text>
-          </SoftCard>
-        )}
-        <PrimaryButton
-          title="Add expense"
+        <Text style={styles.title}>ADD EXPENSE</Text>
+        <Text style={styles.sub}>Amount · category · optional note</Text>
+
+        <AmountField label="AMOUNT" value={amount} onChangeText={setAmount} suffix={suffix} />
+
+        <Text style={styles.label}>CATEGORY</Text>
+        <View style={styles.grid}>
+          {envelopes.map((env) => {
+            const on = env.key === envelopeKey;
+            return (
+              <Pressable
+                key={env.id}
+                onPress={() => setEnvelopeKey(env.key)}
+                style={[styles.cat, on && styles.catOn]}
+              >
+                <Text style={[styles.catText, on && styles.catTextOn]}>{env.title}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Panel>
+          <Text style={styles.label}>NOTE (OPTIONAL)</Text>
+          <TextInput
+            value={note}
+            onChangeText={setNote}
+            placeholder="What drained energy?"
+            placeholderTextColor={colors.textDim}
+            style={styles.note}
+          />
+        </Panel>
+
+        <HudButton
+          title={busy ? 'LOGGING…' : 'LOG EXPENSE'}
           onPress={onAdd}
-          disabled={!name.trim() || parsePositiveAmount(amount) == null}
+          disabled={parsePositiveAmount(amount) == null || busy}
         />
-
-        {expenses.length > 0 && (
-          <>
-            <Text style={styles.section}>This cycle</Text>
-            <SoftCard>
-              {expenses.map((e) => (
-                <ExpenseRow
-                  key={e.id}
-                  expense={e}
-                  currencyCode={store.settings.currencyCode}
-                  onDelete={() =>
-                    Alert.alert('Delete spending?', e.name, [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Delete',
-                        style: 'destructive',
-                        onPress: async () => {
-                          await deleteExpense(e.id);
-                          setConfirm(null);
-                        },
-                      },
-                    ])
-                  }
-                />
-              ))}
-            </SoftCard>
-          </>
-        )}
-
-        <PrimaryButton title="Done" onPress={() => navigation.goBack()} />
+        <HudButton title="CANCEL" onPress={() => navigation.goBack()} variant="secondary" />
       </ScrollView>
     </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 24, gap: 16, paddingBottom: 40 },
-  title: { fontSize: 32, fontWeight: '700', color: colors.ink },
-  sub: { color: colors.inkSecondary, fontSize: 15 },
-  section: { color: colors.ink, fontSize: 18, fontWeight: '700', marginTop: 8 },
-  textField: {
-    backgroundColor: colors.whiteSoft,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.ink,
+  pad: { padding: 20, gap: 14, paddingBottom: 40 },
+  title: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 1.5 },
+  sub: { color: colors.textSecondary, fontSize: 13 },
+  label: { color: colors.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 1.4 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  cat: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.panel,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 10,
+    minWidth: '30%',
   },
-  confirm: { color: colors.accent, fontSize: 22, fontWeight: '700' },
+  catOn: { borderColor: colors.resource, backgroundColor: '#14301A' },
+  catText: { color: colors.textSecondary, fontWeight: '700', fontSize: 11, letterSpacing: 1 },
+  catTextOn: { color: colors.resource },
+  note: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+    paddingVertical: 4,
+  },
 });

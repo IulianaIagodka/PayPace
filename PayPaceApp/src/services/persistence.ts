@@ -1,13 +1,34 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { defaultSettings, emptyStore, type AppStoreData } from '../models/types';
+import { defaultSettings, emptyStore, type AppStoreData, type PayCycle } from '../models/types';
+import { defaultEnvelopes, ensureEnvelopes } from './envelopes';
+import { asMoney } from './formatting';
 
 const KEY = 'paypace.app.store.v1';
+
+function migrateCycle(cycle: PayCycle): PayCycle {
+  const withEnv = {
+    ...cycle,
+    envelopes: cycle.envelopes?.length
+      ? cycle.envelopes
+      : ensureEnvelopes({ ...cycle, envelopes: [] }),
+  };
+  if (!withEnv.envelopes.length) {
+    const pool =
+      asMoney(cycle.currentBalance) -
+      cycle.bills.filter((b) => !b.isPaid).reduce((s, b) => s + asMoney(b.amount), 0) -
+      asMoney(cycle.savingsGoal) -
+      asMoney(cycle.emergencyBuffer) -
+      asMoney(cycle.spendingBuffer);
+    withEnv.envelopes = defaultEnvelopes(Math.max(pool, 0));
+  }
+  return withEnv;
+}
 
 function migrate(raw: unknown): AppStoreData {
   const data = (raw ?? {}) as Partial<AppStoreData>;
   return {
     settings: { ...defaultSettings, ...(data.settings ?? {}) },
-    cycles: Array.isArray(data.cycles) ? data.cycles : [],
+    cycles: Array.isArray(data.cycles) ? data.cycles.map((c) => migrateCycle(c as PayCycle)) : [],
     household: data.household ?? null,
     localMemberId: data.localMemberId ?? null,
   };

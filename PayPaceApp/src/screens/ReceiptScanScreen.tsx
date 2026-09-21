@@ -9,10 +9,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { PrimaryButton, ScreenBackground, SecondaryButton, SoftCard } from '../components/ui';
+import { PrimaryButton, ScreenBackground, SecondaryButton, SegmentedBar, SoftCard } from '../components/ui';
 import { categoryTitle } from '../services/categories';
 import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import { formatMoney } from '../services/formatting';
@@ -22,7 +21,7 @@ import {
   type ReceiptScanResult,
 } from '../services/receiptAnalyzer';
 import { useBudget } from '../store/BudgetContext';
-import { colors, paceGradient } from '../theme/colors';
+import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
 import type { ExpenseCategory } from '../models/types';
 import { SPENDING_CATEGORIES } from '../services/categories';
@@ -132,7 +131,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
       })),
     );
     Alert.alert('Saved', 'Receipt items added to this pay cycle.', [
-      { text: 'OK', onPress: () => navigation.navigate('Home') },
+      { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
     ]);
   };
 
@@ -219,12 +218,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.lineName}>{row.title}</Text>
                   <View style={styles.barTrack}>
-                    <LinearGradient
-                      colors={[...paceGradient]}
-                      start={{ x: 0, y: 0.5 }}
-                      end={{ x: 1, y: 0.5 }}
-                      style={[styles.barFill, { width: `${Math.max(row.share * 100, 4)}%` }]}
-                    />
+                    <SegmentedBar ratio={row.share} segments={8} height={8} />
                   </View>
                 </View>
                 <Text style={styles.amount}>{formatMoney(row.spent, currency)}</Text>

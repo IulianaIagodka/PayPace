@@ -21,12 +21,14 @@ import {
   type PayCycle,
   type SafeSpendSnapshot,
   type SharedHouseholdPayload,
+  type TrajectoryLabel,
 } from '../models/types';
 import { loadStore, saveStore } from '../services/persistence';
 import { asMoney, toDateKey } from '../services/formatting';
 import { getDeviceId } from '../services/deviceIdentity';
 import { generateInviteCode, normalizeInviteCode } from '../services/inviteCode';
 import { mergeSharedPayloads, toSharedPayload } from '../services/householdMerge';
+import { ensureEnvelopes, categoryToEnvelopeKey } from '../services/envelopes';
 import {
   cloudFetchById,
   cloudFetchByInviteCode,
@@ -57,6 +59,7 @@ type BudgetContextValue = {
   replaceActiveCycle: (cycle: PayCycle) => Promise<void>;
   resetAll: () => Promise<void>;
   setPremium: (enabled: boolean) => Promise<void>;
+  setEnvelopes: (envelopes: PayCycle['envelopes']) => Promise<void>;
   createHousehold: (displayName: string, householdName?: string) => Promise<Household>;
   joinHousehold: (inviteCode: string, displayName: string) => Promise<Household>;
   leaveHousehold: () => Promise<void>;
@@ -238,6 +241,9 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
             reservedTotal: 0,
             isAtRisk: false,
             projectedShortfallDays: null,
+            resourcesRemainingRatio: 0,
+            trajectory: 'ON TARGET' as TrajectoryLabel,
+            projectedEndBalance: 0,
           },
     [activeCycle],
   );
@@ -262,10 +268,15 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     syncStatus,
     syncError,
     completeOnboarding: async (cycle) => {
+      const withEnv = {
+        ...cycle,
+        envelopes: cycle.envelopes?.length ? cycle.envelopes : ensureEnvelopes(cycle),
+        isActive: true,
+      };
       await commit({
         ...store,
         settings: { ...store.settings, hasCompletedOnboarding: true },
-        cycles: [{ ...withCycleTouch(cycle), isActive: true }],
+        cycles: [withCycleTouch(withEnv)],
       });
     },
     updateSettings: async (patch) => {
@@ -328,10 +339,12 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       const amount = Math.max(asMoney(expense.amount), 0);
       if (amount <= 0) return;
       const attr = attribution();
+      const envelopeKey = expense.envelopeKey ?? categoryToEnvelopeKey(expense.category);
       const next: DailyExpense = {
         ...expense,
         ...attr,
         amount,
+        envelopeKey,
         id: expense.id ?? newId(),
         date: expense.date ?? toDateKey(new Date()),
       };
@@ -339,7 +352,11 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id
-            ? withCycleTouch({ ...c, expenses: [next, ...c.expenses] })
+            ? withCycleTouch({
+                ...c,
+                envelopes: ensureEnvelopes(c),
+                expenses: [next, ...c.expenses],
+              })
             : c,
         ),
       });
@@ -355,6 +372,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
             ...expense,
             ...attr,
             amount,
+            envelopeKey: expense.envelopeKey ?? categoryToEnvelopeKey(expense.category),
             id: expense.id ?? newId(),
             date: expense.date ?? toDateKey(new Date()),
           } satisfies DailyExpense;
@@ -385,15 +403,29 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       });
     },
     replaceActiveCycle: async (cycle) => {
+      const withEnv = {
+        ...cycle,
+        envelopes: cycle.envelopes?.length ? cycle.envelopes : ensureEnvelopes(cycle),
+        isActive: true,
+      };
       await commit({
         ...store,
         settings: { ...store.settings, hasCompletedOnboarding: true },
-        cycles: [{ ...withCycleTouch(cycle), isActive: true }],
+        cycles: [withCycleTouch(withEnv)],
       });
     },
     resetAll: async () => commit(emptyStore, { skipPush: true }),
     setPremium: async (enabled) => {
       await commit({ ...store, settings: { ...store.settings, isPremium: enabled } });
+    },
+    setEnvelopes: async (envelopes) => {
+      if (!activeCycle) return;
+      await commit({
+        ...store,
+        cycles: store.cycles.map((c) =>
+          c.id === activeCycle.id ? withCycleTouch({ ...c, envelopes }) : c,
+        ),
+      });
     },
     createHousehold: async (displayName, householdName) => {
       const trimmed = displayName.trim();

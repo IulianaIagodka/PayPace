@@ -1,12 +1,22 @@
+export type MainTabParamList = {
+  Home: undefined;
+  Activity: undefined;
+  Status: undefined;
+  Settings: undefined;
+};
+
 export type RootStackParamList = {
   Onboarding: undefined;
-  Home: undefined;
+  MainTabs: undefined;
   AddExpense: undefined;
   Bills: undefined;
   PayCycle: undefined;
   History: undefined;
-  Settings: undefined;
+  Allocate: undefined;
   ReceiptScan: undefined;
   CategoryBalances: undefined;
   SharedBudget: undefined;
+  // legacy names kept so older imports typecheck during transition
+  Home: undefined;
+  Settings: undefined;
 };
