@@ -228,9 +228,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontWeight: '700',
     letterSpacing: -0.8,
-    textShadowColor: 'rgba(255, 34, 0, 0.35)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
   },
   metaRow: {
     flexDirection: 'row',
@@ -300,9 +297,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   sub: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, fontFamily: fonts.body },
-  alert: { borderColor: colors.danger },
+  alert: { borderColor: colors.warning },
   alertTitle: {
-    color: colors.danger,
+    color: colors.warning,
     fontWeight: '700',
     letterSpacing: 1.6,
     fontSize: 12,

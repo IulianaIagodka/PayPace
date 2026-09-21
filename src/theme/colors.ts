@@ -20,8 +20,9 @@ export const colors = {
   healthy: '#55FF00',
   /** Classic Doom ammo / readout yellow */
   warning: '#FFCC00',
-  danger: '#FF2200',
-  critical: '#990000',
+  /** Industrial alert red — not blood */
+  danger: '#D94A30',
+  critical: '#A83828',
 
   text: '#E8E0D0',
   textSecondary: '#9A9080',

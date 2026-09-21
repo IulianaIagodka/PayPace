@@ -88,7 +88,7 @@ export function Panel({
   );
 }
 
-export function StatusChip({ label = 'ARMED' }: { label?: string }) {
+export function StatusChip({ label = 'ONLINE' }: { label?: string }) {
   return (
     <View style={styles.chip}>
       <View style={styles.chipDot} />
@@ -549,8 +549,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     borderWidth: 2,
-    borderColor: colors.danger,
-    backgroundColor: 'rgba(255, 34, 0, 0.12)',
+    borderColor: colors.resource,
+    backgroundColor: colors.resourceSoft,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 0,
@@ -559,10 +559,10 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 0,
-    backgroundColor: colors.danger,
+    backgroundColor: colors.resource,
   },
   chipText: {
-    color: colors.danger,
+    color: colors.resource,
     fontSize: 11,
     fontFamily: fonts.label,
     fontWeight: '700',
