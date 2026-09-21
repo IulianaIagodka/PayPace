@@ -205,7 +205,7 @@ export function HomeScreen({ navigation }: Props) {
           </Panel>
         )}
 
-        <HudButton title="ADD EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
+        <HudButton title="+ ADD EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
       </ScrollView>
     </ScreenBackground>
   );

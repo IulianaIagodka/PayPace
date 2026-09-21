@@ -137,7 +137,7 @@ export function HudButton({
             variant === 'danger' && { color: colors.danger },
           ]}
         >
-          {title.replace(/^\+\s*/, '')}
+          {title}
         </Text>
       </View>
     </Pressable>
