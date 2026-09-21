@@ -1,0 +1,13 @@
+{
+  "name": "paypace-monorepo",
+  "private": true,
+  "description": "Run Expo/EAS commands from PayPaceApp — root scripts forward there.",
+  "scripts": {
+    "start": "npm --prefix PayPaceApp start",
+    "typecheck": "npm --prefix PayPaceApp run typecheck",
+    "build:ios": "npm --prefix PayPaceApp run build:ios",
+    "submit:ios": "npm --prefix PayPaceApp run submit:ios",
+    "build:ios:submit": "npm --prefix PayPaceApp run build:ios:submit",
+    "eas": "npm --prefix PayPaceApp exec -- eas"
+  }
+}

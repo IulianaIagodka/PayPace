@@ -11,13 +11,27 @@
 
 ## Expo → TestFlight (recommended)
 
+**Important:** `app.json` / `eas.json` live in `PayPaceApp/`.  
+If you run `eas build` from the repo root you get:
+
+`Run this command inside a project directory.`
+
 ```bash
 cd PayPaceApp
 npm install
 npx eas-cli login
-npx eas-cli init
+npm run build:ios
+# or:
 npm run build:ios:submit
 ```
+
+From the repo root you can also use the forwarder scripts:
+
+```bash
+npm run build:ios
+```
+
+`npm warn deprecated rimraf/glob` during install is noisy but not a build failure.
 
 Details: [`PayPaceApp/TESTFLIGHT-EAS.md`](PayPaceApp/TESTFLIGHT-EAS.md)
 

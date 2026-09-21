@@ -3,6 +3,10 @@
 Project: [@iuliana.iagodka/paypace](https://expo.dev/accounts/iuliana.iagodka/projects/paypace)  
 Bundle ID: `app.paypace.PayPace`
 
+> Always run EAS from **`PayPaceApp/`** (or use root `npm run build:ios`).  
+> Root of the git repo is not an Expo project — that causes  
+> `Run this command inside a project directory`.
+
 ## One-time Apple credentials (on your Mac)
 
 EAS is logged in, but Apple signing must be set up once interactively:
