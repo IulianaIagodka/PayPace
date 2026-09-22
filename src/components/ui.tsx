@@ -90,11 +90,27 @@ export function Panel({
   );
 }
 
-export function StatusChip({ label = 'ONLINE' }: { label?: string }) {
+export function StatusChip({
+  label = 'OK',
+  tone = 'ok',
+}: {
+  label?: string;
+  /** Money situation — colors the chip. */
+  tone?: 'ok' | 'tense' | 'critical';
+}) {
+  const accent =
+    tone === 'critical' ? colors.danger : tone === 'tense' ? colors.warning : colors.resource;
+  const bg =
+    tone === 'critical'
+      ? 'rgba(196, 90, 66, 0.12)'
+      : tone === 'tense'
+        ? 'rgba(212, 168, 74, 0.12)'
+        : colors.resourceSoft;
+
   return (
-    <View style={styles.chip}>
-      <View style={styles.chipDot} />
-      <Text style={styles.chipText}>{label}</Text>
+    <View style={[styles.chip, { borderColor: accent, backgroundColor: bg }]}>
+      <View style={[styles.chipDot, { backgroundColor: accent }]} />
+      <Text style={[styles.chipText, { color: accent }]}>{label}</Text>
     </View>
   );
 }

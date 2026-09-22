@@ -21,6 +21,7 @@ import { fonts } from '../theme/fonts';
 import { hud, hudType } from '../theme/hud';
 import { formatMoney, formatDays } from '../services/formatting';
 import { envelopeStatuses } from '../services/envelopes';
+import { moneyStatusFromSnapshot, moneyStatusLabel } from '../services/moneyStatus';
 import type { PaceHorizon } from '../models/calculator';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
@@ -107,6 +108,7 @@ export function HomeScreen({ navigation }: Props) {
   const availableLabel = isWeek ? 'AVAILABLE THIS WEEK' : 'AVAILABLE UNTIL PAYDAY';
   const safeColor =
     snapshot.remainingUntilPayday < 0 ? colors.danger : colors.safeValue;
+  const moneyStatus = moneyStatusFromSnapshot(snapshot);
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
@@ -115,7 +117,7 @@ export function HomeScreen({ navigation }: Props) {
           <Text style={styles.brand}>
             PAY<Text style={styles.brandAccent}>PACE</Text>
           </Text>
-          <StatusChip />
+          <StatusChip label={moneyStatusLabel(moneyStatus)} tone={moneyStatus} />
         </View>
 
         <Animated.View style={{ opacity: heroPulse }}>
