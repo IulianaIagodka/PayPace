@@ -131,11 +131,11 @@ assertEq(reservesLabelFor('month'), 'RESERVES · UNTIL CHECKPOINT', 'month reser
 assertEq(reservesAmountFor('week', snap()), 1000, 'week uses week safe');
 assertEq(reservesAmountFor('month', snap()), 4000, 'month uses remaining');
 assertEq(reservesAmountFor('month', snap({ remainingUntilPayday: -50 })), 0, 'floor at 0');
-assertEq(runwayMetaFor('week', snap()), '5D RUNWAY · WEEK', 'week runway meta');
-assertEq(runwayMetaFor('month', snap()), '20D TO CHECKPOINT', 'month runway meta');
+assertEq(runwayMetaFor('week', snap()), '5 days left in week', 'week runway meta');
+assertEq(runwayMetaFor('month', snap()), '20 days to payday', 'month runway meta');
 assertEq(
   weekCycleHint('week', 4000, 20, (n) => `$${n}`),
-  'CYCLE RESERVE $4000 · 20D TO PAYDAY',
+  'Cycle left $4000 · 20 days to payday',
   'week hint text',
 );
 assertEq(weekCycleHint('month', 4000, 20, (n) => `$${n}`), null, 'month has no week hint');
@@ -191,7 +191,7 @@ section('controlPanel · buildControlPanelView');
   assertEq(healthy.reservesLabel, 'RESERVES · UNTIL CHECKPOINT', 'view month reserves label');
   assertEq(healthy.reservesAmount, 4000, 'view reserves amount');
   assertEq(healthy.resourcesPct, 80, 'view pct');
-  assertEq(healthy.runwayLabel, '20D TO CHECKPOINT', 'view runway');
+  assertEq(healthy.runwayLabel, '20 days to payday', 'view runway');
   assertEq(healthy.weekHint, null, 'month weekHint null');
   assertEq(healthy.recommendedPacing, 200, 'view pacing');
   assertEq(healthy.burnDaily, 100, 'view burn');
@@ -202,8 +202,8 @@ section('controlPanel · buildControlPanelView');
   const week = buildControlPanelView(snap(), 'week', (n) => `PLN ${n}`);
   assertEq(week.reservesLabel, 'RESERVES · THIS WEEK', 'week label');
   assertEq(week.reservesAmount, 1000, 'week amount');
-  assertEq(week.runwayLabel, '5D RUNWAY · WEEK', 'week runway');
-  assert(week.weekHint?.includes('CYCLE RESERVE'), 'week hint present');
+  assertEq(week.runwayLabel, '5 days left in week', 'week runway');
+  assert(week.weekHint?.includes('Cycle left'), 'week hint present');
   assertEq(week.periodShare, 0.25, 'week share');
   assert(week.isWeekHorizon, 'week horizon flag');
 
