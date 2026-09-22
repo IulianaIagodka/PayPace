@@ -1,51 +1,51 @@
-/** PayPace HUD — Doom industrial, evening-friendly (less acid neon) */
+/** PayPace HUD — dark sci-fi resource console (industrial, not luxury fintech) */
 export const colors = {
-  bg: '#0A0806',
-  bgGrid: '#120E0A',
+  bg: '#070605',
+  bgGrid: '#12100C',
   panel: '#1A1612',
-  panelRaised: '#242018',
-  panelAlt: '#2A241C',
-  panelDeep: '#100E0B',
-  border: '#5A5040',
-  borderBright: '#9A8A6A',
-  borderSoft: '#1C1814',
-  metal: '#B0A080',
-  metalDim: '#6A6050',
+  panelRaised: '#262018',
+  panelAlt: '#2C261E',
+  panelDeep: '#0E0C0A',
+  border: '#5C5040',
+  borderBright: '#A09070',
+  borderSoft: '#1A1612',
+  metal: '#B8A888',
+  metalDim: '#6E6454',
 
-  /** Muted olive resource green — readable, not eye-searing */
+  /** Phosphor resource green — system-healthy, not neon candy */
   resource: '#6FAF45',
   resourceDim: '#3D6E28',
-  resourceGlow: 'rgba(111, 175, 69, 0.22)',
-  resourceSoft: 'rgba(111, 175, 69, 0.10)',
+  resourceGlow: 'rgba(111, 175, 69, 0.28)',
+  resourceSoft: 'rgba(111, 175, 69, 0.12)',
   healthy: '#6FAF45',
-  /** Soft amber — not neon yellow */
+  /** Soft amber — paced warning */
   warning: '#D4A84A',
-  /** Industrial alert red — not blood */
+  /** Industrial alert red */
   danger: '#C45A42',
   critical: '#9A3A2C',
 
-  text: '#E4DCD0',
+  text: '#E8E0D4',
   textSecondary: '#9A9080',
   textDim: '#5A5048',
-  /** Calm readout — warm off-white, not acid yellow */
-  safeValue: '#E0D8C4',
-  ammo: '#D8C890',
+  /** Calm readout — warm off-white */
+  safeValue: '#E2DAC6',
+  ammo: '#DCCEA0',
 
   // legacy aliases
-  bgTop: '#0A0806',
-  bgMid: '#0A0806',
-  bgBottom: '#0A0806',
-  ink: '#E4DCD0',
+  bgTop: '#070605',
+  bgMid: '#070605',
+  bgBottom: '#070605',
+  ink: '#E8E0D4',
   inkSecondary: '#9A9080',
   accent: '#6FAF45',
   accentMid: '#6FAF45',
   accentLight: '#6FAF45',
-  mint: '#2A241C',
-  accentSoft: 'rgba(111, 175, 69, 0.10)',
+  mint: '#2C261E',
+  accentSoft: 'rgba(111, 175, 69, 0.12)',
   warm: '#D4A84A',
   success: '#6FAF45',
   whiteSoft: '#1A1612',
-  whiteSofter: '#2A241C',
+  whiteSofter: '#2C261E',
 };
 
 export const spacing = {
