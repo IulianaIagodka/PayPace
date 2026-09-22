@@ -102,7 +102,6 @@ export function HomeScreen({ navigation }: Props) {
     isWeek ? snapshot.safeToSpendThisWeek : snapshot.safeToSpendThisMonth,
     0,
   );
-  const periodDays = isWeek ? snapshot.daysLeftInWeek : snapshot.daysLeftInMonth;
   const periodShare = isWeek ? snapshot.weekShare : snapshot.monthShare;
   const horizonLabel = isWeek ? 'WEEK' : 'CYCLE';
   const availableLabel = isWeek ? 'AVAILABLE THIS WEEK' : 'AVAILABLE UNTIL PAYDAY';
@@ -137,17 +136,9 @@ export function HomeScreen({ navigation }: Props) {
           <View style={styles.metaRow}>
             <HudMeta>{pct}% REMAINING</HudMeta>
             <HudMeta style={styles.daysMeta}>
-              {isWeek
-                ? `${formatDays(periodDays)} left in week`
-                : `${formatDays(snapshot.daysUntilPayday)} to payday`}
+              {formatDays(snapshot.daysUntilPayday)} to payday
             </HudMeta>
           </View>
-          {isWeek ? (
-            <Text style={styles.weekHint}>
-              Cycle left {formatMoney(available, currency)} ·{' '}
-              {formatDays(snapshot.daysUntilPayday)} to payday
-            </Text>
-          ) : null}
         </HUDPanel>
 
         {snapshot.projectedShortfallDays != null ? (
@@ -254,14 +245,6 @@ const styles = StyleSheet.create({
   daysMeta: {
     textTransform: 'none',
     letterSpacing: 0.4,
-  },
-  weekHint: {
-    color: colors.textDim,
-    fontSize: 11,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-    textTransform: 'none',
   },
   railBlock: { gap: hud.gap },
   rail: { gap: 10, paddingRight: 8, paddingVertical: 2 },
