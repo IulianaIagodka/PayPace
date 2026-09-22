@@ -89,9 +89,9 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#100E0B',
-          borderTopColor: colors.borderBright,
-          borderTopWidth: 2,
+          backgroundColor: '#0C1016',
+          borderTopColor: colors.border,
+          borderTopWidth: 1.5,
           height: 50 + bottomPad,
           paddingBottom: bottomPad,
           paddingTop: 6,

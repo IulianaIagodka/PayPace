@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     minWidth: '30%',
   },
-  catOn: { borderColor: colors.resource, backgroundColor: '#14301A' },
+  catOn: { borderColor: colors.resource, backgroundColor: '#143040' },
   catText: { color: colors.textSecondary, fontWeight: '700', fontSize: 11, letterSpacing: 1 },
   catTextOn: { color: colors.resource },
   note: {

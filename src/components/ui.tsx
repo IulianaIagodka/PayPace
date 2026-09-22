@@ -38,13 +38,22 @@ export function ScreenBackground({
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={['#1A1410', '#0C0A08', '#060504']}
-        locations={[0, 0.45, 1]}
+        colors={['#151C26', '#0C1016', '#070A0E']}
+        locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
-      {/* Scanline grit — Doom CRT feel */}
+      <View pointerEvents="none" style={styles.gridOverlay}>
+        {Array.from({ length: 20 }).map((_, i) => (
+          <View key={`h-${i}`} style={styles.gridH} />
+        ))}
+      </View>
+      <View pointerEvents="none" style={[styles.gridOverlay, styles.gridCols]}>
+        {Array.from({ length: 10 }).map((_, i) => (
+          <View key={`v-${i}`} style={styles.gridV} />
+        ))}
+      </View>
       <View pointerEvents="none" style={styles.scanlines}>
-        {Array.from({ length: 48 }).map((_, i) => (
+        {Array.from({ length: 40 }).map((_, i) => (
           <View key={i} style={styles.scanline} />
         ))}
       </View>
@@ -56,7 +65,7 @@ export function ScreenBackground({
   );
 }
 
-/** Steel plate — thick bevel + rivets */
+/** Armor plate — bevel corners + cyan glow option */
 export function Panel({
   children,
   style,
@@ -70,18 +79,19 @@ export function Panel({
   glow?: boolean;
   innerGlow?: boolean;
 }) {
+  const corner = glow || innerGlow ? colors.resource : colors.borderBright;
   return (
     <View style={[styles.panelWrap, glow && styles.panelGlow, style]}>
       <LinearGradient
-        colors={alt ? ['#2E2820', '#1A1612'] : ['#262218', '#141210']}
+        colors={alt ? ['#243040', '#161E28'] : ['#1C2430', '#121820']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={[styles.panel, innerGlow && styles.panelInnerGlow]}
       >
-        <View style={[styles.bevel, styles.bevelTL]} />
-        <View style={[styles.bevel, styles.bevelTR]} />
-        <View style={[styles.bevel, styles.bevelBL]} />
-        <View style={[styles.bevel, styles.bevelBR]} />
+        <View style={[styles.bevel, styles.bevelTL, { borderColor: corner }]} />
+        <View style={[styles.bevel, styles.bevelTR, { borderColor: corner }]} />
+        <View style={[styles.bevel, styles.bevelBL, { borderColor: corner }]} />
+        <View style={[styles.bevel, styles.bevelBR, { borderColor: corner }]} />
         <View style={[styles.rivet, styles.rivetTL]} />
         <View style={[styles.rivet, styles.rivetTR]} />
         <View style={[styles.rivet, styles.rivetBL]} />
@@ -127,7 +137,7 @@ export function HudButton({
     >
       {variant === 'primary' ? (
         <LinearGradient
-          colors={['#1E3318', '#10180E']}
+          colors={['#163048', '#0C1824']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -216,7 +226,7 @@ export function SegmentedBar({
             ? segmentColor(i, lit, tone)
             : i < lit
               ? colorForTone(tone)
-              : '#121512';
+              : '#0E141A';
         return (
           <View
             key={i}
@@ -225,9 +235,9 @@ export function SegmentedBar({
               compact && styles.barSegCompact,
               {
                 backgroundColor: bg,
-                shadowColor: i < lit && tone === 'healthy' ? colors.resource : 'transparent',
-                shadowOpacity: i < lit ? 0.18 : 0,
-                shadowRadius: compact ? 1 : 2,
+                shadowColor: i < lit ? colorForTone(tone) : 'transparent',
+                shadowOpacity: i < lit ? 0.45 : 0,
+                shadowRadius: compact ? 2 : 4,
               },
             ]}
           />
@@ -286,6 +296,7 @@ export function CategoryCell({
   periodShare = 1,
   horizonLabel = 'CYCLE',
   depleted = false,
+  layout = 'grid',
 }: {
   title: string;
   iconKey: string;
@@ -299,14 +310,16 @@ export function CategoryCell({
   periodShare?: number;
   horizonLabel?: string;
   depleted?: boolean;
+  /** `rail` = fixed-width vertical pod for horizontal scroll */
+  layout?: 'grid' | 'rail';
 }) {
   const cycleRemaining = Math.max(allocated - spent, 0);
   const periodRemaining = cycleRemaining * Math.max(0, Math.min(periodShare, 1));
   const remainingRatio = allocated > 0 ? cycleRemaining / allocated : 0;
   const enter = useRef(new Animated.Value(0)).current;
   const muted = depleted || remainingRatio <= 0;
-  // Mid reserves tip amber; high reserves stay full green — status via bar behavior only.
   const tipAmber = tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
+  const isRail = layout === 'rail';
 
   useEffect(() => {
     Animated.timing(enter, {
@@ -323,7 +336,8 @@ export function CategoryCell({
   return (
     <Animated.View
       style={{
-        flex: 1,
+        flex: isRail ? undefined : 1,
+        width: isRail ? 118 : undefined,
         opacity: enter,
         transform: [
           {
@@ -335,33 +349,61 @@ export function CategoryCell({
         ],
       }}
     >
-      <Pressable onPress={onPress} disabled={!onPress} style={{ flex: 1, opacity: muted ? 0.48 : 1 }}>
-        <Panel style={styles.cell}>
-          <View style={styles.cellTitleRow}>
-            <Ionicons
-              name={iconName}
-              size={15}
-              color={muted ? colors.textDim : colors.textSecondary}
-            />
-            <Text style={[styles.cellTitle, muted && { color: colors.textDim }]} numberOfLines={1}>
-              {title}
-            </Text>
-            <Text style={styles.cellHorizon}>{muted ? 'EMPTY' : horizonLabel}</Text>
-          </View>
-          <Text style={[styles.cellAmount, muted && { color: colors.textDim }]} numberOfLines={1}>
-            {formatMoney(periodRemaining, currencyCode)}
-            <Text style={styles.cellAmountDim}>
-              {' '}
-              / {formatMoney(cycleRemaining, currencyCode)}
-            </Text>
-          </Text>
-          <SegmentedBar
-            ratio={remainingRatio}
-            segments={8}
-            height={9}
-            compact
-            tipAmber={tipAmber}
-          />
+      <Pressable onPress={onPress} disabled={!onPress} style={{ flex: isRail ? undefined : 1, opacity: muted ? 0.48 : 1 }}>
+        <Panel style={isRail ? styles.cellRail : styles.cell} glow={!muted && isRail}>
+          {isRail ? (
+            <>
+              <View style={styles.cellIconWrap}>
+                <Ionicons
+                  name={iconName}
+                  size={22}
+                  color={muted ? colors.textDim : colors.resource}
+                />
+              </View>
+              <Text style={[styles.cellTitleRail, muted && { color: colors.textDim }]} numberOfLines={1}>
+                {title}
+              </Text>
+              <Text style={[styles.cellAmountRail, muted && { color: colors.textDim }]} numberOfLines={1}>
+                {formatMoney(spent, currencyCode)}
+                <Text style={styles.cellAmountDim}> / {formatMoney(allocated, currencyCode)}</Text>
+              </Text>
+              <SegmentedBar
+                ratio={remainingRatio}
+                segments={6}
+                height={8}
+                compact
+                tipAmber={tipAmber}
+              />
+            </>
+          ) : (
+            <>
+              <View style={styles.cellTitleRow}>
+                <Ionicons
+                  name={iconName}
+                  size={15}
+                  color={muted ? colors.textDim : colors.textSecondary}
+                />
+                <Text style={[styles.cellTitle, muted && { color: colors.textDim }]} numberOfLines={1}>
+                  {title}
+                </Text>
+                <Text style={styles.cellHorizon}>{muted ? 'EMPTY' : horizonLabel}</Text>
+              </View>
+              <Text style={[styles.cellAmount, muted && { color: colors.textDim }]} numberOfLines={1}>
+                {formatMoney(periodRemaining, currencyCode)}
+                <Text style={styles.cellAmountDim}>
+                  {' '}
+                  / {formatMoney(cycleRemaining, currencyCode)}
+                </Text>
+              </Text>
+              <SegmentedBar
+                ratio={remainingRatio}
+                segments={8}
+                height={9}
+                compact
+                tipAmber={tipAmber}
+              />
+            </>
+          )}
         </Panel>
       </Pressable>
     </Animated.View>
@@ -428,13 +470,22 @@ export function ExpenseRow({
   expense,
   currencyCode,
   onDelete,
+  showChevron,
 }: {
   expense: DailyExpense;
   currencyCode: string;
   onDelete?: () => void;
+  showChevron?: boolean;
 }) {
+  const iconKey = expense.envelopeKey ?? expense.category ?? 'other';
+  const iconName = (ENVELOPE_ICON_NAMES[iconKey] ??
+    ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
+
   return (
     <View style={styles.row}>
+      <View style={styles.rowIcon}>
+        <Ionicons name={iconName} size={16} color={colors.resource} />
+      </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={styles.rowTitle}>{expense.name}</Text>
         <Text style={styles.meta}>
@@ -442,7 +493,8 @@ export function ExpenseRow({
           {expense.memberName ? ` · ${expense.memberName}` : ''}
         </Text>
       </View>
-      <Text style={styles.rowAmount}>{formatMoney(expense.amount, currencyCode)}</Text>
+      <Text style={styles.rowAmount}>-{formatMoney(expense.amount, currencyCode)}</Text>
+      {showChevron ? <Ionicons name="chevron-forward" size={14} color={colors.textDim} /> : null}
       {onDelete ? (
         <Pressable onPress={onDelete} hitSlop={10} style={styles.deleteBtn}>
           <Text style={styles.deleteText}>DEL</Text>
@@ -520,13 +572,36 @@ export function HeaderIconButton({ label, onPress }: { label: string; onPress: (
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   root: { flex: 1, backgroundColor: colors.bg },
-  scanlines: {
+  gridOverlay: {
     position: 'absolute',
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
     opacity: 0.07,
+    justifyContent: 'space-evenly',
+  },
+  gridCols: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+  },
+  gridH: {
+    height: 1,
+    width: '100%',
+    backgroundColor: colors.resource,
+  },
+  gridV: {
+    width: 1,
+    height: '100%',
+    backgroundColor: colors.resource,
+  },
+  scanlines: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    opacity: 0.05,
     justifyContent: 'space-between',
   },
   scanline: {
@@ -539,20 +614,20 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    borderWidth: 18,
-    borderColor: 'rgba(0,0,0,0.45)',
+    borderWidth: 20,
+    borderColor: 'rgba(0,0,0,0.5)',
   },
   panelWrap: {},
   panelGlow: {
     shadowColor: colors.resource,
-    shadowOpacity: 0.14,
-    shadowRadius: 5,
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 4,
+    elevation: 5,
   },
   panel: {
-    borderRadius: 0,
-    borderWidth: 2,
+    borderRadius: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
     padding: 14,
     gap: 8,
@@ -560,12 +635,12 @@ const styles = StyleSheet.create({
   },
   panelInnerGlow: {
     borderColor: colors.resource,
-    borderWidth: 2,
+    borderWidth: 1.5,
   },
   bevel: {
     position: 'absolute',
-    width: 14,
-    height: 14,
+    width: 16,
+    height: 16,
     borderColor: colors.borderBright,
     opacity: 1,
   },
@@ -589,12 +664,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.resource,
     backgroundColor: colors.resourceSoft,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 0,
+    borderRadius: 2,
   },
   chipDot: {
     width: 6,
@@ -610,21 +685,21 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   btn: {
-    borderRadius: 0,
+    borderRadius: 2,
     paddingVertical: 16,
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
     overflow: 'hidden',
     minHeight: 54,
   },
   btnPrimary: {
-    backgroundColor: '#10180E',
+    backgroundColor: '#0C1824',
     borderColor: colors.resource,
     shadowColor: colors.resource,
-    shadowOpacity: 0.16,
-    shadowRadius: 3,
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
     elevation: 4,
   },
@@ -633,7 +708,7 @@ const styles = StyleSheet.create({
     borderColor: colors.borderBright,
   },
   btnDanger: {
-    backgroundColor: '#2A0A08',
+    backgroundColor: '#2A1010',
     borderColor: colors.danger,
   },
   btnContent: {
@@ -655,16 +730,16 @@ const styles = StyleSheet.create({
   },
   barTrack: {
     flexDirection: 'row',
-    gap: 2,
-    backgroundColor: '#080604',
-    borderWidth: 2,
+    gap: 3,
+    backgroundColor: '#080C10',
+    borderWidth: 1.5,
     borderColor: colors.border,
-    borderRadius: 0,
+    borderRadius: 2,
     padding: 3,
   },
   barTrackCompact: { gap: 2, padding: 2 },
-  barSeg: { flex: 1, borderRadius: 0 },
-  barSegCompact: { borderRadius: 0 },
+  barSeg: { flex: 1, borderRadius: 1 },
+  barSegCompact: { borderRadius: 1 },
   module: { gap: 8 },
   moduleHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   moduleTitle: {
@@ -678,6 +753,22 @@ const styles = StyleSheet.create({
   warnLabel: { color: colors.warning, fontSize: 11, letterSpacing: 0.8, fontWeight: '600' },
   criticalLabel: { color: colors.critical, fontSize: 11, letterSpacing: 1, fontWeight: '700' },
   cell: { gap: 8, paddingVertical: 12, paddingHorizontal: 12, minHeight: 92 },
+  cellRail: {
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    minHeight: 148,
+    alignItems: 'center',
+  },
+  cellIconWrap: {
+    width: 40,
+    height: 40,
+    borderWidth: 1.5,
+    borderColor: colors.borderBright,
+    backgroundColor: colors.resourceSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cellTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   cellTitle: {
     flex: 1,
@@ -686,6 +777,14 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     fontWeight: '700',
     letterSpacing: 1.2,
+  },
+  cellTitleRail: {
+    color: colors.text,
+    fontSize: 13,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    textAlign: 'center',
   },
   cellHorizon: {
     color: colors.textDim,
@@ -700,12 +799,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.ammo,
   },
+  cellAmountRail: {
+    fontSize: 11,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    color: colors.ammo,
+    textAlign: 'center',
+  },
   cellAmountDim: { color: colors.textDim, fontWeight: '600' },
   emptyCell: {
     flex: 1,
     minHeight: 92,
-    borderRadius: 0,
-    borderWidth: 2,
+    borderRadius: 2,
+    borderWidth: 1.5,
     borderColor: colors.borderSoft,
     backgroundColor: colors.panelDeep,
     opacity: 0.45,
@@ -721,8 +827,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.panelAlt,
-    borderRadius: 0,
-    borderWidth: 2,
+    borderRadius: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -738,13 +844,22 @@ const styles = StyleSheet.create({
   accessory: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1C1814',
+    backgroundColor: '#141A22',
     borderTopWidth: 1,
     borderTopColor: colors.border,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  rowIcon: {
+    width: 32,
+    height: 32,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.resourceSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   rowTitle: { color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: fonts.body },
   rowAmount: { color: colors.ammo, fontSize: 15, fontWeight: '700', fontFamily: fonts.display },
   meta: { color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body },
@@ -755,10 +870,10 @@ const styles = StyleSheet.create({
     minHeight: 40,
     paddingHorizontal: 10,
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.panel,
-    borderRadius: 0,
+    borderRadius: 2,
   },
   headerBtnText: {
     color: colors.textSecondary,

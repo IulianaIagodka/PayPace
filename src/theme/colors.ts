@@ -1,51 +1,51 @@
-/** PayPace HUD — Doom industrial, evening-friendly (less acid neon) */
+/** PayPace HUD — cool industrial / cyber console (charcoal + cyan) */
 export const colors = {
-  bg: '#0A0806',
-  bgGrid: '#120E0A',
-  panel: '#1A1612',
-  panelRaised: '#242018',
-  panelAlt: '#2A241C',
-  panelDeep: '#100E0B',
-  border: '#5A5040',
-  borderBright: '#9A8A6A',
-  borderSoft: '#1C1814',
-  metal: '#B0A080',
-  metalDim: '#6A6050',
+  bg: '#0A0D11',
+  bgGrid: '#12171E',
+  panel: '#141A22',
+  panelRaised: '#1B2430',
+  panelAlt: '#222C38',
+  panelDeep: '#0C1016',
+  border: '#3A4656',
+  borderBright: '#6A7A8E',
+  borderSoft: '#1A222C',
+  metal: '#9AABBC',
+  metalDim: '#5A6A7C',
 
-  /** Muted olive resource green — readable, not eye-searing */
-  resource: '#6FAF45',
-  resourceDim: '#3D6E28',
-  resourceGlow: 'rgba(111, 175, 69, 0.22)',
-  resourceSoft: 'rgba(111, 175, 69, 0.10)',
-  healthy: '#6FAF45',
-  /** Soft amber — not neon yellow */
-  warning: '#D4A84A',
-  /** Industrial alert red — not blood */
-  danger: '#C45A42',
-  critical: '#9A3A2C',
+  /** Ice cyan resource — primary HUD glow */
+  resource: '#3DDCFF',
+  resourceDim: '#1A8AAB',
+  resourceGlow: 'rgba(61, 220, 255, 0.28)',
+  resourceSoft: 'rgba(61, 220, 255, 0.12)',
+  healthy: '#3DDCFF',
+  /** Soft amber — caution, not neon */
+  warning: '#E0B45A',
+  /** Alert red */
+  danger: '#E06058',
+  critical: '#B03A38',
 
-  text: '#E4DCD0',
-  textSecondary: '#9A9080',
-  textDim: '#5A5048',
-  /** Calm readout — warm off-white, not acid yellow */
-  safeValue: '#E0D8C4',
-  ammo: '#D8C890',
+  text: '#F0F4F8',
+  textSecondary: '#8A9AAB',
+  textDim: '#4A5A6A',
+  /** Primary readout — cool white */
+  safeValue: '#E8F2F8',
+  ammo: '#D8ECF8',
 
   // legacy aliases
-  bgTop: '#0A0806',
-  bgMid: '#0A0806',
-  bgBottom: '#0A0806',
-  ink: '#E4DCD0',
-  inkSecondary: '#9A9080',
-  accent: '#6FAF45',
-  accentMid: '#6FAF45',
-  accentLight: '#6FAF45',
-  mint: '#2A241C',
-  accentSoft: 'rgba(111, 175, 69, 0.10)',
-  warm: '#D4A84A',
-  success: '#6FAF45',
-  whiteSoft: '#1A1612',
-  whiteSofter: '#2A241C',
+  bgTop: '#0A0D11',
+  bgMid: '#0A0D11',
+  bgBottom: '#0A0D11',
+  ink: '#F0F4F8',
+  inkSecondary: '#8A9AAB',
+  accent: '#3DDCFF',
+  accentMid: '#3DDCFF',
+  accentLight: '#3DDCFF',
+  mint: '#222C38',
+  accentSoft: 'rgba(61, 220, 255, 0.12)',
+  warm: '#E0B45A',
+  success: '#3DDCFF',
+  whiteSoft: '#141A22',
+  whiteSofter: '#222C38',
 };
 
 export const spacing = {
@@ -76,9 +76,9 @@ export function colorForTone(tone: ResourceTone): string {
   }
 }
 
-/** Healthy bars tip amber on the last lit chunk (FPS HUD feel) */
+/** Healthy bars stay cyan; tip amber only when mid reserves */
 export function segmentColor(index: number, lit: number, tone: ResourceTone): string {
-  if (index >= lit) return '#12100C';
+  if (index >= lit) return '#0E141A';
   if (tone === 'healthy' && lit > 1 && index === lit - 1) return colors.warning;
   return colorForTone(tone);
 }
@@ -86,10 +86,10 @@ export function segmentColor(index: number, lit: number, tone: ResourceTone): st
 export const paceGradient = [colors.resource, colors.healthy, colors.warning, colors.danger] as const;
 
 export const ENVELOPE_ICON_NAMES: Record<string, string> = {
-  food: 'cart-outline',
+  food: 'restaurant-outline',
   transport: 'bus-outline',
   kids: 'people-outline',
-  fun: 'restaurant-outline',
+  fun: 'game-controller-outline',
   home: 'home-outline',
   other: 'grid-outline',
 };
