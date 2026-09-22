@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -9,8 +8,8 @@ import {
   ExpenseRow,
   HudButton,
   Panel,
+  ResourceBattery,
   ScreenBackground,
-  SegmentedBar,
 } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
@@ -25,7 +24,8 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
-const RAIL_KEYS = ['food', 'home', 'kids', 'fun', 'transport'] as const;
+/** Primary category pods on Home — Food, Home, Kids, Fun */
+const HOME_CATS = ['food', 'home', 'kids', 'fun'] as const;
 
 export function HomeScreen({ navigation }: Props) {
   const { activeCycle, snapshot, store, setPremium } = useBudget();
@@ -33,7 +33,7 @@ export function HomeScreen({ navigation }: Props) {
   const horizon: PaceHorizon = store.settings.paceHorizon ?? 'week';
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
   const prevRatio = useRef(snapshot.resourcesRemainingRatio);
-  const heroPulse = useRef(new Animated.Value(0.92)).current;
+  const heroPulse = useRef(new Animated.Value(0.94)).current;
 
   useEffect(() => {
     if (prevRatio.current > snapshot.resourcesRemainingRatio) {
@@ -48,8 +48,8 @@ export function HomeScreen({ navigation }: Props) {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(heroPulse, { toValue: 1, duration: 2400, useNativeDriver: true }),
-        Animated.timing(heroPulse, { toValue: 0.94, duration: 2400, useNativeDriver: true }),
+        Animated.timing(heroPulse, { toValue: 1, duration: 2600, useNativeDriver: true }),
+        Animated.timing(heroPulse, { toValue: 0.95, duration: 2600, useNativeDriver: true }),
       ]),
     ).start();
   }, [heroPulse]);
@@ -59,17 +59,15 @@ export function HomeScreen({ navigation }: Props) {
     [activeCycle],
   );
 
-  const railModules = useMemo(() => {
+  const homeCats = useMemo(() => {
     const byKey = new Map(modules.map((m) => [m.envelope.key, m]));
-    const ordered = RAIL_KEYS.map((k) => byKey.get(k)).filter(Boolean) as typeof modules;
-    const extras = modules.filter((m) => !RAIL_KEYS.includes(m.envelope.key as (typeof RAIL_KEYS)[number]));
-    return [...ordered, ...extras];
+    return HOME_CATS.map((k) => byKey.get(k)).filter(Boolean) as typeof modules;
   }, [modules]);
 
   const recent = useMemo(() => {
     const list = [...(activeCycle?.expenses ?? [])];
     list.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-    return list.slice(0, 5);
+    return list.slice(0, 4);
   }, [activeCycle?.expenses]);
 
   if (!activeCycle) {
@@ -96,8 +94,7 @@ export function HomeScreen({ navigation }: Props) {
   );
   const periodDays = isWeek ? snapshot.daysLeftInWeek : snapshot.daysLeftInMonth;
   const periodShare = isWeek ? snapshot.weekShare : snapshot.monthShare;
-  const periodUnit = isWeek ? '/ WEEK' : '/ CYCLE';
-  const stable = snapshot.projectedShortfallDays == null && snapshot.remainingUntilPayday >= 0;
+  const periodUnit = isWeek ? 'WEEK' : 'PAYDAY';
   const safeColor = snapshot.remainingUntilPayday < 0 ? colors.danger : colors.safeValue;
 
   return (
@@ -108,77 +105,56 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={styles.brand}>
               PAY<Text style={styles.brandAccent}>PACE</Text>
             </Text>
-            <Text style={styles.tagline}>MONEY KEEPS YOU MOVING</Text>
+            <Text style={styles.tagline}>RESOURCE CONSOLE</Text>
           </View>
-          <View style={styles.planCol}>
-            <Text style={styles.planLine}>PLAN</Text>
-            <Text style={styles.planLine}>TRACK</Text>
-            <Text style={styles.planLine}>PROCEED</Text>
+          <View style={styles.onlineBadge}>
+            <View style={styles.onlineDot} />
+            <Text style={styles.onlineText}>LIVE</Text>
           </View>
         </View>
 
         <Animated.View style={{ opacity: heroPulse }}>
           <Panel glow innerGlow style={styles.availablePanel}>
-            <View style={styles.availableInner}>
-              <View style={styles.availableMain}>
-                <Text style={styles.label}>TOTAL AVAILABLE</Text>
-                <Text style={styles.available}>{formatMoney(available, currency)}</Text>
-                <Text style={styles.steady}>
-                  {stable ? 'Steady progress. Keep going.' : 'Pace needs attention.'}
+            <Text style={styles.label}>TOTAL AVAILABLE</Text>
+            <Text style={styles.available}>{formatMoney(available, currency)}</Text>
+            <View style={styles.splitRow}>
+              <View style={styles.splitCol}>
+                <Text style={[styles.splitValue, { color: safeColor }]}>
+                  {formatMoney(safe, currency)}
                 </Text>
+                <Text style={styles.splitUnit}>/ DAY</Text>
               </View>
-              <View style={styles.stabilityBox}>
-                <Ionicons
-                  name={stable ? 'shield-checkmark-outline' : 'warning-outline'}
-                  size={18}
-                  color={stable ? colors.resource : colors.warning}
-                />
-                <Text style={[styles.stabilityText, !stable && { color: colors.warning }]}>
-                  {stable ? 'FINANCIAL STABILITY AHEAD' : 'SPENDING PACE HIGH'}
+              <View style={styles.splitDivider} />
+              <View style={styles.splitCol}>
+                <Text style={[styles.splitValueWeek, { color: safeColor }]}>
+                  {formatMoney(periodSafe, currency)}
+                </Text>
+                <Text style={styles.splitUnit}>/ {periodUnit}</Text>
+                <Text style={styles.splitHint}>
+                  {isWeek
+                    ? `${periodDays}D LEFT IN WEEK`
+                    : `${snapshot.daysUntilPayday}D TO PAYDAY`}
                 </Text>
               </View>
             </View>
           </Panel>
         </Animated.View>
 
-        <Panel style={styles.cyclePanel}>
-          <View style={styles.cycleHead}>
-            <Text style={styles.sectionLabel}>PAY CYCLE</Text>
-            <Text style={styles.pctRemain}>{pct}% REMAINING</Text>
+        <Panel style={styles.budgetPanel}>
+          <View style={styles.budgetHead}>
+            <Text style={styles.sectionLabel}>BUDGET ENERGY</Text>
+            <Text style={styles.pctRemain}>{pct}% LEFT</Text>
           </View>
-          <SegmentedBar
+          <ResourceBattery
             ratio={snapshot.resourcesRemainingRatio}
             segments={12}
-            height={18}
             animateFrom={drainFrom}
             tipAmber
           />
           <View style={styles.metaRow}>
             <Text style={styles.meta}>{formatMoney(spent, currency)} spent</Text>
             <Text style={styles.meta}>{formatMoney(cyclePool, currency)} pool</Text>
-            <Text style={styles.meta}>{snapshot.daysUntilPayday}D TO PAYDAY</Text>
-          </View>
-        </Panel>
-
-        <Panel style={styles.safePanel}>
-          <Text style={styles.heroLabel}>SAFE TO SPEND</Text>
-          <View style={styles.safeRow}>
-            <View style={styles.safeCol}>
-              <Text style={[styles.safe, { color: safeColor }]}>{formatMoney(safe, currency)}</Text>
-              <Text style={styles.perUnit}>/ DAY</Text>
-            </View>
-            <View style={styles.safeDivider} />
-            <View style={styles.safeCol}>
-              <Text style={[styles.safeWeek, { color: safeColor }]}>
-                {formatMoney(periodSafe, currency)}
-              </Text>
-              <Text style={styles.perUnit}>{periodUnit}</Text>
-              <Text style={styles.weekHint}>
-                {isWeek
-                  ? `${periodDays}D LEFT IN WEEK`
-                  : `${snapshot.daysUntilPayday}D UNTIL PAYDAY`}
-              </Text>
-            </View>
+            <Text style={styles.meta}>{snapshot.daysUntilPayday}D → PAYDAY</Text>
           </View>
         </Panel>
 
@@ -200,7 +176,7 @@ export function HomeScreen({ navigation }: Props) {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.rail}
             >
-              {railModules.map((mod, index) => (
+              {homeCats.map((mod, index) => (
                 <CategoryCell
                   key={mod.envelope.id}
                   title={mod.envelope.title}
@@ -220,10 +196,9 @@ export function HomeScreen({ navigation }: Props) {
           </View>
         ) : (
           <Panel alt>
-            <Text style={styles.alertTitle}>CATEGORY REMAINING · PLUS</Text>
+            <Text style={styles.alertTitle}>CATEGORY CELLS · PLUS</Text>
             <Text style={styles.alertBody}>
-              Plus shows how much is left in each category — food, transport, kids, and the rest —
-              and lets you set those amounts.
+              Plus unlocks Food, Home, Kids, and Fun cells with remaining energy per category.
             </Text>
             <HudButton
               title="TRY PLUS (DEMO)"
@@ -261,7 +236,7 @@ const styles = StyleSheet.create({
   pad: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 28, gap: 14 },
   brandRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 2,
   },
@@ -281,19 +256,31 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: fonts.label,
     fontWeight: '700',
-    letterSpacing: 2.4,
+    letterSpacing: 2.6,
   },
-  planCol: { alignItems: 'flex-end', gap: 1, paddingTop: 4 },
-  planLine: {
-    color: colors.textSecondary,
-    fontSize: 9,
+  onlineBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.resource,
+    backgroundColor: colors.resourceSoft,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  onlineDot: {
+    width: 6,
+    height: 6,
+    backgroundColor: colors.resource,
+  },
+  onlineText: {
+    color: colors.resource,
+    fontSize: 10,
     fontFamily: fonts.label,
     fontWeight: '700',
-    letterSpacing: 2.2,
+    letterSpacing: 2,
   },
-  availablePanel: { paddingVertical: 16, paddingHorizontal: 14 },
-  availableInner: { flexDirection: 'row', gap: 12, alignItems: 'stretch' },
-  availableMain: { flex: 1, gap: 4 },
+  availablePanel: { paddingVertical: 16, paddingHorizontal: 14, gap: 8 },
   label: {
     color: colors.textSecondary,
     fontSize: 11,
@@ -303,37 +290,55 @@ const styles = StyleSheet.create({
   },
   available: {
     color: colors.text,
-    fontSize: 36,
+    fontSize: 38,
     fontFamily: fonts.display,
     fontWeight: '700',
     letterSpacing: -0.6,
   },
-  steady: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontFamily: fonts.body,
-    marginTop: 2,
+  splitRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 14,
+    marginTop: 6,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
-  stabilityBox: {
-    width: 92,
-    borderLeftWidth: 1,
-    borderLeftColor: colors.border,
-    paddingLeft: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
+  splitCol: { flex: 1, gap: 2 },
+  splitDivider: {
+    width: 1,
+    backgroundColor: colors.borderBright,
+    marginVertical: 2,
   },
-  stabilityText: {
-    color: colors.resource,
-    fontSize: 9,
+  splitValue: {
+    fontSize: 26,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  splitValueWeek: {
+    fontSize: 22,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  splitUnit: {
+    color: colors.metal,
+    fontSize: 11,
     fontFamily: fonts.label,
     fontWeight: '700',
-    letterSpacing: 1.1,
-    textAlign: 'center',
-    lineHeight: 12,
+    letterSpacing: 1.6,
   },
-  cyclePanel: { gap: 10 },
-  cycleHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  splitHint: {
+    color: colors.textDim,
+    fontSize: 10,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginTop: 2,
+  },
+  budgetPanel: { gap: 10 },
+  budgetHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionLabel: {
     color: colors.textSecondary,
     fontSize: 11,
@@ -360,57 +365,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     fontWeight: '700',
     letterSpacing: 1.1,
-  },
-  safePanel: { gap: 10, paddingVertical: 14 },
-  heroLabel: {
-    color: colors.resource,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 2.8,
-  },
-  safeRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: 14,
-  },
-  safeCol: {
-    flex: 1,
-    gap: 2,
-  },
-  safeDivider: {
-    width: 1,
-    backgroundColor: colors.borderBright,
-    marginVertical: 4,
-  },
-  safe: {
-    color: colors.safeValue,
-    fontSize: 30,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: -0.4,
-  },
-  safeWeek: {
-    color: colors.safeValue,
-    fontSize: 24,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  perUnit: {
-    color: colors.metal,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.6,
-  },
-  weekHint: {
-    color: colors.textDim,
-    fontSize: 10,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginTop: 2,
   },
   sub: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, fontFamily: fonts.body },
   alert: { borderColor: colors.warning },

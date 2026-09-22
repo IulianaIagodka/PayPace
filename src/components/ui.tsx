@@ -38,26 +38,35 @@ export function ScreenBackground({
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={['#151C26', '#0C1016', '#070A0E']}
-        locations={[0, 0.5, 1]}
+        colors={['#1A222C', '#0E131A', '#070A0E']}
+        locations={[0, 0.48, 1]}
         style={StyleSheet.absoluteFill}
       />
+      {/* Brushed steel grain */}
+      <View pointerEvents="none" style={styles.steelGrain}>
+        {Array.from({ length: 56 }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.steelLine,
+              { opacity: i % 3 === 0 ? 0.07 : 0.035 },
+            ]}
+          />
+        ))}
+      </View>
       <View pointerEvents="none" style={styles.gridOverlay}>
-        {Array.from({ length: 20 }).map((_, i) => (
+        {Array.from({ length: 18 }).map((_, i) => (
           <View key={`h-${i}`} style={styles.gridH} />
         ))}
       </View>
       <View pointerEvents="none" style={[styles.gridOverlay, styles.gridCols]}>
-        {Array.from({ length: 10 }).map((_, i) => (
+        {Array.from({ length: 9 }).map((_, i) => (
           <View key={`v-${i}`} style={styles.gridV} />
         ))}
       </View>
-      <View pointerEvents="none" style={styles.scanlines}>
-        {Array.from({ length: 40 }).map((_, i) => (
-          <View key={i} style={styles.scanline} />
-        ))}
-      </View>
       <View pointerEvents="none" style={styles.vignette} />
+      {/* Device chassis rim */}
+      <View pointerEvents="none" style={styles.chassisRim} />
       <SafeAreaView style={styles.flex} edges={edges}>
         {children}
       </SafeAreaView>
@@ -65,7 +74,7 @@ export function ScreenBackground({
   );
 }
 
-/** Armor plate — bevel corners + cyan glow option */
+/** Armor plate — bevel corners, steel brush, holographic cyan edges */
 export function Panel({
   children,
   style,
@@ -83,11 +92,18 @@ export function Panel({
   return (
     <View style={[styles.panelWrap, glow && styles.panelGlow, style]}>
       <LinearGradient
-        colors={alt ? ['#243040', '#161E28'] : ['#1C2430', '#121820']}
+        colors={alt ? ['#2A3644', '#171E28', '#121820'] : ['#222C38', '#161E28', '#10161E']}
+        locations={[0, 0.45, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        end={{ x: 0.15, y: 1 }}
         style={[styles.panel, innerGlow && styles.panelInnerGlow]}
       >
+        <View pointerEvents="none" style={styles.panelBrush}>
+          {Array.from({ length: 10 }).map((_, i) => (
+            <View key={i} style={styles.panelBrushLine} />
+          ))}
+        </View>
+        {glow || innerGlow ? <View pointerEvents="none" style={styles.holoEdge} /> : null}
         <View style={[styles.bevel, styles.bevelTL, { borderColor: corner }]} />
         <View style={[styles.bevel, styles.bevelTR, { borderColor: corner }]} />
         <View style={[styles.bevel, styles.bevelBL, { borderColor: corner }]} />
@@ -243,6 +259,34 @@ export function SegmentedBar({
           />
         );
       })}
+    </View>
+  );
+}
+
+/** Battery / energy cell frame around a segmented resource bar */
+export function ResourceBattery({
+  ratio,
+  segments = 12,
+  animateFrom,
+  tipAmber = true,
+}: {
+  ratio: number;
+  segments?: number;
+  animateFrom?: number;
+  tipAmber?: boolean;
+}) {
+  return (
+    <View style={styles.batteryFrame}>
+      <View style={styles.batteryCap} />
+      <View style={styles.batteryBody}>
+        <SegmentedBar
+          ratio={ratio}
+          segments={segments}
+          height={22}
+          animateFrom={animateFrom}
+          tipAmber={tipAmber}
+        />
+      </View>
     </View>
   );
 }
@@ -572,13 +616,27 @@ export function HeaderIconButton({ label, onPress }: { label: string; onPress: (
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   root: { flex: 1, backgroundColor: colors.bg },
+  steelGrain: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  steelLine: {
+    height: 1,
+    width: '100%',
+    backgroundColor: '#C8D0D8',
+  },
   gridOverlay: {
     position: 'absolute',
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
-    opacity: 0.07,
+    opacity: 0.055,
     justifyContent: 'space-evenly',
   },
   gridCols: {
@@ -595,38 +653,34 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: colors.resource,
   },
-  scanlines: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    opacity: 0.05,
-    justifyContent: 'space-between',
-  },
-  scanline: {
-    height: 1,
-    backgroundColor: '#000',
-  },
   vignette: {
     position: 'absolute',
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
-    borderWidth: 20,
-    borderColor: 'rgba(0,0,0,0.5)',
+    borderWidth: 22,
+    borderColor: 'rgba(0,0,0,0.55)',
+  },
+  chassisRim: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    bottom: 6,
+    left: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(122, 138, 156, 0.22)',
   },
   panelWrap: {},
   panelGlow: {
     shadowColor: colors.resource,
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 5,
+    elevation: 6,
   },
   panel: {
-    borderRadius: 2,
+    borderRadius: 3,
     borderWidth: 1.5,
     borderColor: colors.border,
     padding: 14,
@@ -636,6 +690,24 @@ const styles = StyleSheet.create({
   panelInnerGlow: {
     borderColor: colors.resource,
     borderWidth: 1.5,
+  },
+  panelBrush: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'space-evenly',
+    opacity: 0.08,
+  },
+  panelBrushLine: {
+    height: 1,
+    backgroundColor: '#D0D8E0',
+  },
+  holoEdge: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: 1,
+    backgroundColor: colors.resource,
+    opacity: 0.55,
   },
   bevel: {
     position: 'absolute',
@@ -660,6 +732,26 @@ const styles = StyleSheet.create({
   rivetTR: { top: 5, right: 5 },
   rivetBL: { bottom: 5, left: 5 },
   rivetBR: { bottom: 5, right: 5 },
+  batteryFrame: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  batteryCap: {
+    width: 5,
+    height: 14,
+    borderRadius: 1,
+    backgroundColor: colors.borderBright,
+    opacity: 0.7,
+  },
+  batteryBody: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: colors.borderBright,
+    backgroundColor: '#080C10',
+    padding: 4,
+    borderRadius: 2,
+  },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

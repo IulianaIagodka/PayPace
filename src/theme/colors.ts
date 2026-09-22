@@ -1,51 +1,48 @@
-/** PayPace HUD — cool industrial / cyber console (charcoal + cyan) */
+/** PayPace HUD — diegetic sci-fi console (graphite steel + holographic cyan) */
 export const colors = {
-  bg: '#0A0D11',
-  bgGrid: '#12171E',
-  panel: '#141A22',
-  panelRaised: '#1B2430',
-  panelAlt: '#222C38',
-  panelDeep: '#0C1016',
-  border: '#3A4656',
-  borderBright: '#6A7A8E',
+  bg: '#080B0F',
+  bgGrid: '#10151C',
+  panel: '#151B24',
+  panelRaised: '#1C2530',
+  panelAlt: '#243040',
+  panelDeep: '#0A0E14',
+  border: '#3E4A5A',
+  borderBright: '#7A8A9C',
   borderSoft: '#1A222C',
-  metal: '#9AABBC',
-  metalDim: '#5A6A7C',
+  metal: '#A8B4C0',
+  metalDim: '#5C6A7A',
 
-  /** Ice cyan resource — primary HUD glow */
-  resource: '#3DDCFF',
-  resourceDim: '#1A8AAB',
-  resourceGlow: 'rgba(61, 220, 255, 0.28)',
-  resourceSoft: 'rgba(61, 220, 255, 0.12)',
-  healthy: '#3DDCFF',
-  /** Soft amber — caution, not neon */
+  /** Holographic cyan — resource glow */
+  resource: '#4AE0FF',
+  resourceDim: '#1A90B0',
+  resourceGlow: 'rgba(74, 224, 255, 0.32)',
+  resourceSoft: 'rgba(74, 224, 255, 0.14)',
+  healthy: '#4AE0FF',
   warning: '#E0B45A',
-  /** Alert red */
   danger: '#E06058',
   critical: '#B03A38',
 
-  text: '#F0F4F8',
+  text: '#F2F6FA',
   textSecondary: '#8A9AAB',
   textDim: '#4A5A6A',
-  /** Primary readout — cool white */
-  safeValue: '#E8F2F8',
+  safeValue: '#EAF4FA',
   ammo: '#D8ECF8',
 
   // legacy aliases
-  bgTop: '#0A0D11',
-  bgMid: '#0A0D11',
-  bgBottom: '#0A0D11',
-  ink: '#F0F4F8',
+  bgTop: '#080B0F',
+  bgMid: '#080B0F',
+  bgBottom: '#080B0F',
+  ink: '#F2F6FA',
   inkSecondary: '#8A9AAB',
-  accent: '#3DDCFF',
-  accentMid: '#3DDCFF',
-  accentLight: '#3DDCFF',
-  mint: '#222C38',
-  accentSoft: 'rgba(61, 220, 255, 0.12)',
+  accent: '#4AE0FF',
+  accentMid: '#4AE0FF',
+  accentLight: '#4AE0FF',
+  mint: '#243040',
+  accentSoft: 'rgba(74, 224, 255, 0.14)',
   warm: '#E0B45A',
-  success: '#3DDCFF',
-  whiteSoft: '#141A22',
-  whiteSofter: '#222C38',
+  success: '#4AE0FF',
+  whiteSoft: '#151B24',
+  whiteSofter: '#243040',
 };
 
 export const spacing = {
