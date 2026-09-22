@@ -294,7 +294,7 @@ export function CategoryCell({
   tone,
   index = 0,
   onPress,
-  periodShare = 1,
+  periodShare: _periodShare = 1,
   horizonLabel = 'CYCLE',
   depleted = false,
   layout = 'grid',
@@ -315,8 +315,8 @@ export function CategoryCell({
   layout?: 'grid' | 'rail';
 }) {
   const cycleRemaining = Math.max(allocated - spent, 0);
-  const periodRemaining = cycleRemaining * Math.max(0, Math.min(periodShare, 1));
-  const remainingRatio = allocated > 0 ? cycleRemaining / allocated : 0;
+  const planned = Math.max(allocated, 0);
+  const remainingRatio = planned > 0 ? cycleRemaining / planned : 0;
   const enter = useRef(new Animated.Value(0)).current;
   const muted = depleted || remainingRatio <= 0;
   const tipAmber = tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
@@ -333,6 +333,16 @@ export function CategoryCell({
 
   const iconName = (ENVELOPE_ICON_NAMES[iconKey] ??
     ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
+
+  const amountLine = (
+    <HudValue size="compact" style={muted ? { color: colors.textDim } : undefined}>
+      {formatMoney(cycleRemaining, currencyCode)}
+      <Text style={styles.cellAmountDim}>
+        {' '}
+        / {formatMoney(planned, currencyCode)}
+      </Text>
+    </HudValue>
+  );
 
   return (
     <Animated.View
@@ -370,13 +380,7 @@ export function CategoryCell({
                   color={muted ? colors.textDim : colors.resource}
                 />
               </View>
-              <HudValue size="compact" style={muted ? { color: colors.textDim } : undefined}>
-                {formatMoney(periodRemaining, currencyCode)}
-                <Text style={styles.cellAmountDim}>
-                  {' '}
-                  / {formatMoney(cycleRemaining, currencyCode)}
-                </Text>
-              </HudValue>
+              {amountLine}
               <View style={{ alignSelf: 'stretch' }}>
                 <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
               </View>
@@ -391,13 +395,7 @@ export function CategoryCell({
                 />
                 <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
               </View>
-              <HudValue size="compact" style={muted ? { color: colors.textDim } : undefined}>
-                {formatMoney(periodRemaining, currencyCode)}
-                <Text style={styles.cellAmountDim}>
-                  {' '}
-                  / {formatMoney(cycleRemaining, currencyCode)}
-                </Text>
-              </HudValue>
+              {amountLine}
               <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
             </>
           )}
