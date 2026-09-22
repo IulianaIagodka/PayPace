@@ -64,12 +64,12 @@ export function SettingsScreen({ navigation }: Props) {
         <Text style={styles.brand}>
           PAY<Text style={{ color: colors.resource }}>PACE</Text>
         </Text>
-        <Text style={styles.sub}>Money is energy. Tune your payday budget here.</Text>
+        <Text style={styles.sub}>Money is energy. Tune the control panel here.</Text>
 
         <Panel>
-          <Text style={styles.section}>BUDGET</Text>
-          <HudButton title="ALLOCATE RESOURCES" onPress={() => navigation.navigate('Allocate')} />
-          <Text style={styles.sub}>Plus · set how much each category gets.</Text>
+          <Text style={styles.section}>CYCLE</Text>
+          <HudButton title="ALLOCATE MODULES" onPress={() => navigation.navigate('Allocate')} />
+          <Text style={styles.sub}>Plus · set how much each module gets.</Text>
           <HudButton title="EDIT CYCLE" onPress={() => navigation.navigate('PayCycle')} variant="secondary" />
           <HudButton title="BILLS" onPress={() => navigation.navigate('Bills')} variant="secondary" />
         </Panel>

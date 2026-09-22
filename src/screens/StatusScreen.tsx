@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { Panel, ScreenBackground, SegmentedBar } from '../components/ui';
+import { Panel, PanelLabel, ScreenBackground, SegmentedBar, TelemetryCell } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors, colorForTone } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 import { formatMoney } from '../services/formatting';
 import type { MainTabParamList } from '../navigation/types';
 
@@ -27,7 +28,7 @@ export function StatusScreen({}: Props) {
     return (
       <ScreenBackground>
         <View style={styles.pad}>
-          <Text style={styles.title}>STATUS</Text>
+          <Text style={styles.title}>SYSTEMS</Text>
           <Text style={styles.sub}>No active cycle.</Text>
         </View>
       </ScreenBackground>
@@ -37,6 +38,8 @@ export function StatusScreen({}: Props) {
   const income = activeCycle.expectedPaycheck || activeCycle.currentBalance;
   const remaining = snapshot.remainingUntilPayday;
   const reserve = snapshot.reservedTotal;
+  const burnDaily =
+    snapshot.daysElapsed > 0 ? snapshot.spentThisCycle / Math.max(snapshot.daysElapsed, 1) : 0;
   const trajTone =
     snapshot.trajectory === 'DEFICIT'
       ? 'critical'
@@ -47,34 +50,63 @@ export function StatusScreen({}: Props) {
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>STATUS</Text>
+        <View style={styles.head}>
+          <Text style={styles.title}>SYSTEMS</Text>
+          <Text style={styles.sysTag}>TELEMETRY // CYCLE HEALTH</Text>
+        </View>
 
         <Panel>
-          <Row label="INCOME" value={formatMoney(income, currency)} />
-          <Row label="SPENT" value={formatMoney(snapshot.spentThisCycle, currency)} />
-          <Row label="REMAINING" value={formatMoney(Math.max(remaining, 0), currency)} />
-          <Row label="RESERVED" value={formatMoney(reserve, currency)} />
+          <View style={styles.telemetryRow}>
+            <TelemetryCell
+              label="RUNWAY"
+              value={`${snapshot.daysUntilPayday}D`}
+              tone={snapshot.daysUntilPayday < 5 ? 'warn' : 'ok'}
+            />
+            <View style={styles.divider} />
+            <TelemetryCell
+              label="BURN"
+              value={`${formatMoney(burnDaily, currency)}/D`}
+              tone={burnDaily > snapshot.safeToSpendToday && snapshot.safeToSpendToday > 0 ? 'warn' : 'normal'}
+            />
+            <View style={styles.divider} />
+            <TelemetryCell
+              label="PACE"
+              value={formatMoney(Math.max(snapshot.safeToSpendToday, 0), currency)}
+              tone="ok"
+            />
+          </View>
+        </Panel>
+
+        <Panel>
+          <PanelLabel>RESOURCE POOL</PanelLabel>
+          <Row label="INCOME INTAKE" value={formatMoney(income, currency)} />
+          <Row label="TOTAL DRAIN" value={formatMoney(snapshot.spentThisCycle, currency)} />
+          <Row label="RESERVES" value={formatMoney(Math.max(remaining, 0), currency)} />
+          <Row label="LOCKED BUFFER" value={formatMoney(reserve, currency)} />
           <Row
-            label="SAFE TO SPEND / DAY"
+            label="PACING / DAY"
             value={formatMoney(Math.max(snapshot.safeToSpendToday, 0), currency)}
             strong
           />
           <Row
-            label="PROJECTED AT PAYDAY"
+            label="PROJECTED AT CHECKPOINT"
             value={formatMoney(snapshot.projectedEndBalance, currency)}
           />
         </Panel>
 
         <Panel>
-          <Text style={styles.label}>TRAJECTORY</Text>
+          <PanelLabel tone="warn">TRAJECTORY</PanelLabel>
           <Text style={[styles.traj, { color: colorForTone(trajTone as any) }]}>
             {snapshot.trajectory}
           </Text>
           <SegmentedBar ratio={snapshot.resourcesRemainingRatio} segments={12} height={14} />
+          <Text style={styles.sub}>
+            {Math.round(snapshot.resourcesRemainingRatio * 100)}% resources remaining
+          </Text>
         </Panel>
 
         <Panel>
-          <Text style={styles.label}>CYCLE TIMELINE</Text>
+          <PanelLabel>CHECKPOINT TIMELINE</PanelLabel>
           <View style={styles.timeline}>
             {timeline.map((d) => (
               <View
@@ -88,7 +120,8 @@ export function StatusScreen({}: Props) {
             ))}
           </View>
           <Text style={styles.sub}>
-            Day {snapshot.daysElapsed} of {snapshot.totalDaysInCycle} · today marked
+            Day {snapshot.daysElapsed} of {snapshot.totalDaysInCycle} · today marked · payday =
+            checkpoint
           </Text>
         </Panel>
       </ScrollView>
@@ -117,15 +150,35 @@ function Row({
 
 const styles = StyleSheet.create({
   pad: { padding: 20, gap: 14, paddingBottom: 40 },
-  title: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 2 },
-  label: {
-    color: colors.textSecondary,
-    fontSize: 11,
+  head: { gap: 4 },
+  title: {
+    color: colors.text,
+    fontSize: 22,
+    fontFamily: fonts.display,
     fontWeight: '700',
-    letterSpacing: 1.4,
+    letterSpacing: 2.4,
   },
-  sub: { color: colors.textSecondary, fontSize: 12 },
-  traj: { fontSize: 28, fontWeight: '800', letterSpacing: 1 },
+  sysTag: {
+    color: colors.textDim,
+    fontSize: 10,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.8,
+  },
+  telemetryRow: { flexDirection: 'row', alignItems: 'center' },
+  divider: {
+    width: 1,
+    alignSelf: 'stretch',
+    backgroundColor: colors.border,
+    marginVertical: 2,
+  },
+  sub: { color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body },
+  traj: {
+    fontSize: 26,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -134,19 +187,33 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  rowLabel: { color: colors.textSecondary, fontSize: 11, letterSpacing: 1, fontWeight: '600' },
-  rowValue: { color: colors.text, fontSize: 15, fontWeight: '700' },
+  rowLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    letterSpacing: 1,
+    fontWeight: '700',
+    fontFamily: fonts.label,
+  },
+  rowValue: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: fonts.display,
+  },
   timeline: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   tick: {
     width: 10,
     height: 18,
-    borderRadius: 2,
+    borderRadius: 0,
     backgroundColor: colors.borderSoft,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  tickPassed: { backgroundColor: colors.healthy },
+  tickPassed: { backgroundColor: colors.healthy, borderColor: colors.resourceDim },
   tickToday: {
     backgroundColor: colors.warning,
     width: 12,
     height: 22,
+    borderColor: colors.warning,
   },
 });

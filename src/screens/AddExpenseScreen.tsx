@@ -46,7 +46,7 @@ export function AddExpenseScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <FormScroll contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>ADD EXPENSE</Text>
+        <Text style={styles.title}>LOG EXPENSE</Text>
         <Text style={styles.sub}>
           Log it yourself anytime. Photos and bank statements are Plus.
         </Text>

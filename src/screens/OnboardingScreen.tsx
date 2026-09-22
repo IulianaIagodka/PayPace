@@ -113,12 +113,13 @@ export function OnboardingScreen() {
               <Text style={styles.brandPay}>Pay</Text>
               <Text style={styles.brandPace}>pace</Text>
             </Text>
-            <Text style={styles.title}>Know what you can spend.{'\n'}Until your next payday.</Text>
+            <Text style={styles.title}>Your money control panel.{'\n'}Survive until payday.</Text>
             <Text style={styles.sub}>
-              No monthly spreadsheet. Just a clear number for today — and peace of mind until payday.
+              Monitor reserves, burn rate, and runway to the next checkpoint — not another spreadsheet
+              budget.
             </Text>
           </View>
-          <PrimaryButton title="Get started" onPress={() => setStep('balance')} />
+          <PrimaryButton title="INITIALIZE" onPress={() => setStep('balance')} />
         </View>
       </ScreenBackground>
     );
@@ -129,7 +130,7 @@ export function OnboardingScreen() {
       <ScreenBackground>
         <View style={[styles.pad, { justifyContent: 'space-between' }]}>
           <View style={{ gap: 22, paddingTop: 60 }}>
-            <Text style={styles.sub}>You’re set</Text>
+            <Text style={styles.sub}>SYSTEM READY</Text>
             <SafeSpendHero
               safeToday={snap.safeToSpendToday}
               remaining={snap.remainingUntilPayday}
@@ -143,7 +144,7 @@ export function OnboardingScreen() {
               totalDays={snap.totalDaysInCycle}
             />
           </View>
-          <PrimaryButton title="Go to home" onPress={() => completeOnboarding(draftCycle)} />
+          <PrimaryButton title="ENTER CONTROL PANEL" onPress={() => completeOnboarding(draftCycle)} />
         </View>
       </ScreenBackground>
     );
@@ -173,7 +174,10 @@ export function OnboardingScreen() {
           {step === 'payday' && (
             <View style={{ gap: 16 }}>
               <Text style={styles.title}>When is your next payday?</Text>
-              <Text style={styles.sub}>PayPace budgets from now until that day — not by calendar month.</Text>
+              <Text style={styles.sub}>
+                Payday is your next checkpoint. PayPace paces reserves from now until that day — not by
+                calendar month.
+              </Text>
               <AmountField
                 label="Days until payday"
                 value={daysUntil}

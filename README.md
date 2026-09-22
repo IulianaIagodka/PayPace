@@ -1,8 +1,10 @@
 # PayPace
 
-Payday → payday budgeting. Money = energy.
+Payday → payday resource control. Money = energy.
 
 One Expo app at the **repo root**. Develop from the **phone** or the **Mac**. Ship TestFlight from **EAS cloud** or a **local Mac** IPA.
+
+PayPace is a **dark sci-fi money control panel** — reserves, burn rate, runway, and pacing until the next checkpoint (payday) — not a classic budgeting spreadsheet.
 
 ## Setup
 

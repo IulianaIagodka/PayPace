@@ -90,11 +90,74 @@ export function Panel({
   );
 }
 
-export function StatusChip({ label = 'ONLINE' }: { label?: string }) {
+export function StatusChip({ label = 'SYSTEM ONLINE' }: { label?: string }) {
+  const pulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.35, duration: 900, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 900, useNativeDriver: true }),
+      ]),
+    ).start();
+  }, [pulse]);
+
   return (
     <View style={styles.chip}>
-      <View style={styles.chipDot} />
+      <Animated.View style={[styles.chipDot, { opacity: pulse }]} />
       <Text style={styles.chipText}>{label}</Text>
+    </View>
+  );
+}
+
+/** Section label — wraps shared HudLabel for control-panel screens */
+export function PanelLabel({
+  children,
+  tone = 'dim',
+}: {
+  children: string;
+  tone?: 'dim' | 'warn' | 'ok';
+}) {
+  const hudTone = tone === 'ok' ? 'primary' : tone === 'warn' ? 'warn' : 'default';
+  return (
+    <View style={styles.panelLabelRow}>
+      <View
+        style={[
+          styles.panelLabelTick,
+          {
+            backgroundColor:
+              tone === 'ok' ? colors.resource : tone === 'warn' ? colors.warning : colors.textSecondary,
+          },
+        ]}
+      />
+      <HudLabel tone={hudTone}>{children}</HudLabel>
+    </View>
+  );
+}
+
+/** Compact telemetry readout for burn / runway / status strips */
+export function TelemetryCell({
+  label,
+  value,
+  tone = 'normal',
+}: {
+  label: string;
+  value: string;
+  tone?: 'normal' | 'ok' | 'warn' | 'danger';
+}) {
+  const valueColor =
+    tone === 'ok'
+      ? colors.resource
+      : tone === 'warn'
+        ? colors.warning
+        : tone === 'danger'
+          ? colors.danger
+          : colors.ammo;
+  return (
+    <View style={styles.telemetryCell}>
+      <Text style={styles.telemetryLabel}>{label}</Text>
+      <Text style={[styles.telemetryValue, { color: valueColor }]} numberOfLines={1}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -125,7 +188,7 @@ export function HudButton({
     >
       {variant === 'primary' ? (
         <LinearGradient
-          colors={['#1E3318', '#10180E']}
+          colors={['#2A4A1E', '#152412', '#0E180C']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -166,6 +229,13 @@ export function HudButton({
           </Text>
         )}
       </View>
+      {variant === 'primary' ? (
+        <View pointerEvents="none" style={styles.btnVents}>
+          <View style={styles.btnVent} />
+          <View style={styles.btnVent} />
+          <View style={styles.btnVent} />
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -391,11 +461,15 @@ export function CategoryCell({
   );
 }
 
-/** Empty steel plate to keep the 2-col grid balanced */
+/** Empty steel plate with hazard stripes — keeps modular grid balanced */
 export function EmptyCell() {
   return (
     <View style={{ flex: 1 }}>
-      <View style={styles.emptyCell} />
+      <View style={styles.emptyCell}>
+        {Array.from({ length: 7 }).map((_, i) => (
+          <View key={i} style={[styles.hazardStripe, { left: i * 18 - 20 }]} />
+        ))}
+      </View>
     </View>
   );
 }
@@ -589,6 +663,35 @@ const styles = StyleSheet.create({
     letterSpacing: 2.2,
     textTransform: 'uppercase',
   },
+  panelLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  panelLabelTick: {
+    width: 10,
+    height: 3,
+  },
+  telemetryCell: {
+    flex: 1,
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  telemetryLabel: {
+    color: colors.textDim,
+    fontSize: 10,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+  },
+  telemetryValue: {
+    fontSize: 14,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
   btn: {
     borderRadius: 0,
     paddingVertical: 16,
@@ -619,6 +722,20 @@ const styles = StyleSheet.create({
   btnContent: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  btnVents: {
+    position: 'absolute',
+    right: 12,
+    top: 10,
+    bottom: 10,
+    width: 18,
+    justifyContent: 'space-evenly',
+    opacity: 0.55,
+  },
+  btnVent: {
+    height: 2,
+    backgroundColor: colors.resource,
+    transform: [{ rotate: '-28deg' }],
   },
   btnText: {
     color: colors.resource,
@@ -666,7 +783,17 @@ const styles = StyleSheet.create({
     borderWidth: hud.stroke,
     borderColor: colors.borderSoft,
     backgroundColor: colors.panelDeep,
-    opacity: 0.45,
+    opacity: 0.7,
+    overflow: 'hidden',
+  },
+  hazardStripe: {
+    position: 'absolute',
+    top: -20,
+    bottom: -20,
+    width: 10,
+    backgroundColor: colors.border,
+    opacity: 0.35,
+    transform: [{ rotate: '28deg' }],
   },
   fieldBox: {
     flexDirection: 'row',

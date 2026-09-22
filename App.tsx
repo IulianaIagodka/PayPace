@@ -107,19 +107,19 @@ function MainTabs() {
         },
       }}
     >
-      <Tab.Screen
+          <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          title: 'HOME',
-          tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
+          title: 'PACE',
+          tabBarIcon: ({ focused }) => <TabIcon name="radio-button-on" focused={focused} />,
         }}
       />
       <Tab.Screen
         name="Activity"
         component={ActivityScreen}
         options={{
-          title: 'ACTIVITY',
+          title: 'LOG',
           tabBarIcon: ({ focused }) => <TabIcon name="list" focused={focused} />,
         }}
       />
@@ -127,15 +127,15 @@ function MainTabs() {
         name="Status"
         component={StatusScreen}
         options={{
-          title: 'STATUS',
-          tabBarIcon: ({ focused }) => <TabIcon name="stats-chart" focused={focused} />,
+          title: 'SYSTEMS',
+          tabBarIcon: ({ focused }) => <TabIcon name="pulse" focused={focused} />,
         }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
         options={{
-          title: 'SETTINGS',
+          title: 'CONFIG',
           tabBarIcon: ({ focused }) => <TabIcon name="settings-sharp" focused={focused} />,
         }}
       />
@@ -174,8 +174,8 @@ function RootNavigator() {
           }}
         >
           <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-          <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'ADD EXPENSE' }} />
-          <Stack.Screen name="Allocate" component={AllocateScreen} options={{ title: 'ALLOCATE' }} />
+          <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'LOG EXPENSE' }} />
+          <Stack.Screen name="Allocate" component={AllocateScreen} options={{ title: 'MODULES' }} />
           <Stack.Screen name="Bills" component={BillsScreen} options={{ title: 'BILLS' }} />
           <Stack.Screen name="PayCycle" component={PayCycleScreen} options={{ title: 'EDIT CYCLE' }} />
           <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'HISTORY' }} />
