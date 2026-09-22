@@ -6,6 +6,7 @@ import { useBudget } from '../store/BudgetContext';
 import { colors, colorForTone } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 import { formatMoney } from '../services/formatting';
+import { burnRateDaily, CONTROL_PANEL_COPY, isBurnHot } from '../services/controlPanel';
 import type { MainTabParamList } from '../navigation/types';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Status'>;
@@ -28,7 +29,7 @@ export function StatusScreen({}: Props) {
     return (
       <ScreenBackground>
         <View style={styles.pad}>
-          <Text style={styles.title}>SYSTEMS</Text>
+          <Text style={styles.title}>{CONTROL_PANEL_COPY.status.title}</Text>
           <Text style={styles.sub}>No active cycle.</Text>
         </View>
       </ScreenBackground>
@@ -38,8 +39,8 @@ export function StatusScreen({}: Props) {
   const income = activeCycle.expectedPaycheck || activeCycle.currentBalance;
   const remaining = snapshot.remainingUntilPayday;
   const reserve = snapshot.reservedTotal;
-  const burnDaily =
-    snapshot.daysElapsed > 0 ? snapshot.spentThisCycle / Math.max(snapshot.daysElapsed, 1) : 0;
+  const burnDaily = burnRateDaily(snapshot.spentThisCycle, snapshot.daysElapsed);
+  const burnHot = isBurnHot(burnDaily, snapshot.safeToSpendToday);
   const trajTone =
     snapshot.trajectory === 'DEFICIT'
       ? 'critical'
@@ -51,8 +52,8 @@ export function StatusScreen({}: Props) {
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.pad}>
         <View style={styles.head}>
-          <Text style={styles.title}>SYSTEMS</Text>
-          <Text style={styles.sysTag}>TELEMETRY // CYCLE HEALTH</Text>
+          <Text style={styles.title}>{CONTROL_PANEL_COPY.status.title}</Text>
+          <Text style={styles.sysTag}>{CONTROL_PANEL_COPY.status.sysTag}</Text>
         </View>
 
         <Panel>
@@ -66,7 +67,7 @@ export function StatusScreen({}: Props) {
             <TelemetryCell
               label="BURN"
               value={`${formatMoney(burnDaily, currency)}/D`}
-              tone={burnDaily > snapshot.safeToSpendToday && snapshot.safeToSpendToday > 0 ? 'warn' : 'normal'}
+              tone={burnHot ? 'warn' : 'normal'}
             />
             <View style={styles.divider} />
             <TelemetryCell
@@ -78,7 +79,7 @@ export function StatusScreen({}: Props) {
         </Panel>
 
         <Panel>
-          <PanelLabel>RESOURCE POOL</PanelLabel>
+          <PanelLabel>{CONTROL_PANEL_COPY.status.poolLabel}</PanelLabel>
           <Row label="INCOME INTAKE" value={formatMoney(income, currency)} />
           <Row label="TOTAL DRAIN" value={formatMoney(snapshot.spentThisCycle, currency)} />
           <Row label="RESERVES" value={formatMoney(Math.max(remaining, 0), currency)} />
@@ -95,7 +96,7 @@ export function StatusScreen({}: Props) {
         </Panel>
 
         <Panel>
-          <PanelLabel tone="warn">TRAJECTORY</PanelLabel>
+          <PanelLabel tone="warn">{CONTROL_PANEL_COPY.status.trajectoryLabel}</PanelLabel>
           <Text style={[styles.traj, { color: colorForTone(trajTone as any) }]}>
             {snapshot.trajectory}
           </Text>
@@ -106,7 +107,7 @@ export function StatusScreen({}: Props) {
         </Panel>
 
         <Panel>
-          <PanelLabel>CHECKPOINT TIMELINE</PanelLabel>
+          <PanelLabel>{CONTROL_PANEL_COPY.status.timelineLabel}</PanelLabel>
           <View style={styles.timeline}>
             {timeline.map((d) => (
               <View

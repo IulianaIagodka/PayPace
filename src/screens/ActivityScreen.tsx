@@ -6,6 +6,7 @@ import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 import { formatMoney } from '../services/formatting';
+import { CONTROL_PANEL_COPY } from '../services/controlPanel';
 import type { MainTabParamList } from '../navigation/types';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Activity'>;
@@ -19,12 +20,12 @@ export function ActivityScreen({}: Props) {
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.pad}>
         <View style={styles.head}>
-          <Text style={styles.title}>DRAIN LOG</Text>
-          <Text style={styles.sysTag}>EXPENSE EVENTS // THIS CYCLE</Text>
+          <Text style={styles.title}>{CONTROL_PANEL_COPY.activity.title}</Text>
+          <Text style={styles.sysTag}>{CONTROL_PANEL_COPY.activity.sysTag}</Text>
         </View>
 
         <Panel>
-          <PanelLabel tone="warn">TOTAL DRAIN</PanelLabel>
+          <PanelLabel tone="warn">{CONTROL_PANEL_COPY.activity.totalLabel}</PanelLabel>
           <Text style={styles.total}>{formatMoney(snapshot.spentThisCycle, currency)}</Text>
           <Text style={styles.sub}>
             {expenses.length} event{expenses.length === 1 ? '' : 's'} logged against reserves
@@ -32,9 +33,9 @@ export function ActivityScreen({}: Props) {
         </Panel>
 
         <Panel>
-          <PanelLabel>EVENT FEED</PanelLabel>
+          <PanelLabel>{CONTROL_PANEL_COPY.activity.feedLabel}</PanelLabel>
           {expenses.length === 0 ? (
-            <Text style={styles.sub}>No drain events yet.</Text>
+            <Text style={styles.sub}>{CONTROL_PANEL_COPY.activity.empty}</Text>
           ) : (
             expenses.map((e) => (
               <ExpenseRow

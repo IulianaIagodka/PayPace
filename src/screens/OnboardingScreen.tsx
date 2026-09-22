@@ -27,6 +27,7 @@ import type { Bill, ExpenseCategory, PayCycle, PaySchedule } from '../models/typ
 import { asMoney, currencySymbol, parseAmount, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { CONTROL_PANEL_COPY } from '../services/controlPanel';
 
 const billSuggestions: { name: string; category: ExpenseCategory }[] = [
   { name: 'Rent', category: 'rent' },
@@ -113,13 +114,13 @@ export function OnboardingScreen() {
               <Text style={styles.brandPay}>Pay</Text>
               <Text style={styles.brandPace}>pace</Text>
             </Text>
-            <Text style={styles.title}>Your money control panel.{'\n'}Survive until payday.</Text>
+            <Text style={styles.title}>{CONTROL_PANEL_COPY.onboarding.title}</Text>
             <Text style={styles.sub}>
               Monitor reserves, burn rate, and runway to the next checkpoint — not another spreadsheet
               budget.
             </Text>
           </View>
-          <PrimaryButton title="INITIALIZE" onPress={() => setStep('balance')} />
+          <PrimaryButton title={CONTROL_PANEL_COPY.onboarding.cta} onPress={() => setStep('balance')} />
         </View>
       </ScreenBackground>
     );
@@ -130,7 +131,7 @@ export function OnboardingScreen() {
       <ScreenBackground>
         <View style={[styles.pad, { justifyContent: 'space-between' }]}>
           <View style={{ gap: 22, paddingTop: 60 }}>
-            <Text style={styles.sub}>SYSTEM READY</Text>
+            <Text style={styles.sub}>{CONTROL_PANEL_COPY.onboarding.ready}</Text>
             <SafeSpendHero
               safeToday={snap.safeToSpendToday}
               remaining={snap.remainingUntilPayday}
@@ -144,7 +145,10 @@ export function OnboardingScreen() {
               totalDays={snap.totalDaysInCycle}
             />
           </View>
-          <PrimaryButton title="ENTER CONTROL PANEL" onPress={() => completeOnboarding(draftCycle)} />
+          <PrimaryButton
+            title={CONTROL_PANEL_COPY.onboarding.enter}
+            onPress={() => completeOnboarding(draftCycle)}
+          />
         </View>
       </ScreenBackground>
     );

@@ -24,6 +24,13 @@ import { fonts } from '../theme/fonts';
 import { hud, hudType } from '../theme/hud';
 import { formatMoney } from '../services/formatting';
 import { envelopeStatuses } from '../services/envelopes';
+import {
+  CONTROL_PANEL_COPY,
+  buildControlPanelView,
+  filterControlGridModules,
+  pairModuleRows,
+  recentDrainEvents,
+} from '../services/controlPanel';
 import type { PaceHorizon } from '../models/calculator';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
@@ -31,8 +38,6 @@ type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Home'>,
   NativeStackScreenProps<RootStackParamList>
 >;
-
-const GRID_KEYS = new Set(['food', 'transport', 'kids', 'fun', 'home']);
 
 export function HomeScreen({ navigation }: Props) {
   const { activeCycle, snapshot, store, setPremium } = useBudget();
@@ -42,6 +47,7 @@ export function HomeScreen({ navigation }: Props) {
   const prevRatio = useRef(snapshot.resourcesRemainingRatio);
   const heroPulse = useRef(new Animated.Value(0.92)).current;
   const brandIn = useRef(new Animated.Value(0)).current;
+  const copy = CONTROL_PANEL_COPY;
 
   useEffect(() => {
     if (prevRatio.current > snapshot.resourcesRemainingRatio) {
@@ -74,16 +80,17 @@ export function HomeScreen({ navigation }: Props) {
     [activeCycle],
   );
 
-  const gridModules = useMemo(
-    () => modules.filter((m) => GRID_KEYS.has(String(m.envelope.key))),
-    [modules],
+  const gridModules = useMemo(() => filterControlGridModules(modules), [modules]);
+
+  const recent = useMemo(
+    () => recentDrainEvents(activeCycle?.expenses ?? [], 3),
+    [activeCycle?.expenses],
   );
 
-  const recent = useMemo(() => {
-    const list = [...(activeCycle?.expenses ?? [])];
-    list.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-    return list.slice(0, 3);
-  }, [activeCycle?.expenses]);
+  const panel = useMemo(
+    () => buildControlPanelView(snapshot, horizon, (n) => formatMoney(n, currency)),
+    [snapshot, horizon, currency],
+  );
 
   if (!activeCycle) {
     return (
@@ -97,50 +104,8 @@ export function HomeScreen({ navigation }: Props) {
     );
   }
 
-  const available = Math.max(snapshot.remainingUntilPayday, 0);
-  const pct = Math.round(snapshot.resourcesRemainingRatio * 100);
-  const safe = Math.max(snapshot.safeToSpendToday, 0);
-  const isWeek = horizon === 'week';
-  const periodSafe = Math.max(
-    isWeek ? snapshot.safeToSpendThisWeek : snapshot.safeToSpendThisMonth,
-    0,
-  );
-  const periodDays = isWeek ? snapshot.daysLeftInWeek : snapshot.daysLeftInMonth;
-  const periodShare = isWeek ? snapshot.weekShare : snapshot.monthShare;
-  const reservesAmount = isWeek ? periodSafe : available;
-  const reservesLabel = isWeek ? 'RESERVES · THIS WEEK' : 'RESERVES · UNTIL CHECKPOINT';
-  const burnDaily =
-    snapshot.daysElapsed > 0 ? snapshot.spentThisCycle / Math.max(snapshot.daysElapsed, 1) : 0;
-  const burnHot = burnDaily > safe && safe > 0;
-  const statusTone =
-    snapshot.trajectory === 'DEFICIT'
-      ? 'danger'
-      : snapshot.trajectory === 'LOW RESERVE' || burnHot
-        ? 'warn'
-        : 'ok';
-  const statusLabel =
-    snapshot.trajectory === 'DEFICIT'
-      ? 'CRITICAL'
-      : snapshot.trajectory === 'LOW RESERVE'
-        ? 'LOW RESERVE'
-        : burnHot
-          ? 'BURN HIGH'
-          : snapshot.trajectory === 'WITH RESERVE'
-            ? 'STABLE'
-            : 'ON PACE';
-  const chipLabel =
-    snapshot.remainingUntilPayday < 0
-      ? 'SYSTEM CRITICAL'
-      : snapshot.isAtRisk
-        ? 'SYSTEM WARN'
-        : 'SYSTEM ONLINE';
-  const safeColor =
-    snapshot.remainingUntilPayday < 0 ? colors.danger : colors.safeValue;
-
-  const rows: (typeof gridModules)[] = [];
-  for (let i = 0; i < gridModules.length; i += 2) {
-    rows.push(gridModules.slice(i, i + 2));
-  }
+  const safeColor = panel.pacingTone === 'danger' ? colors.danger : colors.safeValue;
+  const rows = pairModuleRows(gridModules);
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
@@ -165,43 +130,34 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={styles.brand}>
               PAY<Text style={styles.brandAccent}>PACE</Text>
             </Text>
-            <Text style={styles.sysTag}>RESOURCE CONTROL // PAYDAY CYCLE</Text>
+            <Text style={styles.sysTag}>{copy.home.sysTag}</Text>
           </View>
-          <StatusChip label={chipLabel} />
+          <StatusChip label={panel.chipLabel} />
         </Animated.View>
 
-        <HUDPanel variant="standard" label={reservesLabel} labelTone="warn">
-          <HudValue>{formatMoney(reservesAmount, currency)}</HudValue>
+        <HUDPanel variant="standard" label={panel.reservesLabel} labelTone="warn">
+          <HudValue>{formatMoney(panel.reservesAmount, currency)}</HudValue>
           <SegmentedBar
             ratio={snapshot.resourcesRemainingRatio}
             animateFrom={drainFrom}
             tipAmber
           />
           <View style={styles.metaRow}>
-            <HudMeta>{pct}% RESOURCES REMAINING</HudMeta>
-            <HudMeta>
-              {isWeek
-                ? `${periodDays}D RUNWAY · WEEK`
-                : `${snapshot.daysUntilPayday}D TO CHECKPOINT`}
-            </HudMeta>
+            <HudMeta>{panel.resourcesPct}% RESOURCES REMAINING</HudMeta>
+            <HudMeta>{panel.runwayLabel}</HudMeta>
           </View>
-          {isWeek ? (
-            <HudMeta>
-              CYCLE RESERVE {formatMoney(available, currency)} · {snapshot.daysUntilPayday}D TO
-              PAYDAY
-            </HudMeta>
-          ) : null}
+          {panel.weekHint ? <HudMeta>{panel.weekHint}</HudMeta> : null}
         </HUDPanel>
 
         <Animated.View style={{ opacity: heroPulse }}>
-          <HUDPanel variant="primary" label="RECOMMENDED PACING">
+          <HUDPanel variant="primary" label={copy.home.pacingLabel}>
             <View style={styles.paceRow}>
               <HudValue size="hero" style={{ color: safeColor }}>
-                {formatMoney(safe, currency)}
+                {formatMoney(panel.recommendedPacing, currency)}
               </HudValue>
               <Text style={hudType.unit}>/ DAY</Text>
             </View>
-            <HudMeta>Daily drain ceiling until next checkpoint</HudMeta>
+            <HudMeta>{copy.home.pacingHint}</HudMeta>
           </HUDPanel>
         </Animated.View>
 
@@ -209,22 +165,26 @@ export function HomeScreen({ navigation }: Props) {
           <View style={styles.telemetryRow}>
             <TelemetryCell
               label="BURN RATE"
-              value={`${formatMoney(burnDaily, currency)}/D`}
-              tone={burnHot ? 'warn' : 'normal'}
+              value={`${formatMoney(panel.burnDaily, currency)}/D`}
+              tone={panel.burnHot ? 'warn' : 'normal'}
             />
             <View style={styles.telemetryDivider} />
             <TelemetryCell
               label="CHECKPOINT"
-              value={`${snapshot.daysUntilPayday}D`}
+              value={`${panel.checkpointDays}D`}
               tone="normal"
             />
             <View style={styles.telemetryDivider} />
-            <TelemetryCell label="STATUS" value={statusLabel} tone={statusTone} />
+            <TelemetryCell
+              label="STATUS"
+              value={panel.statusLabel}
+              tone={panel.statusTone}
+            />
           </View>
         </HUDPanel>
 
         {snapshot.projectedShortfallDays != null ? (
-          <HUDPanel variant="standard" label="BURN RATE CRITICAL" labelTone="warn">
+          <HUDPanel variant="standard" label={copy.home.burnCriticalTitle} labelTone="warn">
             <HudBody>
               At current drain, reserves deplete {snapshot.projectedShortfallDays} days before
               checkpoint.
@@ -234,7 +194,7 @@ export function HomeScreen({ navigation }: Props) {
 
         {store.settings.isPremium ? (
           <View style={styles.modulesBlock}>
-            <PanelLabel>MODULES</PanelLabel>
+            <PanelLabel>{copy.home.modulesLabel}</PanelLabel>
             <View style={styles.grid}>
               {rows.map((row, rowIndex) => (
                 <View key={`row-${rowIndex}`} style={styles.gridRow}>
@@ -249,7 +209,7 @@ export function HomeScreen({ navigation }: Props) {
                       tone={mod.tone}
                       depleted={mod.depleted}
                       index={rowIndex * 2 + index}
-                      periodShare={periodShare}
+                      periodShare={panel.periodShare}
                       layout="grid"
                       onPress={() => navigation.navigate('AddExpense')}
                     />
@@ -260,7 +220,7 @@ export function HomeScreen({ navigation }: Props) {
             </View>
           </View>
         ) : (
-          <HUDPanel variant="standard" label="MODULES · PLUS" labelTone="warn">
+          <HUDPanel variant="standard" label={copy.home.modulesPlusTitle} labelTone="warn">
             <HudBody>
               Plus unlocks per-module reserves — food, transport, kids, and the rest — so you can
               watch each resource cell drain.
@@ -275,14 +235,14 @@ export function HomeScreen({ navigation }: Props) {
 
         <View style={styles.recentBlock}>
           <View style={styles.recentHead}>
-            <PanelLabel>DRAIN LOG</PanelLabel>
+            <PanelLabel>{copy.home.drainLogLabel}</PanelLabel>
             <Pressable onPress={() => navigation.navigate('Activity')}>
               <Text style={styles.seeAll}>FULL LOG ›</Text>
             </Pressable>
           </View>
           <HUDPanel variant="standard">
             {recent.length === 0 ? (
-              <HudBody>No drain events logged.</HudBody>
+              <HudBody>{copy.home.drainEmpty}</HudBody>
             ) : (
               recent.map((e) => (
                 <ExpenseRow key={e.id} expense={e} currencyCode={currency} />
@@ -291,7 +251,7 @@ export function HomeScreen({ navigation }: Props) {
           </HUDPanel>
         </View>
 
-        <HudButton title="+ LOG EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
+        <HudButton title={copy.home.logExpense} onPress={() => navigation.navigate('AddExpense')} />
       </ScrollView>
     </ScreenBackground>
   );
