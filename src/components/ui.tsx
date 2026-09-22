@@ -286,6 +286,7 @@ export function CategoryCell({
   periodShare = 1,
   horizonLabel = 'CYCLE',
   depleted = false,
+  layout = 'grid',
 }: {
   title: string;
   iconKey: string;
@@ -299,14 +300,16 @@ export function CategoryCell({
   periodShare?: number;
   horizonLabel?: string;
   depleted?: boolean;
+  /** `rail` = fixed-width pod for horizontal scroll */
+  layout?: 'grid' | 'rail';
 }) {
   const cycleRemaining = Math.max(allocated - spent, 0);
   const periodRemaining = cycleRemaining * Math.max(0, Math.min(periodShare, 1));
   const remainingRatio = allocated > 0 ? cycleRemaining / allocated : 0;
   const enter = useRef(new Animated.Value(0)).current;
   const muted = depleted || remainingRatio <= 0;
-  // Mid reserves tip amber; high reserves stay full green — status via bar behavior only.
   const tipAmber = tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
+  const isRail = layout === 'rail';
 
   useEffect(() => {
     Animated.timing(enter, {
@@ -323,7 +326,8 @@ export function CategoryCell({
   return (
     <Animated.View
       style={{
-        flex: 1,
+        flex: isRail ? undefined : 1,
+        width: isRail ? 124 : undefined,
         opacity: enter,
         transform: [
           {
@@ -335,33 +339,76 @@ export function CategoryCell({
         ],
       }}
     >
-      <Pressable onPress={onPress} disabled={!onPress} style={{ flex: 1, opacity: muted ? 0.48 : 1 }}>
-        <Panel style={styles.cell}>
-          <View style={styles.cellTitleRow}>
-            <Ionicons
-              name={iconName}
-              size={15}
-              color={muted ? colors.textDim : colors.textSecondary}
-            />
-            <Text style={[styles.cellTitle, muted && { color: colors.textDim }]} numberOfLines={1}>
-              {title}
-            </Text>
-            <Text style={styles.cellHorizon}>{muted ? 'EMPTY' : horizonLabel}</Text>
-          </View>
-          <Text style={[styles.cellAmount, muted && { color: colors.textDim }]} numberOfLines={1}>
-            {formatMoney(periodRemaining, currencyCode)}
-            <Text style={styles.cellAmountDim}>
-              {' '}
-              / {formatMoney(cycleRemaining, currencyCode)}
-            </Text>
-          </Text>
-          <SegmentedBar
-            ratio={remainingRatio}
-            segments={8}
-            height={9}
-            compact
-            tipAmber={tipAmber}
-          />
+      <Pressable
+        onPress={onPress}
+        disabled={!onPress}
+        style={{ flex: isRail ? undefined : 1, opacity: muted ? 0.48 : 1 }}
+      >
+        <Panel style={isRail ? styles.cellRail : styles.cell}>
+          {isRail ? (
+            <View style={styles.cellRailInner}>
+              <View style={styles.cellIconWrap}>
+                <Ionicons
+                  name={iconName}
+                  size={20}
+                  color={muted ? colors.textDim : colors.resource}
+                />
+              </View>
+              <Text
+                style={[styles.cellTitleRail, muted && { color: colors.textDim }]}
+                numberOfLines={1}
+              >
+                {title}
+              </Text>
+              <Text
+                style={[styles.cellAmountRail, muted && { color: colors.textDim }]}
+                numberOfLines={1}
+              >
+                {formatMoney(periodRemaining, currencyCode)}
+                <Text style={styles.cellAmountDim}>
+                  {' '}
+                  / {formatMoney(cycleRemaining, currencyCode)}
+                </Text>
+              </Text>
+              <View style={{ alignSelf: 'stretch' }}>
+                <SegmentedBar
+                  ratio={remainingRatio}
+                  segments={6}
+                  height={8}
+                  compact
+                  tipAmber={tipAmber}
+                />
+              </View>
+            </View>
+          ) : (
+            <>
+              <View style={styles.cellTitleRow}>
+                <Ionicons
+                  name={iconName}
+                  size={15}
+                  color={muted ? colors.textDim : colors.textSecondary}
+                />
+                <Text style={[styles.cellTitle, muted && { color: colors.textDim }]} numberOfLines={1}>
+                  {title}
+                </Text>
+                <Text style={styles.cellHorizon}>{muted ? 'EMPTY' : horizonLabel}</Text>
+              </View>
+              <Text style={[styles.cellAmount, muted && { color: colors.textDim }]} numberOfLines={1}>
+                {formatMoney(periodRemaining, currencyCode)}
+                <Text style={styles.cellAmountDim}>
+                  {' '}
+                  / {formatMoney(cycleRemaining, currencyCode)}
+                </Text>
+              </Text>
+              <SegmentedBar
+                ratio={remainingRatio}
+                segments={8}
+                height={9}
+                compact
+                tipAmber={tipAmber}
+              />
+            </>
+          )}
         </Panel>
       </Pressable>
     </Animated.View>
@@ -678,6 +725,24 @@ const styles = StyleSheet.create({
   warnLabel: { color: colors.warning, fontSize: 11, letterSpacing: 0.8, fontWeight: '600' },
   criticalLabel: { color: colors.critical, fontSize: 11, letterSpacing: 1, fontWeight: '700' },
   cell: { gap: 8, paddingVertical: 12, paddingHorizontal: 12, minHeight: 92 },
+  cellRail: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    minHeight: 140,
+  },
+  cellRailInner: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  cellIconWrap: {
+    width: 36,
+    height: 36,
+    borderWidth: 1,
+    borderColor: colors.borderBright,
+    backgroundColor: colors.resourceSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cellTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   cellTitle: {
     flex: 1,
@@ -686,6 +751,14 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     fontWeight: '700',
     letterSpacing: 1.2,
+  },
+  cellTitleRail: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textAlign: 'center',
   },
   cellHorizon: {
     color: colors.textDim,
@@ -699,6 +772,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontWeight: '700',
     color: colors.ammo,
+  },
+  cellAmountRail: {
+    fontSize: 11,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    color: colors.ammo,
+    textAlign: 'center',
   },
   cellAmountDim: { color: colors.textDim, fontWeight: '600' },
   emptyCell: {

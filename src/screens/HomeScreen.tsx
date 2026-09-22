@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   CategoryCell,
-  EmptyCell,
+  ExpenseRow,
   HudButton,
   Panel,
   ScreenBackground,
@@ -25,7 +25,8 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
-const GRID_KEYS = ['food', 'fun', 'transport', 'kids', 'home'] as const;
+/** Most-used category order when spend is equal / zero */
+const POPULAR_KEYS = ['food', 'home', 'kids', 'fun', 'transport', 'other'] as const;
 
 export function HomeScreen({ navigation }: Props) {
   const { activeCycle, snapshot, store, setPremium } = useBudget();
@@ -33,7 +34,7 @@ export function HomeScreen({ navigation }: Props) {
   const horizon: PaceHorizon = store.settings.paceHorizon ?? 'week';
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
   const prevRatio = useRef(snapshot.resourcesRemainingRatio);
-  const heroPulse = useRef(new Animated.Value(0.85)).current;
+  const heroPulse = useRef(new Animated.Value(0.88)).current;
 
   useEffect(() => {
     if (prevRatio.current > snapshot.resourcesRemainingRatio) {
@@ -59,10 +60,23 @@ export function HomeScreen({ navigation }: Props) {
     [activeCycle],
   );
 
-  const gridModules = useMemo(() => {
-    const byKey = new Map(modules.map((m) => [m.envelope.key, m]));
-    return GRID_KEYS.map((k) => byKey.get(k)).filter(Boolean) as typeof modules;
+  /** Popular first: by spend desc, then preferred key order */
+  const railModules = useMemo(() => {
+    const rank = (key: string) => {
+      const i = POPULAR_KEYS.indexOf(key as (typeof POPULAR_KEYS)[number]);
+      return i >= 0 ? i : POPULAR_KEYS.length;
+    };
+    return [...modules].sort((a, b) => {
+      if (b.spent !== a.spent) return b.spent - a.spent;
+      return rank(String(a.envelope.key)) - rank(String(b.envelope.key));
+    });
   }, [modules]);
+
+  const recent = useMemo(() => {
+    const list = [...(activeCycle?.expenses ?? [])];
+    list.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    return list.slice(0, 4);
+  }, [activeCycle?.expenses]);
 
   if (!activeCycle) {
     return (
@@ -86,19 +100,10 @@ export function HomeScreen({ navigation }: Props) {
   );
   const periodDays = isWeek ? snapshot.daysLeftInWeek : snapshot.daysLeftInMonth;
   const periodShare = isWeek ? snapshot.weekShare : snapshot.monthShare;
-  const periodUnit = isWeek ? '/ week' : '/ until payday';
   const horizonLabel = isWeek ? 'WEEK' : 'CYCLE';
-  // Keep SAFE TO SPEND neutral; SPENDING RATE HIGH card owns the warning signal.
-  // Red only when the buffer is already gone.
+  const availableLabel = isWeek ? 'AVAILABLE THIS WEEK' : 'AVAILABLE UNTIL PAYDAY';
   const safeColor =
     snapshot.remainingUntilPayday < 0 ? colors.danger : colors.safeValue;
-
-  type GridItem = (typeof gridModules)[number] | null;
-  const withPad: GridItem[] = [...gridModules, null];
-  const rows: GridItem[][] = [];
-  for (let i = 0; i < withPad.length; i += 2) {
-    rows.push(withPad.slice(i, i + 2));
-  }
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
@@ -110,48 +115,42 @@ export function HomeScreen({ navigation }: Props) {
           <StatusChip />
         </View>
 
-        <View style={styles.availableBlock}>
-          <Text style={styles.label}>AVAILABLE</Text>
-          <Text style={styles.available}>{formatMoney(available, currency)}</Text>
-        </View>
-
-        <SegmentedBar
-          ratio={snapshot.resourcesRemainingRatio}
-          segments={10}
-          height={30}
-          animateFrom={drainFrom}
-          tipAmber
-        />
-        <View style={styles.metaRow}>
-          <Text style={styles.meta}>{pct}% REMAINING</Text>
-          <Text style={styles.meta}>{snapshot.daysUntilPayday}D TO PAYDAY</Text>
-        </View>
-
         <Animated.View style={{ opacity: heroPulse }}>
           <Panel glow innerGlow style={styles.heroPanel}>
-            <Text style={styles.heroLabel}>SAFE TO SPEND</Text>
-            <View style={styles.safeRow}>
-              <View style={styles.safeCol}>
-                <Text style={[styles.safe, { color: safeColor }]}>
-                  {formatMoney(safe, currency)}
-                </Text>
-                <Text style={styles.perUnit}>/ DAY</Text>
-              </View>
-              <View style={styles.safeDivider} />
-              <View style={styles.safeCol}>
-                <Text style={[styles.safeWeek, { color: safeColor }]}>
-                  {formatMoney(periodSafe, currency)}
-                </Text>
-                <Text style={styles.perUnit}>{periodUnit.toUpperCase()}</Text>
-                <Text style={styles.weekHint}>
-                  {isWeek
-                    ? `${periodDays}D LEFT IN WEEK`
-                    : `${snapshot.daysUntilPayday}D UNTIL PAYDAY`}
-                </Text>
-              </View>
-            </View>
+            <Text style={styles.heroLabel}>SAFE TO SPEND TODAY</Text>
+            <Text style={[styles.safeToday, { color: safeColor }]}>
+              {formatMoney(safe, currency)}
+            </Text>
+            <Text style={styles.perUnit}>/ DAY</Text>
           </Panel>
         </Animated.View>
+
+        <Panel style={styles.availablePanel}>
+          <View style={styles.availableHead}>
+            <Text style={styles.label}>{availableLabel}</Text>
+            <Text style={styles.available}>{formatMoney(isWeek ? periodSafe : available, currency)}</Text>
+          </View>
+          <SegmentedBar
+            ratio={snapshot.resourcesRemainingRatio}
+            segments={10}
+            height={22}
+            animateFrom={drainFrom}
+            tipAmber
+          />
+          <View style={styles.metaRow}>
+            <Text style={styles.meta}>{pct}% REMAINING</Text>
+            <Text style={styles.meta}>
+              {isWeek
+                ? `${periodDays}D LEFT IN WEEK`
+                : `${snapshot.daysUntilPayday}D TO PAYDAY`}
+            </Text>
+          </View>
+          {isWeek ? (
+            <Text style={styles.weekHint}>
+              Cycle left {formatMoney(available, currency)} · {snapshot.daysUntilPayday}D to payday
+            </Text>
+          ) : null}
+        </Panel>
 
         {snapshot.projectedShortfallDays != null ? (
           <Panel alt style={styles.alert}>
@@ -164,31 +163,31 @@ export function HomeScreen({ navigation }: Props) {
         ) : null}
 
         {store.settings.isPremium ? (
-          <View style={styles.grid}>
-            {rows.map((row, rowIndex) => (
-              <View key={rowIndex} style={styles.gridRow}>
-                {row.map((mod, colIndex) =>
-                  mod == null ? (
-                    <EmptyCell key="empty" />
-                  ) : (
-                    <CategoryCell
-                      key={mod.envelope.id}
-                      title={mod.envelope.title}
-                      iconKey={mod.envelope.key}
-                      spent={mod.spent}
-                      allocated={mod.envelope.allocated}
-                      currencyCode={currency}
-                      tone={mod.tone}
-                      depleted={mod.depleted}
-                      index={rowIndex * 2 + colIndex}
-                      periodShare={periodShare}
-                      horizonLabel={horizonLabel}
-                      onPress={() => navigation.navigate('AddExpense')}
-                    />
-                  ),
-                )}
-              </View>
-            ))}
+          <View style={styles.railBlock}>
+            <Text style={styles.sectionLabel}>CATEGORIES</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.rail}
+            >
+              {railModules.map((mod, index) => (
+                <CategoryCell
+                  key={mod.envelope.id}
+                  title={mod.envelope.title}
+                  iconKey={mod.envelope.key}
+                  spent={mod.spent}
+                  allocated={mod.envelope.allocated}
+                  currencyCode={currency}
+                  tone={mod.tone}
+                  depleted={mod.depleted}
+                  index={index}
+                  periodShare={periodShare}
+                  horizonLabel={horizonLabel}
+                  layout="rail"
+                  onPress={() => navigation.navigate('AddExpense')}
+                />
+              ))}
+            </ScrollView>
           </View>
         ) : (
           <Panel alt>
@@ -204,6 +203,24 @@ export function HomeScreen({ navigation }: Props) {
             />
           </Panel>
         )}
+
+        <View style={styles.recentBlock}>
+          <View style={styles.recentHead}>
+            <Text style={styles.sectionLabel}>RECENT</Text>
+            <Pressable onPress={() => navigation.navigate('Activity')}>
+              <Text style={styles.seeAll}>ACTIVITY ›</Text>
+            </Pressable>
+          </View>
+          <Panel>
+            {recent.length === 0 ? (
+              <Text style={styles.sub}>No expenses yet.</Text>
+            ) : (
+              recent.map((e) => (
+                <ExpenseRow key={e.id} expense={e} currencyCode={currency} />
+              ))
+            )}
+          </Panel>
+        </View>
 
         <HudButton title="+ ADD EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
       </ScrollView>
@@ -229,7 +246,33 @@ const styles = StyleSheet.create({
   brandAccent: {
     color: colors.resource,
   },
-  availableBlock: { gap: 2 },
+  heroPanel: {
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    gap: 4,
+  },
+  heroLabel: {
+    color: colors.resource,
+    fontSize: 12,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 2.8,
+  },
+  safeToday: {
+    fontSize: 40,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: -0.6,
+  },
+  perUnit: {
+    color: colors.metal,
+    fontSize: 13,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.6,
+  },
+  availablePanel: { gap: 10, paddingVertical: 14 },
+  availableHead: { gap: 4 },
   label: {
     color: colors.warning,
     fontSize: 11,
@@ -239,15 +282,14 @@ const styles = StyleSheet.create({
   },
   available: {
     color: colors.ammo,
-    fontSize: 44,
+    fontSize: 28,
     fontFamily: fonts.display,
     fontWeight: '700',
-    letterSpacing: -0.8,
+    letterSpacing: -0.4,
   },
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: -4,
   },
   meta: {
     color: colors.metal,
@@ -256,60 +298,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1.4,
   },
-  heroPanel: {
-    paddingVertical: 18,
-    paddingHorizontal: 16,
-    gap: 10,
-  },
-  heroLabel: {
-    color: colors.resource,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 2.8,
-  },
-  safeRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: 14,
-  },
-  safeCol: {
-    flex: 1,
-    gap: 2,
-  },
-  safeDivider: {
-    width: 2,
-    backgroundColor: colors.borderBright,
-    marginVertical: 4,
-  },
-  safe: {
-    color: colors.safeValue,
-    fontSize: 34,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: -0.4,
-  },
-  safeWeek: {
-    color: colors.safeValue,
-    fontSize: 28,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  perUnit: {
-    color: colors.metal,
-    fontSize: 13,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.6,
-  },
   weekHint: {
     color: colors.textDim,
     fontSize: 11,
     fontFamily: fonts.label,
     fontWeight: '700',
     letterSpacing: 1,
-    marginTop: 2,
+  },
+  sectionLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 2.2,
   },
   sub: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, fontFamily: fonts.body },
   alert: { borderColor: colors.warning },
@@ -326,6 +327,15 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontFamily: fonts.body,
   },
-  grid: { gap: 8, marginTop: 2 },
-  gridRow: { flexDirection: 'row', gap: 8 },
+  railBlock: { gap: 10 },
+  rail: { gap: 10, paddingRight: 8, paddingVertical: 2 },
+  recentBlock: { gap: 10 },
+  recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  seeAll: {
+    color: colors.resource,
+    fontSize: 11,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+  },
 });
