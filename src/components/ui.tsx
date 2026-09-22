@@ -268,12 +268,18 @@ export function EnvelopeModule({
   warning?: boolean;
   depleted?: boolean;
 }) {
-  const remainingRatio = allocated > 0 ? Math.max(allocated - spent, 0) / allocated : 0;
+  const remaining = Math.max(allocated - spent, 0);
+  const planned = Math.max(allocated, 0);
+  const remainingRatio = planned > 0 ? remaining / planned : 0;
   return (
     <HUDPanel variant="compact" label={title}>
-      <HudValue size="compact" style={{ color: colorForTone(tone) }}>
-        {formatMoney(spent, currencyCode)} / {formatMoney(allocated, currencyCode)}
-      </HudValue>
+      <View style={styles.amountRow}>
+        <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
+          {formatMoney(remaining, currencyCode)}
+        </Text>
+        <Text style={styles.amountSep}> / </Text>
+        <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
+      </View>
       <SegmentedBar ratio={remainingRatio} tipAmber />
       {depleted ? <HudLabel tone="warn">DEPLETED</HudLabel> : null}
       {warning && !depleted ? (
@@ -335,13 +341,13 @@ export function CategoryCell({
     ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
 
   const amountLine = (
-    <HudValue size="compact" style={muted ? { color: colors.textDim } : undefined}>
-      {formatMoney(cycleRemaining, currencyCode)}
-      <Text style={styles.cellAmountDim}>
-        {' '}
-        / {formatMoney(planned, currencyCode)}
+    <View style={styles.amountRow}>
+      <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
+        {formatMoney(cycleRemaining, currencyCode)}
       </Text>
-    </HudValue>
+      <Text style={styles.amountSep}> / </Text>
+      <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
+    </View>
   );
 
   return (
@@ -672,7 +678,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cellTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  cellAmountDim: { color: colors.textDim, fontWeight: '600', fontFamily: fonts.display },
+  amountRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+  },
+  amountLeft: {
+    ...hudType.valueCompact,
+  },
+  amountSep: {
+    color: colors.textDim,
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: fonts.display,
+  },
+  amountPlanned: {
+    color: colors.textDim,
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: fonts.display,
+  },
   emptyCell: {
     flex: 1,
     minHeight: 92,
