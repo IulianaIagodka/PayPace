@@ -130,15 +130,39 @@ export function HudButton({
         />
       ) : null}
       <View style={styles.btnContent}>
-        <Text
-          style={[
-            styles.btnText,
-            variant === 'secondary' && { color: colors.text },
-            variant === 'danger' && { color: colors.danger },
-          ]}
-        >
-          {title}
-        </Text>
+        {title.startsWith('+') ? (
+          <>
+            <Text
+              style={[
+                styles.btnText,
+                styles.btnPlus,
+                variant === 'secondary' && { color: colors.text },
+                variant === 'danger' && { color: colors.danger },
+              ]}
+            >
+              +
+            </Text>
+            <Text
+              style={[
+                styles.btnText,
+                variant === 'secondary' && { color: colors.text },
+                variant === 'danger' && { color: colors.danger },
+              ]}
+            >
+              {title.replace(/^\+\s*/, '')}
+            </Text>
+          </>
+        ) : (
+          <Text
+            style={[
+              styles.btnText,
+              variant === 'secondary' && { color: colors.text },
+              variant === 'danger' && { color: colors.danger },
+            ]}
+          >
+            {title}
+          </Text>
+        )}
       </View>
     </Pressable>
   );
@@ -602,6 +626,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontWeight: '700',
     letterSpacing: 2.6,
+  },
+  btnPlus: {
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: 0,
+    marginRight: 8,
   },
   barTrack: {
     flexDirection: 'row',
