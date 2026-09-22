@@ -39,7 +39,6 @@ export function HomeScreen({ navigation }: Props) {
   const horizon: PaceHorizon = store.settings.paceHorizon ?? 'week';
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
   const prevRatio = useRef(snapshot.resourcesRemainingRatio);
-  const heroPulse = useRef(new Animated.Value(0.88)).current;
 
   useEffect(() => {
     if (prevRatio.current > snapshot.resourcesRemainingRatio) {
@@ -50,15 +49,6 @@ export function HomeScreen({ navigation }: Props) {
     }
     prevRatio.current = snapshot.resourcesRemainingRatio;
   }, [snapshot.resourcesRemainingRatio]);
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(heroPulse, { toValue: 1, duration: 2200, useNativeDriver: true }),
-        Animated.timing(heroPulse, { toValue: 0.92, duration: 2200, useNativeDriver: true }),
-      ]),
-    ).start();
-  }, [heroPulse]);
 
   const modules = useMemo(
     () => (activeCycle ? envelopeStatuses(activeCycle) : []),
@@ -120,13 +110,11 @@ export function HomeScreen({ navigation }: Props) {
           <StatusChip label={moneyStatusLabel(moneyStatus)} tone={moneyStatus} />
         </View>
 
-        <Animated.View style={{ opacity: heroPulse }}>
-          <HUDPanel variant="primary" label="SAFE TO SPEND TODAY">
-            <HudValue size="hero" style={{ color: safeColor }}>
-              {formatMoney(safe, currency)}
-            </HudValue>
-          </HUDPanel>
-        </Animated.View>
+        <HUDPanel variant="primary" label="SAFE TO SPEND TODAY">
+          <HudValue size="hero" style={{ color: safeColor }}>
+            {formatMoney(safe, currency)}
+          </HudValue>
+        </HUDPanel>
 
         <HUDPanel variant="standard" label={availableLabel}>
           <HudValue>{formatMoney(isWeek ? periodSafe : available, currency)}</HudValue>

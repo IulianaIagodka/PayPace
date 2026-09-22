@@ -36,7 +36,7 @@ export function HUDPanel({
     tone === 'primary' ? hudType.labelPrimary : tone === 'warn' ? hudType.labelWarn : hudType.label;
 
   return (
-    <View style={[isPrimary && styles.glow, style]}>
+    <View style={style}>
       <LinearGradient
         colors={isPrimary ? ['#1E3318', '#10180E'] : ['#262218', '#141210']}
         start={{ x: 0, y: 0 }}
@@ -115,13 +115,6 @@ export function HudBody({
 }
 
 const styles = StyleSheet.create({
-  glow: {
-    shadowColor: colors.resource,
-    shadowOpacity: 0.16,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 4,
-  },
   shell: {
     borderRadius: 0,
     borderWidth: hud.stroke,
