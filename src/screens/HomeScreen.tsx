@@ -124,7 +124,6 @@ export function HomeScreen({ navigation }: Props) {
             <HudValue size="hero" style={{ color: safeColor }}>
               {formatMoney(safe, currency)}
             </HudValue>
-            <Text style={hudType.unit}>/ DAY</Text>
           </HUDPanel>
         </Animated.View>
 
