@@ -11,6 +11,15 @@ create table if not exists public.households (
 
 create index if not exists households_invite_code_idx on public.households (invite_code);
 
+-- Live partner sync. Idempotent if the table is already in the publication.
+do $$
+begin
+  alter publication supabase_realtime add table public.households;
+exception
+  when duplicate_object then null;
+  when undefined_object then null;
+end $$;
+
 alter table public.households enable row level security;
 
 -- Invite-code apps use the anon key without user auth for MVP couple sync.
