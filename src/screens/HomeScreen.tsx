@@ -115,6 +115,7 @@ export function HomeScreen({ navigation }: Props) {
 
         <Animated.View style={{ opacity: heroPulse }}>
           <Panel glow innerGlow style={styles.availablePanel}>
+            <Text style={styles.moduleStamp}>ENERGY CELL · PRIMARY</Text>
             <Text style={styles.label}>TOTAL AVAILABLE</Text>
             <Text style={styles.available}>{formatMoney(available, currency)}</Text>
             <View style={styles.splitRow}>
@@ -142,7 +143,7 @@ export function HomeScreen({ navigation }: Props) {
 
         <Panel style={styles.budgetPanel}>
           <View style={styles.budgetHead}>
-            <Text style={styles.sectionLabel}>BUDGET ENERGY</Text>
+            <Text style={styles.sectionLabel}>BUDGET ENERGY MODULE</Text>
             <Text style={styles.pctRemain}>{pct}% LEFT</Text>
           </View>
           <ResourceBattery
@@ -233,12 +234,15 @@ export function HomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 28, gap: 14 },
+  pad: { paddingHorizontal: 18, paddingTop: 12, paddingBottom: 32, gap: 16 },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 2,
+    marginBottom: 4,
+    paddingBottom: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(0,0,0,0.45)',
   },
   brandCol: { gap: 4, flex: 1 },
   brand: {
@@ -280,7 +284,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 2,
   },
-  availablePanel: { paddingVertical: 16, paddingHorizontal: 14, gap: 8 },
+  availablePanel: { gap: 8 },
+  moduleStamp: {
+    color: colors.metalDim,
+    fontSize: 9,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 2.4,
+    marginBottom: -2,
+  },
   label: {
     color: colors.textSecondary,
     fontSize: 11,

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
+  ImageBackground,
   InputAccessoryView,
   Keyboard,
   Platform,
@@ -28,6 +29,29 @@ import { formatMoney, formatShortDate } from '../services/formatting';
 import type { Bill, DailyExpense } from '../models/types';
 import { fonts } from '../theme/fonts';
 
+const STEEL = require('../../assets/steel-brush.png');
+
+function HexBolt({ style }: { style?: ViewStyle }) {
+  return (
+    <View style={[styles.bolt, style]}>
+      <View style={styles.boltInner} />
+      <View style={styles.boltCrossH} />
+      <View style={styles.boltCrossV} />
+    </View>
+  );
+}
+
+function ChamferCorners() {
+  return (
+    <>
+      <View style={[styles.chamfer, styles.chamferTL]} />
+      <View style={[styles.chamfer, styles.chamferTR]} />
+      <View style={[styles.chamfer, styles.chamferBL]} />
+      <View style={[styles.chamfer, styles.chamferBR]} />
+    </>
+  );
+}
+
 export function ScreenBackground({
   children,
   edges = ['top', 'left', 'right'],
@@ -38,35 +62,41 @@ export function ScreenBackground({
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={['#1A222C', '#0E131A', '#070A0E']}
-        locations={[0, 0.48, 1]}
+        colors={['#2A3038', '#14181E', '#080A0C']}
+        locations={[0, 0.4, 1]}
         style={StyleSheet.absoluteFill}
       />
-      {/* Brushed steel grain */}
-      <View pointerEvents="none" style={styles.steelGrain}>
-        {Array.from({ length: 56 }).map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.steelLine,
-              { opacity: i % 3 === 0 ? 0.07 : 0.035 },
-            ]}
-          />
-        ))}
+      <ImageBackground
+        source={STEEL}
+        style={StyleSheet.absoluteFill}
+        imageStyle={styles.chassisSteelImg}
+        resizeMode="repeat"
+      />
+      {/* Heavy chassis frame rails */}
+      <View pointerEvents="none" style={[styles.rail, styles.railTop]}>
+        <ImageBackground source={STEEL} style={StyleSheet.absoluteFill} imageStyle={{ opacity: 0.7 }} resizeMode="repeat" />
+        <LinearGradient colors={['#7A8490', '#3A4450', '#1A2028']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
       </View>
-      <View pointerEvents="none" style={styles.gridOverlay}>
-        {Array.from({ length: 18 }).map((_, i) => (
-          <View key={`h-${i}`} style={styles.gridH} />
-        ))}
+      <View pointerEvents="none" style={[styles.rail, styles.railBottom]}>
+        <ImageBackground source={STEEL} style={StyleSheet.absoluteFill} imageStyle={{ opacity: 0.7 }} resizeMode="repeat" />
+        <LinearGradient colors={['#3A4450', '#1A2028', '#0A0E12']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
       </View>
-      <View pointerEvents="none" style={[styles.gridOverlay, styles.gridCols]}>
-        {Array.from({ length: 9 }).map((_, i) => (
-          <View key={`v-${i}`} style={styles.gridV} />
-        ))}
+      <View pointerEvents="none" style={[styles.rail, styles.railLeft]}>
+        <ImageBackground source={STEEL} style={StyleSheet.absoluteFill} imageStyle={{ opacity: 0.65 }} resizeMode="repeat" />
+        <LinearGradient colors={['#6A7480', '#2A323A']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
       </View>
+      <View pointerEvents="none" style={[styles.rail, styles.railRight]}>
+        <ImageBackground source={STEEL} style={StyleSheet.absoluteFill} imageStyle={{ opacity: 0.65 }} resizeMode="repeat" />
+        <LinearGradient colors={['#2A323A', '#0A0E12']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+      </View>
+      <View pointerEvents="none" style={styles.chassisInnerWell} />
+      <View pointerEvents="none" style={styles.seamH1} />
+      <View pointerEvents="none" style={styles.seamH2} />
+      <HexBolt style={styles.boltChassisTL} />
+      <HexBolt style={styles.boltChassisTR} />
+      <HexBolt style={styles.boltChassisBL} />
+      <HexBolt style={styles.boltChassisBR} />
       <View pointerEvents="none" style={styles.vignette} />
-      {/* Device chassis rim */}
-      <View pointerEvents="none" style={styles.chassisRim} />
       <SafeAreaView style={styles.flex} edges={edges}>
         {children}
       </SafeAreaView>
@@ -74,7 +104,10 @@ export function ScreenBackground({
   );
 }
 
-/** Armor plate — bevel corners, steel brush, holographic cyan edges */
+/**
+ * Physical energy module / armor plate.
+ * Metal housing with recessed holographic well — not a flat glowing card.
+ */
 export function Panel({
   children,
   style,
@@ -88,31 +121,45 @@ export function Panel({
   glow?: boolean;
   innerGlow?: boolean;
 }) {
-  const corner = glow || innerGlow ? colors.resource : colors.borderBright;
   return (
-    <View style={[styles.panelWrap, glow && styles.panelGlow, style]}>
+    <View style={styles.moduleWrap}>
+      {/* Raised metal shell */}
       <LinearGradient
-        colors={alt ? ['#2A3644', '#171E28', '#121820'] : ['#222C38', '#161E28', '#10161E']}
-        locations={[0, 0.45, 1]}
+        colors={alt ? ['#6A7480', '#3A4450', '#1A2028'] : ['#5C6672', '#323A44', '#161C22']}
+        locations={[0, 0.35, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 0.15, y: 1 }}
-        style={[styles.panel, innerGlow && styles.panelInnerGlow]}
+        end={{ x: 0.2, y: 1 }}
+        style={[styles.moduleShell, style]}
       >
-        <View pointerEvents="none" style={styles.panelBrush}>
-          {Array.from({ length: 10 }).map((_, i) => (
-            <View key={i} style={styles.panelBrushLine} />
-          ))}
+        <ImageBackground
+          source={STEEL}
+          style={StyleSheet.absoluteFill}
+          imageStyle={styles.moduleSteelImg}
+          resizeMode="repeat"
+        />
+        <ChamferCorners />
+        <HexBolt style={styles.boltTL} />
+        <HexBolt style={styles.boltTR} />
+        <HexBolt style={styles.boltBL} />
+        <HexBolt style={styles.boltBR} />
+        {/* Panel seam lines */}
+        <View style={styles.moduleSeamTop} />
+        <View style={styles.moduleSeamLeft} />
+
+        {/* Recessed holographic well */}
+        <View style={[styles.moduleWell, (glow || innerGlow) && styles.moduleWellLit]}>
+          <LinearGradient
+            colors={['#05070A', '#0A1016', '#06080C']}
+            style={StyleSheet.absoluteFill}
+          />
+          {(glow || innerGlow) ? (
+            <View pointerEvents="none" style={styles.holoInset}>
+              <View style={styles.holoInsetTop} />
+              <View style={styles.holoInsetSide} />
+            </View>
+          ) : null}
+          <View style={styles.moduleContent}>{children}</View>
         </View>
-        {glow || innerGlow ? <View pointerEvents="none" style={styles.holoEdge} /> : null}
-        <View style={[styles.bevel, styles.bevelTL, { borderColor: corner }]} />
-        <View style={[styles.bevel, styles.bevelTR, { borderColor: corner }]} />
-        <View style={[styles.bevel, styles.bevelBL, { borderColor: corner }]} />
-        <View style={[styles.bevel, styles.bevelBR, { borderColor: corner }]} />
-        <View style={[styles.rivet, styles.rivetTL]} />
-        <View style={[styles.rivet, styles.rivetTR]} />
-        <View style={[styles.rivet, styles.rivetBL]} />
-        <View style={[styles.rivet, styles.rivetBR]} />
-        {children}
       </LinearGradient>
     </View>
   );
@@ -153,12 +200,26 @@ export function HudButton({
     >
       {variant === 'primary' ? (
         <LinearGradient
-          colors={['#163048', '#0C1824']}
+          colors={['#4A5562', '#1A2430', '#0C141C']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 0, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
-      ) : null}
+      ) : (
+        <LinearGradient
+          colors={['#3A4450', '#1C242C', '#12181E']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      <ImageBackground
+        source={STEEL}
+        style={StyleSheet.absoluteFill}
+        imageStyle={{ opacity: variant === 'danger' ? 0.2 : 0.4 }}
+        resizeMode="repeat"
+      />
+      <ChamferCorners />
       <View style={styles.btnContent}>
         {title.startsWith('+') ? (
           <>
@@ -263,7 +324,7 @@ export function SegmentedBar({
   );
 }
 
-/** Battery / energy cell frame around a segmented resource bar */
+/** Battery / energy cell bank recessed into metal housing */
 export function ResourceBattery({
   ratio,
   segments = 12,
@@ -277,15 +338,25 @@ export function ResourceBattery({
 }) {
   return (
     <View style={styles.batteryFrame}>
-      <View style={styles.batteryCap} />
+      <View style={styles.batteryCap}>
+        <LinearGradient colors={['#8A94A0', '#4A5460', '#2A323A']} style={StyleSheet.absoluteFill} />
+      </View>
       <View style={styles.batteryBody}>
-        <SegmentedBar
-          ratio={ratio}
-          segments={segments}
-          height={22}
-          animateFrom={animateFrom}
-          tipAmber={tipAmber}
+        <ImageBackground
+          source={STEEL}
+          style={StyleSheet.absoluteFill}
+          imageStyle={{ opacity: 0.35 }}
+          resizeMode="repeat"
         />
+        <View style={styles.batteryWell}>
+          <SegmentedBar
+            ratio={ratio}
+            segments={segments}
+            height={20}
+            animateFrom={animateFrom}
+            tipAmber={tipAmber}
+          />
+        </View>
       </View>
     </View>
   );
@@ -394,9 +465,9 @@ export function CategoryCell({
       }}
     >
       <Pressable onPress={onPress} disabled={!onPress} style={{ flex: isRail ? undefined : 1, opacity: muted ? 0.48 : 1 }}>
-        <Panel style={isRail ? styles.cellRail : styles.cell} glow={!muted && isRail}>
+        <Panel style={isRail ? styles.cellRail : styles.cell} glow={false} innerGlow={!muted && isRail}>
           {isRail ? (
-            <>
+            <View style={{ alignItems: 'center', gap: 10 }}>
               <View style={styles.cellIconWrap}>
                 <Ionicons
                   name={iconName}
@@ -411,14 +482,16 @@ export function CategoryCell({
                 {formatMoney(spent, currencyCode)}
                 <Text style={styles.cellAmountDim}> / {formatMoney(allocated, currencyCode)}</Text>
               </Text>
-              <SegmentedBar
-                ratio={remainingRatio}
-                segments={6}
-                height={8}
-                compact
-                tipAmber={tipAmber}
-              />
-            </>
+              <View style={{ alignSelf: 'stretch' }}>
+                <SegmentedBar
+                  ratio={remainingRatio}
+                  segments={6}
+                  height={8}
+                  compact
+                  tipAmber={tipAmber}
+                />
+              </View>
+            </View>
           ) : (
             <>
               <View style={styles.cellTitleRow}>
@@ -615,142 +688,250 @@ export function HeaderIconButton({ label, onPress }: { label: string; onPress: (
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  root: { flex: 1, backgroundColor: colors.bg },
-  steelGrain: {
+  root: { flex: 1, backgroundColor: '#0A0C0E' },
+  chassisSteelImg: { opacity: 0.42 },
+  rail: {
     position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    justifyContent: 'space-between',
-    paddingVertical: 2,
+    overflow: 'hidden',
   },
-  steelLine: {
-    height: 1,
-    width: '100%',
-    backgroundColor: '#C8D0D8',
-  },
-  gridOverlay: {
+  railTop: { top: 0, left: 0, right: 0, height: 16 },
+  railBottom: { bottom: 0, left: 0, right: 0, height: 16 },
+  railLeft: { top: 16, bottom: 16, left: 0, width: 14 },
+  railRight: { top: 16, bottom: 16, right: 0, width: 14 },
+  chassisInnerWell: {
     position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    opacity: 0.055,
-    justifyContent: 'space-evenly',
+    top: 16,
+    right: 14,
+    bottom: 16,
+    left: 14,
+    borderWidth: 2,
+    borderTopColor: 'rgba(0,0,0,0.65)',
+    borderLeftColor: 'rgba(0,0,0,0.55)',
+    borderRightColor: 'rgba(140,150,160,0.18)',
+    borderBottomColor: 'rgba(140,150,160,0.12)',
   },
-  gridCols: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
+  seamH1: {
+    position: 'absolute',
+    top: 56,
+    left: 22,
+    right: 22,
+    height: 3,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(180,190,200,0.15)',
   },
-  gridH: {
-    height: 1,
-    width: '100%',
-    backgroundColor: colors.resource,
+  seamH2: {
+    position: 'absolute',
+    bottom: 78,
+    left: 22,
+    right: 22,
+    height: 3,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(180,190,200,0.1)',
   },
-  gridV: {
-    width: 1,
-    height: '100%',
-    backgroundColor: colors.resource,
-  },
+  boltChassisTL: { position: 'absolute', top: 20, left: 20 },
+  boltChassisTR: { position: 'absolute', top: 20, right: 20 },
+  boltChassisBL: { position: 'absolute', bottom: 20, left: 20 },
+  boltChassisBR: { position: 'absolute', bottom: 20, right: 20 },
   vignette: {
     position: 'absolute',
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
-    borderWidth: 22,
-    borderColor: 'rgba(0,0,0,0.55)',
+    borderWidth: 24,
+    borderColor: 'rgba(0,0,0,0.45)',
   },
-  chassisRim: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    bottom: 6,
-    left: 6,
+  bolt: {
+    width: 11,
+    height: 11,
+    borderRadius: 2,
+    backgroundColor: '#6A7480',
     borderWidth: 1,
-    borderColor: 'rgba(122, 138, 156, 0.22)',
+    borderTopColor: '#A8B0B8',
+    borderLeftColor: '#A8B0B8',
+    borderRightColor: '#2A3038',
+    borderBottomColor: '#2A3038',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
   },
-  panelWrap: {},
-  panelGlow: {
-    shadowColor: colors.resource,
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 6,
+  boltInner: {
+    ...StyleSheet.absoluteFill,
+    margin: 2,
+    backgroundColor: '#4A5460',
+    borderRadius: 1,
   },
-  panel: {
-    borderRadius: 3,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    padding: 14,
-    gap: 8,
+  boltCrossH: {
+    position: 'absolute',
+    width: 7,
+    height: 1.5,
+    backgroundColor: '#1A1E22',
+  },
+  boltCrossV: {
+    position: 'absolute',
+    width: 1.5,
+    height: 7,
+    backgroundColor: '#1A1E22',
+  },
+  chamfer: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    zIndex: 4,
+    borderStyle: 'solid',
+  },
+  chamferTL: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 10,
+    borderRightWidth: 10,
+    borderTopColor: '#0A0C0E',
+    borderRightColor: 'transparent',
+  },
+  chamferTR: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 10,
+    borderLeftWidth: 10,
+    borderTopColor: '#0A0C0E',
+    borderLeftColor: 'transparent',
+  },
+  chamferBL: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 10,
+    borderRightWidth: 10,
+    borderBottomColor: '#0A0C0E',
+    borderRightColor: 'transparent',
+  },
+  chamferBR: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 10,
+    borderLeftWidth: 10,
+    borderBottomColor: '#0A0C0E',
+    borderLeftColor: 'transparent',
+  },
+  moduleWrap: {
+    shadowColor: '#000',
+    shadowOpacity: 0.55,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+  },
+  moduleShell: {
+    borderRadius: 2,
+    borderWidth: 1,
+    borderTopColor: '#8A94A0',
+    borderLeftColor: '#6A7480',
+    borderRightColor: '#1A2028',
+    borderBottomColor: '#0A0E12',
+    padding: 8,
     overflow: 'hidden',
   },
-  panelInnerGlow: {
-    borderColor: colors.resource,
-    borderWidth: 1.5,
-  },
-  panelBrush: {
-    ...StyleSheet.absoluteFill,
-    justifyContent: 'space-evenly',
-    opacity: 0.08,
-  },
-  panelBrushLine: {
-    height: 1,
-    backgroundColor: '#D0D8E0',
-  },
-  holoEdge: {
+  moduleSteelImg: { opacity: 0.62 },
+  moduleSeamTop: {
     position: 'absolute',
+    top: 7,
+    left: 18,
+    right: 18,
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  moduleSeamLeft: {
+    position: 'absolute',
+    top: 18,
+    bottom: 18,
+    left: 7,
+    width: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  boltTL: { position: 'absolute', top: 5, left: 5 },
+  boltTR: { position: 'absolute', top: 5, right: 5 },
+  boltBL: { position: 'absolute', bottom: 5, left: 5 },
+  boltBR: { position: 'absolute', bottom: 5, right: 5 },
+  moduleWell: {
+    marginTop: 4,
+    marginBottom: 2,
+    marginHorizontal: 2,
+    borderWidth: 2,
+    borderTopColor: '#050608',
+    borderLeftColor: '#050608',
+    borderRightColor: '#3A4450',
+    borderBottomColor: '#4A5460',
+    padding: 12,
+    gap: 8,
+    overflow: 'hidden',
+    minHeight: 48,
+  },
+  moduleWellLit: {
+    shadowColor: colors.resource,
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  holoInset: {
+    ...StyleSheet.absoluteFill,
+  },
+  holoInsetTop: {
+    position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
-    top: 0,
     height: 1,
     backgroundColor: colors.resource,
-    opacity: 0.55,
+    opacity: 0.45,
   },
-  bevel: {
+  holoInsetSide: {
     position: 'absolute',
-    width: 16,
-    height: 16,
-    borderColor: colors.borderBright,
-    opacity: 1,
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 1,
+    backgroundColor: colors.resource,
+    opacity: 0.25,
   },
-  bevelTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3 },
-  bevelTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3 },
-  bevelBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3 },
-  bevelBR: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3 },
-  rivet: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    backgroundColor: colors.metalDim,
-    borderWidth: 1,
-    borderColor: colors.borderBright,
+  moduleContent: {
+    gap: 8,
+    zIndex: 1,
   },
-  rivetTL: { top: 5, left: 5 },
-  rivetTR: { top: 5, right: 5 },
-  rivetBL: { bottom: 5, left: 5 },
-  rivetBR: { bottom: 5, right: 5 },
   batteryFrame: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   batteryCap: {
-    width: 5,
-    height: 14,
+    width: 7,
+    height: 18,
     borderRadius: 1,
-    backgroundColor: colors.borderBright,
-    opacity: 0.7,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderTopColor: '#A8B0B8',
+    borderLeftColor: '#8A94A0',
+    borderRightColor: '#2A3038',
+    borderBottomColor: '#1A2028',
   },
   batteryBody: {
     flex: 1,
-    borderWidth: 1.5,
-    borderColor: colors.borderBright,
-    backgroundColor: '#080C10',
-    padding: 4,
+    borderWidth: 2,
+    borderTopColor: '#8A94A0',
+    borderLeftColor: '#6A7480',
+    borderRightColor: '#1A2028',
+    borderBottomColor: '#0A0E12',
+    padding: 5,
     borderRadius: 2,
+    overflow: 'hidden',
+  },
+  batteryWell: {
+    borderWidth: 2,
+    borderTopColor: '#050608',
+    borderLeftColor: '#050608',
+    borderRightColor: '#3A4450',
+    borderBottomColor: '#4A5460',
+    padding: 3,
+    backgroundColor: '#05070A',
   },
   chip: {
     flexDirection: 'row',
@@ -782,26 +963,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    borderWidth: 1,
+    borderTopColor: '#8A94A0',
+    borderLeftColor: '#6A7480',
+    borderRightColor: '#1A2028',
+    borderBottomColor: '#0A0E12',
     overflow: 'hidden',
     minHeight: 54,
   },
   btnPrimary: {
-    backgroundColor: '#0C1824',
-    borderColor: colors.resource,
-    shadowColor: colors.resource,
-    shadowOpacity: 0.28,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
   },
-  btnSecondary: {
-    backgroundColor: colors.panelAlt,
-    borderColor: colors.borderBright,
-  },
+  btnSecondary: {},
   btnDanger: {
-    backgroundColor: '#2A1010',
-    borderColor: colors.danger,
+    borderTopColor: '#A06060',
+    borderLeftColor: '#804040',
   },
   btnContent: {
     flexDirection: 'row',
@@ -918,10 +1098,13 @@ const styles = StyleSheet.create({
   fieldBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.panelAlt,
+    backgroundColor: '#0A1016',
     borderRadius: 2,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    borderWidth: 2,
+    borderTopColor: '#050608',
+    borderLeftColor: '#050608',
+    borderRightColor: '#4A5460',
+    borderBottomColor: '#5A6570',
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
