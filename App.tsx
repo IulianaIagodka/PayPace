@@ -35,7 +35,6 @@ import { SharedBudgetScreen } from './src/screens/SharedBudgetScreen';
 import { AmountDoneAccessory } from './src/components/ui';
 import { colors } from './src/theme/colors';
 import { fonts } from './src/theme/fonts';
-import { CONTROL_PANEL_COPY } from './src/services/controlPanel';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -108,19 +107,19 @@ function MainTabs() {
         },
       }}
     >
-          <Tab.Screen
+      <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          title: CONTROL_PANEL_COPY.tabs.home,
-          tabBarIcon: ({ focused }) => <TabIcon name="radio-button-on" focused={focused} />,
+          title: 'HOME',
+          tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
         }}
       />
       <Tab.Screen
         name="Activity"
         component={ActivityScreen}
         options={{
-          title: CONTROL_PANEL_COPY.tabs.activity,
+          title: 'ACTIVITY',
           tabBarIcon: ({ focused }) => <TabIcon name="list" focused={focused} />,
         }}
       />
@@ -128,15 +127,15 @@ function MainTabs() {
         name="Status"
         component={StatusScreen}
         options={{
-          title: CONTROL_PANEL_COPY.tabs.status,
-          tabBarIcon: ({ focused }) => <TabIcon name="pulse" focused={focused} />,
+          title: 'STATUS',
+          tabBarIcon: ({ focused }) => <TabIcon name="stats-chart" focused={focused} />,
         }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
         options={{
-          title: CONTROL_PANEL_COPY.tabs.settings,
+          title: 'SETTINGS',
           tabBarIcon: ({ focused }) => <TabIcon name="settings-sharp" focused={focused} />,
         }}
       />
@@ -175,8 +174,8 @@ function RootNavigator() {
           }}
         >
           <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-          <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: CONTROL_PANEL_COPY.addExpenseTitle }} />
-          <Stack.Screen name="Allocate" component={AllocateScreen} options={{ title: CONTROL_PANEL_COPY.allocateTitle }} />
+          <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'ADD EXPENSE' }} />
+          <Stack.Screen name="Allocate" component={AllocateScreen} options={{ title: 'ALLOCATE' }} />
           <Stack.Screen name="Bills" component={BillsScreen} options={{ title: 'BILLS' }} />
           <Stack.Screen name="PayCycle" component={PayCycleScreen} options={{ title: 'EDIT CYCLE' }} />
           <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'HISTORY' }} />

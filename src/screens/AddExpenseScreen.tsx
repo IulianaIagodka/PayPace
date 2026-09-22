@@ -9,7 +9,6 @@ import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 import { ensureEnvelopes } from '../services/envelopes';
-import { CONTROL_PANEL_COPY } from '../services/controlPanel';
 import type { EnvelopeKey } from '../models/types';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -47,7 +46,7 @@ export function AddExpenseScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <FormScroll contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>{CONTROL_PANEL_COPY.addExpenseTitle}</Text>
+        <Text style={styles.title}>ADD EXPENSE</Text>
         <Text style={styles.sub}>
           Log it yourself anytime. Photos and bank statements are Plus.
         </Text>
