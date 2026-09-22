@@ -11,7 +11,7 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, Panel, ScreenBackground } from '../components/ui';
-import { categoryTitle, SPENDING_CATEGORIES } from '../services/categories';
+import { categoryTitle, nextCategoryInCycle } from '../services/categories';
 import { formatMoney, formatShortDate, toDateKey } from '../services/formatting';
 import {
   analyzeStatementFile,
@@ -30,6 +30,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'StatementImport'>;
 export function StatementImportScreen({ navigation, route }: Props) {
   const { store, activeCycle, importExpensesByDate, setPremium } = useBudget();
   const currency = store.settings.currencyCode;
+  const custom = store.settings.customCategories ?? [];
   const weekStartsOn = store.settings.weekStartsOn ?? 1;
   const horizon = route.params?.horizon ?? store.settings.paceHorizon ?? 'week';
   const [busy, setBusy] = useState(false);
@@ -95,8 +96,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
         ...prev,
         items: prev.items.map((item) => {
           if (item.id !== itemId) return item;
-          const idx = SPENDING_CATEGORIES.indexOf(item.category);
-          const next = SPENDING_CATEGORIES[(idx + 1) % SPENDING_CATEGORIES.length];
+          const next = nextCategoryInCycle(item.category, custom);
           return { ...item, category: next };
         }),
       };
@@ -230,7 +230,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={styles.rowTitle}>{item.name}</Text>
                 <Text style={styles.meta}>
-                  {formatShortDate(date)} · {categoryTitle(item.category, false)}
+                  {formatShortDate(date)} · {categoryTitle(item.category, { custom })}
                   {cycle
                     ? ` · cycle ${formatShortDate(cycle.startDate)}`
                     : ' · no cycle match'}

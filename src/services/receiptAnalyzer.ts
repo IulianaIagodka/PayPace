@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import type { ExpenseCategory } from '../models/types';
-import { guessCategory, SPENDING_CATEGORIES } from './categories';
+import { guessCategory, isBuiltinCategory } from './categories';
 
 export type ReceiptLineItem = {
   id: string;
@@ -35,7 +35,7 @@ export function resolveOpenAiApiKey(): string | undefined {
 }
 
 function isCategory(value: unknown): value is ExpenseCategory {
-  return typeof value === 'string' && (SPENDING_CATEGORIES as string[]).includes(value);
+  return typeof value === 'string' && (isBuiltinCategory(value) || value.startsWith('c_'));
 }
 
 function roundMoney(value: number): number {

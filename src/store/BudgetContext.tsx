@@ -29,7 +29,7 @@ import { findCycleForDate } from '../services/cycleMatching';
 import { getDeviceId } from '../services/deviceIdentity';
 import { generateInviteCode, normalizeInviteCode } from '../services/inviteCode';
 import { mergeSharedPayloads, toSharedPayload } from '../services/householdMerge';
-import { ensureEnvelopes, categoryToEnvelopeKey } from '../services/envelopes';
+import { ensureEnvelopes, categoryToEnvelopeKey, makeCustomEnvelope } from '../services/envelopes';
 import {
   cloudFetchById,
   cloudFetchByInviteCode,
@@ -65,6 +65,8 @@ type BudgetContextValue = {
   resetAll: () => Promise<void>;
   setPremium: (enabled: boolean) => Promise<void>;
   setEnvelopes: (envelopes: PayCycle['envelopes']) => Promise<void>;
+  addCustomCategory: (title: string) => Promise<void>;
+  removeCustomCategory: (id: string) => Promise<void>;
   createHousehold: (displayName: string, householdName?: string) => Promise<Household>;
   joinHousehold: (inviteCode: string, displayName: string) => Promise<Household>;
   leaveHousehold: () => Promise<void>;
@@ -103,6 +105,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       household: next.household,
       currencyCode: next.settings.currencyCode,
       cycles: next.cycles,
+      customCategories: next.settings.customCategories,
     });
     await cloudUpsertPayload(payload);
   }, []);
@@ -143,6 +146,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         household: current.household,
         currencyCode: current.settings.currencyCode,
         cycles: current.cycles,
+        customCategories: current.settings.customCategories,
       });
       const merged = mergeSharedPayloads(localPayload, remote);
       const next: AppStoreData = {
@@ -156,6 +160,8 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         settings: {
           ...current.settings,
           currencyCode: merged.settings.currencyCode || current.settings.currencyCode,
+          customCategories:
+            merged.settings.customCategories ?? current.settings.customCategories ?? [],
           hasCompletedOnboarding: true,
         },
         cycles: merged.cycles.length ? merged.cycles : current.cycles,
@@ -480,6 +486,49 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         ),
       });
     },
+    addCustomCategory: async (title) => {
+      if (!store.settings.isPremium) {
+        throw new Error('Custom categories are a Plus feature.');
+      }
+      const trimmed = title.trim();
+      if (!trimmed) throw new Error('Enter a category name.');
+      const existing = store.settings.customCategories ?? [];
+      if (existing.some((c) => c.title.toLowerCase() === trimmed.toLowerCase())) {
+        throw new Error('That category already exists.');
+      }
+      const custom = { id: `c_${newId()}`, title: trimmed };
+      const envelopes = activeCycle
+        ? [...ensureEnvelopes(activeCycle), makeCustomEnvelope(custom)]
+        : [];
+      await commit({
+        ...store,
+        settings: {
+          ...store.settings,
+          customCategories: [...existing, custom],
+        },
+        cycles: activeCycle
+          ? store.cycles.map((c) =>
+              c.id === activeCycle.id ? withCycleTouch({ ...c, envelopes }) : c,
+            )
+          : store.cycles,
+      });
+    },
+    removeCustomCategory: async (id) => {
+      const existing = store.settings.customCategories ?? [];
+      await commit({
+        ...store,
+        settings: {
+          ...store.settings,
+          customCategories: existing.filter((c) => c.id !== id),
+        },
+        cycles: store.cycles.map((c) =>
+          withCycleTouch({
+            ...c,
+            envelopes: (c.envelopes ?? []).filter((e) => e.key !== id && e.category !== id),
+          }),
+        ),
+      });
+    },
     createHousehold: async (displayName, householdName) => {
       const trimmed = displayName.trim();
       if (!trimmed) throw new Error('Enter your name');
@@ -574,6 +623,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           household,
           currencyCode: next.settings.currencyCode,
           cycles: next.cycles,
+          customCategories: next.settings.customCategories,
         }),
       );
       return household;

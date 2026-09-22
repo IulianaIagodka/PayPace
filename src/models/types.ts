@@ -5,7 +5,8 @@ export type PaySchedule =
   | 'weekly'
   | 'custom';
 
-export type ExpenseCategory =
+/** Built-in category ids. Custom categories use ids like `c_<uuid>`. */
+export type BuiltinCategory =
   | 'rent'
   | 'utilities'
   | 'subscriptions'
@@ -16,7 +17,23 @@ export type ExpenseCategory =
   | 'food'
   | 'other';
 
-export type EnvelopeKey = 'food' | 'transport' | 'kids' | 'fun' | 'home' | 'other';
+/** Expense category id — builtin or custom. */
+export type ExpenseCategory = BuiltinCategory | (string & {});
+
+/** Envelope key — builtin keys or custom category id. */
+export type EnvelopeKey =
+  | 'food'
+  | 'transport'
+  | 'kids'
+  | 'fun'
+  | 'home'
+  | 'other'
+  | (string & {});
+
+export interface CustomCategory {
+  id: string;
+  title: string;
+}
 
 export interface Envelope {
   id: string;
@@ -100,6 +117,8 @@ export interface AppSettings {
   weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   /** Show remaining for the current calendar week or month (categories follow). */
   paceHorizon: 'week' | 'month';
+  /** User-defined categories (Plus). */
+  customCategories: CustomCategory[];
 }
 
 export interface AppStoreData {
@@ -111,7 +130,7 @@ export interface AppStoreData {
 
 export interface SharedHouseholdPayload {
   household: Household;
-  settings: Pick<AppSettings, 'currencyCode'>;
+  settings: Pick<AppSettings, 'currencyCode' | 'customCategories'>;
   cycles: PayCycle[];
   revision: number;
   updatedAt: string;
@@ -162,6 +181,7 @@ export const defaultSettings: AppSettings = {
   displayName: '',
   weekStartsOn: 1,
   paceHorizon: 'week',
+  customCategories: [],
 };
 
 export const emptyStore: AppStoreData = {

@@ -25,7 +25,7 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
-const GRID_KEYS = ['food', 'transport', 'kids', 'fun', 'home'] as const;
+const GRID_KEYS = ['food', 'fun', 'transport', 'kids', 'home'] as const;
 
 export function HomeScreen({ navigation }: Props) {
   const { activeCycle, snapshot, store, setPremium } = useBudget();

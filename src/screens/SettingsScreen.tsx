@@ -1,5 +1,5 @@
-import React from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -22,11 +22,15 @@ const HORIZON_OPTIONS: Array<{ value: PaceHorizon; label: string }> = [
 ];
 
 export function SettingsScreen({ navigation }: Props) {
-  const { store, updateSettings, setPremium, resetAll } = useBudget();
+  const { store, updateSettings, setPremium, resetAll, addCustomCategory, removeCustomCategory } =
+    useBudget();
   const s = store.settings;
   const household = store.household;
   const weekStartsOn = (s.weekStartsOn ?? 1) as WeekStartsOn;
   const paceHorizon = (s.paceHorizon ?? 'week') as PaceHorizon;
+  const customs = s.customCategories ?? [];
+  const [newCategory, setNewCategory] = useState('');
+  const [adding, setAdding] = useState(false);
 
   const currencyOptions = CURRENCIES.map((c) => ({
     value: c.code,
@@ -37,6 +41,21 @@ export function SettingsScreen({ navigation }: Props) {
     value: o.value,
     label: o.short,
   }));
+
+  const onAddCategory = async () => {
+    setAdding(true);
+    try {
+      await addCustomCategory(newCategory);
+      setNewCategory('');
+    } catch (error) {
+      Alert.alert(
+        'Custom category',
+        error instanceof Error ? error.message : 'Could not add category.',
+      );
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
@@ -96,12 +115,60 @@ export function SettingsScreen({ navigation }: Props) {
           <Text style={styles.label}>PLUS</Text>
           <Text style={styles.sub}>
             Free: available balance, safe-to-spend, bills, and manual expenses.{'\n'}
-            Plus: leftover by category, receipt scan, bank statements, history, and shared budget.
+            Plus: leftover by category (including Eating out), custom categories, receipt scan, bank
+            statements, history, and shared budget.
           </Text>
           {s.isPremium ? (
             <HudButton title="BACK TO FREE (DEMO)" onPress={() => setPremium(false)} variant="secondary" />
           ) : (
             <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
+          )}
+
+          <View style={styles.divider} />
+          <Text style={styles.label}>CUSTOM CATEGORIES</Text>
+          <Text style={styles.sub}>Plus · add your own (Pets, Gym, Travel…). They show up when you log and allocate.</Text>
+          {s.isPremium ? (
+            <>
+              {customs.length === 0 ? (
+                <Text style={styles.sub}>No custom categories yet.</Text>
+              ) : (
+                customs.map((c) => (
+                  <View key={c.id} style={styles.customRow}>
+                    <Text style={styles.customName}>{c.title}</Text>
+                    <Pressable
+                      onPress={() =>
+                        Alert.alert('Remove category?', c.title, [
+                          { text: 'Cancel', style: 'cancel' },
+                          {
+                            text: 'Remove',
+                            style: 'destructive',
+                            onPress: () => removeCustomCategory(c.id),
+                          },
+                        ])
+                      }
+                    >
+                      <Text style={styles.remove}>Remove</Text>
+                    </Pressable>
+                  </View>
+                ))
+              )}
+              <TextInput
+                value={newCategory}
+                onChangeText={setNewCategory}
+                placeholder="New category name"
+                placeholderTextColor={colors.textDim}
+                style={styles.input}
+                autoCapitalize="words"
+              />
+              <HudButton
+                title={adding ? 'ADDING…' : 'ADD CATEGORY'}
+                onPress={onAddCategory}
+                disabled={!newCategory.trim() || adding}
+                variant="secondary"
+              />
+            </>
+          ) : (
+            <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} variant="secondary" />
           )}
 
           <View style={styles.divider} />
@@ -139,4 +206,23 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
   },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: 12 },
+  customRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    gap: 12,
+  },
+  customName: { color: colors.text, fontSize: 15, fontWeight: '600', flex: 1 },
+  remove: { color: colors.danger, fontWeight: '700', fontSize: 13 },
+  input: {
+    backgroundColor: colors.panelDeep,
+    borderWidth: 1,
+    borderColor: colors.border,
+    color: colors.text,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });

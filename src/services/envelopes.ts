@@ -1,9 +1,10 @@
-import type { Envelope, ExpenseCategory, PayCycle } from '../models/types';
+import type { CustomCategory, Envelope, ExpenseCategory, PayCycle } from '../models/types';
 import { asMoney } from './formatting';
 import { colorForTone, toneForRatio, type ResourceTone } from '../theme/colors';
 import { newId } from './id';
+import { isBuiltinCategory } from './categories';
 
-export type EnvelopeKey = 'food' | 'transport' | 'kids' | 'fun' | 'home' | 'other';
+export type EnvelopeKey = 'food' | 'transport' | 'kids' | 'fun' | 'home' | 'other' | (string & {});
 
 export const ENVELOPE_DEFAULTS: Array<{
   key: EnvelopeKey;
@@ -11,10 +12,10 @@ export const ENVELOPE_DEFAULTS: Array<{
   category: ExpenseCategory;
   share: number;
 }> = [
-  { key: 'food', title: 'FOOD', category: 'groceries', share: 0.28 },
+  { key: 'food', title: 'FOOD', category: 'groceries', share: 0.26 },
+  { key: 'fun', title: 'EAT OUT', category: 'food', share: 0.12 },
   { key: 'transport', title: 'TRANSPORT', category: 'transport', share: 0.12 },
   { key: 'kids', title: 'KIDS', category: 'childcare', share: 0.18 },
-  { key: 'fun', title: 'FUN', category: 'food', share: 0.1 },
   { key: 'home', title: 'HOME', category: 'utilities', share: 0.2 },
   { key: 'other', title: 'OTHER', category: 'other', share: 0.12 },
 ];
@@ -38,8 +39,16 @@ export function defaultEnvelopes(totalSpendPool: number): Envelope[] {
   });
 }
 
+/** Ensure envelopes exist; rename legacy FUN → EAT OUT when still default. */
 export function ensureEnvelopes(cycle: PayCycle): Envelope[] {
-  if (cycle.envelopes?.length) return cycle.envelopes;
+  if (cycle.envelopes?.length) {
+    return cycle.envelopes.map((e) => {
+      if (e.key === 'fun' && (e.title === 'FUN' || !e.title)) {
+        return { ...e, title: 'EAT OUT', category: e.category || 'food' };
+      }
+      return e;
+    });
+  }
   const metricsPool =
     asMoney(cycle.currentBalance) -
     cycle.bills.filter((b) => !b.isPaid).reduce((s, b) => s + asMoney(b.amount), 0) -
@@ -95,6 +104,18 @@ export function unallocatedAmount(cycle: PayCycle, spendPool: number): number {
 }
 
 export function categoryToEnvelopeKey(category?: ExpenseCategory): EnvelopeKey {
+  if (!category) return 'other';
+  if (!isBuiltinCategory(category)) return category;
   const hit = ENVELOPE_DEFAULTS.find((d) => d.category === category);
   return hit?.key ?? 'other';
+}
+
+export function makeCustomEnvelope(custom: CustomCategory): Envelope {
+  return {
+    id: newId(),
+    key: custom.id,
+    title: custom.title.trim().toUpperCase().slice(0, 16) || 'CUSTOM',
+    category: custom.id,
+    allocated: 0,
+  };
 }

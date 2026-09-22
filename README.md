@@ -34,9 +34,10 @@ If receipt scan fails, the app now shows the real error (missing key, billing, b
 
 | Free | Plus |
 |------|------|
-| Available balance, safe-to-spend, days to payday | Leftover by category (Home envelopes) |
+| Available balance, safe-to-spend, days to payday | Leftover by category (Food, Eating out, …) |
 | Bills | Allocate amounts per category |
-| Manual expenses | Receipt photo scan |
+| Manual expenses | Custom categories |
+| | Receipt photo scan |
 | | Bank statement import |
 | | Spend-by-category detail + history |
 | | Shared budget with a partner |

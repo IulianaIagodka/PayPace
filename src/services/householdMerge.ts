@@ -1,4 +1,4 @@
-import type { Bill, DailyExpense, Household, PayCycle, SharedHouseholdPayload } from '../models/types';
+import type { Bill, DailyExpense, Household, PayCycle, SharedHouseholdPayload, CustomCategory } from '../models/types';
 
 function byId<T extends { id: string }>(items: T[]): Map<string, T> {
   return new Map(items.map((item) => [item.id, item]));
@@ -100,22 +100,46 @@ export function mergeSharedPayloads(
       updatedAt,
       inviteCode: householdBase.inviteCode || householdOther.inviteCode,
     },
-    settings: preferRemoteMeta ? remote.settings : local.settings,
+    settings: {
+      currencyCode: preferRemoteMeta
+        ? remote.settings.currencyCode
+        : local.settings.currencyCode,
+      customCategories: mergeCustomCategories(
+        local.settings.customCategories,
+        remote.settings.customCategories,
+      ),
+    },
     cycles: mergePayCycles(local.cycles, remote.cycles),
     revision,
     updatedAt,
   };
 }
 
+function mergeCustomCategories(
+  local: CustomCategory[] | undefined,
+  remote: CustomCategory[] | undefined,
+): CustomCategory[] {
+  const map = new Map<string, CustomCategory>();
+  for (const item of local ?? []) map.set(item.id, item);
+  for (const item of remote ?? []) {
+    if (!map.has(item.id)) map.set(item.id, item);
+  }
+  return Array.from(map.values());
+}
+
 export function toSharedPayload(input: {
   household: Household;
   currencyCode: string;
   cycles: PayCycle[];
+  customCategories?: CustomCategory[];
 }): SharedHouseholdPayload {
   const updatedAt = new Date().toISOString();
   return {
     household: { ...input.household, updatedAt, revision: input.household.revision },
-    settings: { currencyCode: input.currencyCode },
+    settings: {
+      currencyCode: input.currencyCode,
+      customCategories: input.customCategories ?? [],
+    },
     cycles: input.cycles.map((c) => ({ ...c, updatedAt: c.updatedAt ?? updatedAt })),
     revision: input.household.revision,
     updatedAt,

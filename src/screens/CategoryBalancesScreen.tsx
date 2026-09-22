@@ -13,7 +13,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CategoryBalances'>;
 export function CategoryBalancesScreen({ navigation }: Props) {
   const { store, activeCycle, setPremium } = useBudget();
   const currency = store.settings.currencyCode;
-  const rows = categoryBalancesForDisplay(activeCycle);
+  const rows = categoryBalancesForDisplay(activeCycle, store.settings.customCategories ?? []);
 
   if (!store.settings.isPremium) {
     return (

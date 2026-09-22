@@ -27,7 +27,13 @@ function migrateCycle(cycle: PayCycle): PayCycle {
 
 function migrate(raw: unknown): AppStoreData {
   const data = (raw ?? {}) as Partial<AppStoreData>;
-  const settings = { ...defaultSettings, ...(data.settings ?? {}) };
+  const settings = {
+    ...defaultSettings,
+    ...(data.settings ?? {}),
+    customCategories: Array.isArray(data.settings?.customCategories)
+      ? data.settings!.customCategories
+      : [],
+  };
   if (!isSupportedCurrency(settings.currencyCode)) {
     settings.currencyCode = detectDefaultCurrency();
   }

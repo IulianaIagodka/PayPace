@@ -1,6 +1,7 @@
 import type { DailyExpense, ExpenseCategory, PayCycle } from '../models/types';
+import type { CustomCategory } from '../models/types';
 import { asMoney } from './formatting';
-import { SPENDING_CATEGORIES, categoryTitle } from './categories';
+import { allCategoryIds, categoryTitle } from './categories';
 
 export type CategoryBalance = {
   category: ExpenseCategory;
@@ -9,44 +10,39 @@ export type CategoryBalance = {
   share: number; // 0..1 of total categorized spend
 };
 
-export function spendingByCategory(cycle: PayCycle | null): CategoryBalance[] {
+export function spendingByCategory(
+  cycle: PayCycle | null,
+  custom: CustomCategory[] = [],
+): CategoryBalance[] {
   if (!cycle) return [];
-  const totals: Record<ExpenseCategory, number> = {
-    rent: 0,
-    utilities: 0,
-    subscriptions: 0,
-    loan: 0,
-    childcare: 0,
-    groceries: 0,
-    transport: 0,
-    food: 0,
-    other: 0,
-  };
+  const ids = allCategoryIds(custom);
+  const totals = new Map<ExpenseCategory, number>();
+  for (const id of ids) totals.set(id, 0);
 
   for (const expense of cycle.expenses) {
     const category = expense.category ?? 'other';
-    totals[category] += Math.max(asMoney(expense.amount), 0);
+    totals.set(category, (totals.get(category) ?? 0) + Math.max(asMoney(expense.amount), 0));
   }
 
-  const totalSpent = Object.values(totals).reduce((sum, value) => sum + value, 0);
-  return SPENDING_CATEGORIES.map((category) => ({
+  const totalSpent = Array.from(totals.values()).reduce((sum, value) => sum + value, 0);
+  return ids.map((category) => ({
     category,
-    title: categoryTitle(category),
-    spent: totals[category],
-    share: totalSpent > 0 ? totals[category] / totalSpent : 0,
+    title: categoryTitle(category, { custom }),
+    spent: totals.get(category) ?? 0,
+    share: totalSpent > 0 ? (totals.get(category) ?? 0) / totalSpent : 0,
   }));
 }
 
 /** Show categories with spend; if none yet, show the main shopping set at 0. */
-export function categoryBalancesForDisplay(cycle: PayCycle | null): CategoryBalance[] {
-  const rows = spendingByCategory(cycle);
+export function categoryBalancesForDisplay(
+  cycle: PayCycle | null,
+  custom: CustomCategory[] = [],
+): CategoryBalance[] {
+  const rows = spendingByCategory(cycle, custom);
   const withSpend = rows.filter((r) => r.spent > 0).sort((a, b) => b.spent - a.spent);
   if (withSpend.length) return withSpend;
-  return rows.filter((r) =>
-    (['groceries', 'food', 'transport', 'subscriptions', 'other'] as ExpenseCategory[]).includes(
-      r.category,
-    ),
-  );
+  const defaults: ExpenseCategory[] = ['groceries', 'food', 'transport', 'subscriptions', 'other'];
+  return rows.filter((r) => defaults.includes(r.category));
 }
 
 export function groupExpensesByCategory(expenses: DailyExpense[]) {

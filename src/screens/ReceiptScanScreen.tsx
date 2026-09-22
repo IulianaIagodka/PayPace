@@ -12,7 +12,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PrimaryButton, ScreenBackground, SecondaryButton, SegmentedBar, SoftCard } from '../components/ui';
-import { categoryTitle } from '../services/categories';
+import { categoryTitle, allCategoryIds, nextCategoryInCycle } from '../services/categories';
 import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import { formatMoney } from '../services/formatting';
 import {
@@ -24,13 +24,13 @@ import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
 import type { ExpenseCategory } from '../models/types';
-import { SPENDING_CATEGORIES } from '../services/categories';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ReceiptScan'>;
 
 export function ReceiptScanScreen({ navigation }: Props) {
   const { store, activeCycle, addExpenses, setPremium } = useBudget();
   const currency = store.settings.currencyCode;
+  const custom = store.settings.customCategories ?? [];
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ReceiptScanResult | null>(null);
@@ -42,9 +42,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
         ...prev,
         items: prev.items.map((item) => {
           if (item.id !== itemId) return item;
-          const idx = SPENDING_CATEGORIES.indexOf(item.category);
-          const next = SPENDING_CATEGORIES[(idx + 1) % SPENDING_CATEGORIES.length];
-          return { ...item, category: next };
+          return { ...item, category: nextCategoryInCycle(item.category, custom) };
         }),
       };
     });
@@ -58,17 +56,19 @@ export function ReceiptScanScreen({ navigation }: Props) {
       list.push(item);
       map.set(item.category, list);
     }
-    return SPENDING_CATEGORIES.map((category) => {
-      const items = map.get(category) ?? [];
-      return {
-        category,
-        items,
-        total: items.reduce((sum, item) => sum + item.amount, 0),
-      };
-    }).filter((g) => g.items.length > 0);
-  }, [result]);
+    return allCategoryIds(custom)
+      .map((category) => {
+        const items = map.get(category) ?? [];
+        return {
+          category,
+          items,
+          total: items.reduce((sum, item) => sum + item.amount, 0),
+        };
+      })
+      .filter((g) => g.items.length > 0);
+  }, [result, custom]);
 
-  const cycleCategoryBalances = categoryBalancesForDisplay(activeCycle);
+  const cycleCategoryBalances = categoryBalancesForDisplay(activeCycle, custom);
 
   if (!store.settings.isPremium) {
     return (
@@ -180,7 +180,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
             {grouped.map((group) => (
               <SoftCard key={group.category}>
                 <View style={styles.groupHead}>
-                  <Text style={styles.section}>{categoryTitle(group.category, false)}</Text>
+                  <Text style={styles.section}>{categoryTitle(group.category, { custom })}</Text>
                   <Text style={styles.amount}>{money(group.total)}</Text>
                 </View>
                 <Text style={styles.balanceHint}>
