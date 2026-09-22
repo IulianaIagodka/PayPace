@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient, type RealtimeChannel, type SupabaseClient } from '@supabase/supabase-js';
 import type { SharedHouseholdPayload } from '../models/types';
+import { shouldSkipStaleUpsert } from './householdSyncPolicy';
 
 type HouseholdRow = {
   id: string;
@@ -9,6 +10,10 @@ type HouseholdRow = {
   updated_at: string;
   revision: number;
 };
+
+export type CloudUpsertResult = 'written' | 'skipped_stale' | 'disabled';
+
+export { shouldSkipStaleUpsert } from './householdSyncPolicy';
 
 function extraConfig() {
   return (Constants.expoConfig?.extra ?? {}) as Record<string, string | undefined>;
@@ -72,9 +77,23 @@ export async function cloudFetchById(householdId: string): Promise<SharedHouseho
   return (data?.payload as SharedHouseholdPayload | undefined) ?? null;
 }
 
-export async function cloudUpsertPayload(payload: SharedHouseholdPayload): Promise<void> {
+/** Write only if our revision is not behind the cloud row (avoids stomping a fresher push). */
+export async function cloudUpsertPayload(
+  payload: SharedHouseholdPayload,
+): Promise<CloudUpsertResult> {
   const sb = getClient();
-  if (!sb) return;
+  if (!sb) return 'disabled';
+
+  const { data: existing, error: readError } = await sb
+    .from('households')
+    .select('revision')
+    .eq('id', payload.household.id)
+    .maybeSingle();
+  if (readError) throw new Error(readError.message);
+  if (existing && shouldSkipStaleUpsert(payload.revision, existing.revision)) {
+    return 'skipped_stale';
+  }
+
   const row: HouseholdRow = {
     id: payload.household.id,
     invite_code: payload.household.inviteCode,
@@ -84,4 +103,34 @@ export async function cloudUpsertPayload(payload: SharedHouseholdPayload): Promi
   };
   const { error } = await sb.from('households').upsert(row, { onConflict: 'id' });
   if (error) throw new Error(error.message);
+  return 'written';
+}
+
+/** Live updates when the partner writes — no need for a tight poll. */
+export function subscribeHouseholdChanges(
+  householdId: string,
+  onChange: () => void,
+): () => void {
+  const sb = getClient();
+  if (!sb) return () => undefined;
+
+  const channel: RealtimeChannel = sb
+    .channel(`household-${householdId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'households',
+        filter: `id=eq.${householdId}`,
+      },
+      () => {
+        onChange();
+      },
+    )
+    .subscribe();
+
+  return () => {
+    void sb.removeChannel(channel);
+  };
 }

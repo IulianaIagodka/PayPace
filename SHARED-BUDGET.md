@@ -13,6 +13,8 @@ PayPace can sync one household budget between two phones (you + partner). **Shar
 
 Sync needs a free [Supabase](https://supabase.com) project (a few minutes).
 
+While the app is open, partner edits arrive via **Supabase Realtime**. There is also a light background reconcile about **every 20 minutes**, plus a pull when the app comes to the foreground (and **Sync now**).
+
 ## Setup (once)
 
 1. Create a Supabase project
@@ -35,5 +37,7 @@ npx eas-cli env:update EXPO_PUBLIC_SUPABASE_ANON_KEY --value eyJ... --type strin
 You can also place empty placeholders in `app.json` → `expo.extra` (`supabaseUrl`, `supabaseAnonKey`) and fill them via env at build time — never commit real keys.
 
 5. Rebuild the app so the keys are baked in (`npm run build:ios:local:submit` on Mac, or cloud EAS)
+
+6. If the project already existed before Realtime sync: Supabase → **Database → Replication** → enable `households`, or re-run the Realtime line from `supabase/schema.sql`.
 
 Without keys you can still create a household on one phone and name both people, but the phones will not sync until Supabase is configured.
