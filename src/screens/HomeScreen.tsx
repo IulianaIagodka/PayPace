@@ -110,7 +110,7 @@ export function HomeScreen({ navigation }: Props) {
           <StatusChip label={moneyStatusLabel(moneyStatus)} tone={moneyStatus} />
         </View>
 
-        <HUDPanel variant="primary" label="SAFE TO SPEND TODAY">
+        <HUDPanel variant="standard" label="SAFE TO SPEND TODAY">
           <HudValue size="hero" style={{ color: safeColor }}>
             {formatMoney(safe, currency)}
           </HudValue>

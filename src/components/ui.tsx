@@ -523,7 +523,7 @@ export function SafeSpendHero({
   isAtRisk: boolean;
 }) {
   return (
-    <HUDPanel variant="primary" label="SAFE TO SPEND">
+    <HUDPanel variant="standard" label="SAFE TO SPEND">
       <HudValue size="hero" style={isAtRisk ? { color: colors.danger } : undefined}>
         {formatMoney(Math.max(safeToday, 0), currencyCode)}
       </HudValue>
