@@ -1,11 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
+  InputAccessoryView,
+  Keyboard,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
+  Button,
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
@@ -373,6 +377,21 @@ export function EmptyCell() {
   );
 }
 
+const AMOUNT_ACCESSORY_ID = 'paypace.amount.done';
+
+/** Mount once near app root so decimal-pad fields get a Done button. */
+export function AmountDoneAccessory() {
+  if (Platform.OS !== 'ios') return null;
+  return (
+    <InputAccessoryView nativeID={AMOUNT_ACCESSORY_ID}>
+      <View style={styles.accessory}>
+        <View style={{ flex: 1 }} />
+        <Button title="Done" onPress={Keyboard.dismiss} color={colors.resource} />
+      </View>
+    </InputAccessoryView>
+  );
+}
+
 export function AmountField({
   label,
   value,
@@ -396,6 +415,7 @@ export function AmountField({
           placeholder="0"
           placeholderTextColor={colors.textDim}
           style={styles.fieldInput}
+          inputAccessoryViewID={Platform.OS === 'ios' ? AMOUNT_ACCESSORY_ID : undefined}
           {...rest}
         />
         <Text style={styles.suffix}>{suffix}</Text>
@@ -715,6 +735,15 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
   },
   suffix: { color: colors.textSecondary, fontSize: 16, fontWeight: '600' },
+  accessory: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1C1814',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   rowTitle: { color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: fonts.body },
   rowAmount: { color: colors.ammo, fontSize: 15, fontWeight: '700', fontFamily: fonts.display },

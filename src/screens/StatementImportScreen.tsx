@@ -11,6 +11,7 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, Panel, ScreenBackground } from '../components/ui';
+import { FormScroll } from '../components/FormScroll';
 import { categoryTitle, nextCategoryInCycle } from '../services/categories';
 import { formatMoney, formatShortDate, toDateKey } from '../services/formatting';
 import {
@@ -162,7 +163,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
+      <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.title}>UPLOAD STATEMENT</Text>
         <Text style={styles.sub}>
           Import a bank export for this {horizon === 'week' ? 'week' : 'stretch until payday'}. Each
@@ -250,7 +251,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
         ) : null}
 
         <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
-      </ScrollView>
+      </FormScroll>
     </ScreenBackground>
   );
 }

@@ -3,7 +3,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -32,6 +32,7 @@ import { ReceiptScanScreen } from './src/screens/ReceiptScanScreen';
 import { StatementImportScreen } from './src/screens/StatementImportScreen';
 import { CategoryBalancesScreen } from './src/screens/CategoryBalancesScreen';
 import { SharedBudgetScreen } from './src/screens/SharedBudgetScreen';
+import { AmountDoneAccessory } from './src/components/ui';
 import { colors } from './src/theme/colors';
 import { fonts } from './src/theme/fonts';
 
@@ -80,6 +81,9 @@ function TabIcon({
 }
 
 function MainTabs() {
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 10);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -88,9 +92,9 @@ function MainTabs() {
           backgroundColor: '#100E0B',
           borderTopColor: colors.borderBright,
           borderTopWidth: 2,
-          height: 58,
-          paddingBottom: 6,
-          paddingTop: 4,
+          height: 50 + bottomPad,
+          paddingBottom: bottomPad,
+          paddingTop: 6,
         },
         tabBarActiveTintColor: colors.resource,
         tabBarInactiveTintColor: colors.textDim,
@@ -214,6 +218,7 @@ export default function App() {
     <SafeAreaProvider>
       <BudgetProvider>
         <RootNavigator />
+        <AmountDoneAccessory />
       </BudgetProvider>
     </SafeAreaProvider>
   );

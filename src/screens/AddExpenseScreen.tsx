@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AmountField, HudButton, Panel, ScreenBackground } from '../components/ui';
+import { FormScroll } from '../components/FormScroll';
 import { currencySymbol, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
@@ -44,7 +45,7 @@ export function AddExpenseScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
+      <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.title}>ADD EXPENSE</Text>
         <Text style={styles.sub}>
           Log it yourself anytime. Photos and bank statements are Plus.
@@ -97,6 +98,9 @@ export function AddExpenseScreen({ navigation }: Props) {
             placeholder="Coffee, groceries…"
             placeholderTextColor={colors.textDim}
             style={styles.note}
+            returnKeyType="done"
+            blurOnSubmit
+            onSubmitEditing={Keyboard.dismiss}
           />
         </Panel>
 
@@ -106,7 +110,7 @@ export function AddExpenseScreen({ navigation }: Props) {
           disabled={parsePositiveAmount(amount) == null || busy}
         />
         <HudButton title="CANCEL" onPress={() => navigation.goBack()} variant="secondary" />
-      </ScrollView>
+      </FormScroll>
     </ScreenBackground>
   );
 }

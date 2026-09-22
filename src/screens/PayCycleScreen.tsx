@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { newId } from '../services/id';
@@ -9,7 +9,8 @@ import {
   PrimaryButton,
   ScreenBackground,
   SoftCard,
-} from '../components/ui';
+} from '../components/ui'
+import { FormScroll } from '../components/FormScroll';
 import { HudSelect } from '../components/HudSelect';
 import { nextPaydayAfter, scheduleOptions } from '../models/calculator';
 import type { PaySchedule } from '../models/types';
@@ -102,7 +103,7 @@ export function PayCycleScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
+      <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.title}>Edit budget</Text>
         <Text style={styles.sub}>
           Update your balance, payday, or buffers — safe-to-spend recalculates right away.
@@ -138,7 +139,7 @@ export function PayCycleScreen({ navigation }: Props) {
         <PrimaryButton title="Save changes" onPress={save} />
         <PrimaryButton title="Start next pay cycle" onPress={startNext} />
         {saved && <Text style={styles.ok}>Updated — safe-to-spend refreshed.</Text>}
-      </ScrollView>
+      </FormScroll>
     </ScreenBackground>
   );
 }

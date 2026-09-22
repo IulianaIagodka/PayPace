@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { addDays } from 'date-fns';
 import { AmountField, BillRow, PrimaryButton, ScreenBackground, SoftCard } from '../components/ui';
+import { FormScroll } from '../components/FormScroll';
 import { currencySymbol, formatMoney, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
@@ -19,7 +20,7 @@ export function BillsScreen() {
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
+      <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.title}>Upcoming bills</Text>
         <Text style={styles.sub}>
           Total reserved: {formatMoney(upcoming.reduce((s, b) => s + b.amount, 0), currency)}
@@ -65,6 +66,9 @@ export function BillsScreen() {
           placeholder="Name"
           placeholderTextColor={colors.inkSecondary}
           style={styles.textField}
+          returnKeyType="done"
+          blurOnSubmit
+          onSubmitEditing={Keyboard.dismiss}
         />
         <AmountField label="Amount" value={amount} onChangeText={setAmount} suffix={suffix} />
         <PrimaryButton
@@ -83,7 +87,7 @@ export function BillsScreen() {
             setAmount('');
           }}
         />
-      </ScrollView>
+      </FormScroll>
     </ScreenBackground>
   );
 }

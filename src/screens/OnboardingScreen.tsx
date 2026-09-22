@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -154,7 +155,7 @@ export function OnboardingScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}>
           <Dots step={step} />
           {step === 'balance' && (
             <View style={{ gap: 20 }}>
@@ -219,6 +220,9 @@ export function OnboardingScreen() {
                 placeholder="Bill name"
                 placeholderTextColor={colors.inkSecondary}
                 style={styles.textField}
+                returnKeyType="done"
+                blurOnSubmit
+                onSubmitEditing={Keyboard.dismiss}
               />
               <AmountField label="Amount" value={billAmount} onChangeText={setBillAmount} suffix={suffix} />
               <Secondaryish title="Add bill" onPress={addBill} />

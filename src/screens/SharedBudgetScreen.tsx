@@ -2,8 +2,8 @@ import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   Pressable,
-  ScrollView,
   Share,
   StyleSheet,
   Text,
@@ -13,6 +13,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PrimaryButton, ScreenBackground, SecondaryButton, SoftCard } from '../components/ui';
+import { FormScroll } from '../components/FormScroll';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
@@ -59,7 +60,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
   if (!store.settings.isPremium && !household) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <ScrollView contentContainerStyle={styles.pad}>
+        <FormScroll contentContainerStyle={styles.pad}>
           <Text style={styles.title}>Shared budget</Text>
           <Text style={styles.sub}>
             Plus lets you and a partner share one payday budget. Each expense is tagged with who
@@ -67,7 +68,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
           </Text>
           <PrimaryButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
           <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
-        </ScrollView>
+        </FormScroll>
       </ScreenBackground>
     );
   }
@@ -99,7 +100,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
   if (household) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
+        <FormScroll contentContainerStyle={styles.pad}>
           <Text style={styles.title}>Shared budget</Text>
           <Text style={styles.sub}>
             One budget for two. You both see the same balance, payday, bills, and spending.
@@ -153,6 +154,9 @@ export function SharedBudgetScreen({ navigation }: Props) {
               placeholder="e.g. Ira"
               placeholderTextColor={colors.inkSecondary}
               style={styles.field}
+              returnKeyType="done"
+              blurOnSubmit
+              onSubmitEditing={Keyboard.dismiss}
             />
             <PrimaryButton
               title="Save name"
@@ -193,14 +197,14 @@ export function SharedBudgetScreen({ navigation }: Props) {
             }
           />
           {busy ? <ActivityIndicator color={colors.accent} /> : null}
-        </ScrollView>
+        </FormScroll>
       </ScreenBackground>
     );
   }
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
+      <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.title}>Shared budget</Text>
         <Text style={styles.sub}>
           Share one payday budget with your partner. Same balance, same safe-to-spend — expenses
@@ -216,6 +220,9 @@ export function SharedBudgetScreen({ navigation }: Props) {
             placeholderTextColor={colors.inkSecondary}
             style={styles.field}
             autoCapitalize="words"
+            returnKeyType="done"
+            blurOnSubmit
+            onSubmitEditing={Keyboard.dismiss}
           />
         </SoftCard>
 
@@ -239,6 +246,9 @@ export function SharedBudgetScreen({ navigation }: Props) {
             style={styles.field}
             autoCapitalize="characters"
             autoCorrect={false}
+            returnKeyType="done"
+            blurOnSubmit
+            onSubmitEditing={Keyboard.dismiss}
           />
           <PrimaryButton
             title="Join"
@@ -254,7 +264,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
         </SoftCard>
 
         {busy ? <ActivityIndicator color={colors.accent} /> : null}
-      </ScrollView>
+      </FormScroll>
     </ScreenBackground>
   );
 }

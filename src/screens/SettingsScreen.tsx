@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, Panel, ScreenBackground } from '../components/ui';
+import { FormScroll } from '../components/FormScroll';
 import { HudSelect } from '../components/HudSelect';
 import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../models/calculator';
 import { CURRENCIES } from '../services/currencies';
@@ -59,7 +60,7 @@ export function SettingsScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
+      <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.brand}>
           PAY<Text style={{ color: colors.resource }}>PACE</Text>
         </Text>
@@ -159,6 +160,12 @@ export function SettingsScreen({ navigation }: Props) {
                 placeholderTextColor={colors.textDim}
                 style={styles.input}
                 autoCapitalize="words"
+                returnKeyType="done"
+                blurOnSubmit
+                onSubmitEditing={() => {
+                  Keyboard.dismiss();
+                  if (newCategory.trim()) onAddCategory();
+                }}
               />
               <HudButton
                 title={adding ? 'ADDING…' : 'ADD CATEGORY'}
@@ -183,7 +190,7 @@ export function SettingsScreen({ navigation }: Props) {
             }
           />
         </Panel>
-      </ScrollView>
+      </FormScroll>
     </ScreenBackground>
   );
 }
