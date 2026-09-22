@@ -6,8 +6,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   CategoryCell,
   ExpenseRow,
+  HudBody,
   HudButton,
-  Panel,
+  HUDPanel,
+  HudMeta,
+  HudValue,
   ScreenBackground,
   SegmentedBar,
   StatusChip,
@@ -15,6 +18,7 @@ import {
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
+import { hud, hudType } from '../theme/hud';
 import { formatMoney } from '../services/formatting';
 import { envelopeStatuses } from '../services/envelopes';
 import type { PaceHorizon } from '../models/calculator';
@@ -83,7 +87,7 @@ export function HomeScreen({ navigation }: Props) {
       <ScreenBackground>
         <View style={styles.pad}>
           <Text style={styles.brand}>PAYPACE</Text>
-          <Text style={styles.sub}>No active budget yet. Set one up in Settings.</Text>
+          <Text style={hudType.body}>No active budget yet. Set one up in Settings.</Text>
           <HudButton title="SETTINGS" onPress={() => navigation.navigate('Settings')} />
         </View>
       </ScreenBackground>
@@ -116,55 +120,48 @@ export function HomeScreen({ navigation }: Props) {
         </View>
 
         <Animated.View style={{ opacity: heroPulse }}>
-          <Panel glow innerGlow style={styles.heroPanel}>
-            <Text style={styles.heroLabel}>SAFE TO SPEND TODAY</Text>
-            <Text style={[styles.safeToday, { color: safeColor }]}>
+          <HUDPanel variant="primary" label="SAFE TO SPEND TODAY">
+            <HudValue size="hero" style={{ color: safeColor }}>
               {formatMoney(safe, currency)}
-            </Text>
-            <Text style={styles.perUnit}>/ DAY</Text>
-          </Panel>
+            </HudValue>
+            <Text style={hudType.unit}>/ DAY</Text>
+          </HUDPanel>
         </Animated.View>
 
-        <Panel style={styles.availablePanel}>
-          <View style={styles.availableHead}>
-            <Text style={styles.label}>{availableLabel}</Text>
-            <Text style={styles.available}>{formatMoney(isWeek ? periodSafe : available, currency)}</Text>
-          </View>
+        <HUDPanel variant="standard" label={availableLabel}>
+          <HudValue>{formatMoney(isWeek ? periodSafe : available, currency)}</HudValue>
           <SegmentedBar
             ratio={snapshot.resourcesRemainingRatio}
-            segments={10}
-            height={22}
             animateFrom={drainFrom}
             tipAmber
           />
           <View style={styles.metaRow}>
-            <Text style={styles.meta}>{pct}% REMAINING</Text>
-            <Text style={styles.meta}>
+            <HudMeta>{pct}% REMAINING</HudMeta>
+            <HudMeta>
               {isWeek
                 ? `${periodDays}D LEFT IN WEEK`
                 : `${snapshot.daysUntilPayday}D TO PAYDAY`}
-            </Text>
+            </HudMeta>
           </View>
           {isWeek ? (
             <Text style={styles.weekHint}>
               Cycle left {formatMoney(available, currency)} · {snapshot.daysUntilPayday}D to payday
             </Text>
           ) : null}
-        </Panel>
+        </HUDPanel>
 
         {snapshot.projectedShortfallDays != null ? (
-          <Panel alt style={styles.alert}>
-            <Text style={styles.alertTitle}>SPENDING RATE HIGH</Text>
-            <Text style={styles.alertBody}>
+          <HUDPanel variant="standard" label="SPENDING RATE HIGH" labelTone="warn">
+            <HudBody>
               At current pace, available money will be depleted {snapshot.projectedShortfallDays}{' '}
               days before your next income.
-            </Text>
-          </Panel>
+            </HudBody>
+          </HUDPanel>
         ) : null}
 
         {store.settings.isPremium ? (
           <View style={styles.railBlock}>
-            <Text style={styles.sectionLabel}>CATEGORIES</Text>
+            <Text style={hudType.label}>CATEGORIES</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -190,36 +187,35 @@ export function HomeScreen({ navigation }: Props) {
             </ScrollView>
           </View>
         ) : (
-          <Panel alt>
-            <Text style={styles.alertTitle}>CATEGORY REMAINING · PLUS</Text>
-            <Text style={styles.alertBody}>
+          <HUDPanel variant="standard" label="CATEGORY REMAINING · PLUS">
+            <HudBody>
               Plus shows how much is left in each category — food, transport, kids, and the rest —
               and lets you set those amounts.
-            </Text>
+            </HudBody>
             <HudButton
               title="TRY PLUS (DEMO)"
               onPress={() => setPremium(true)}
               variant="secondary"
             />
-          </Panel>
+          </HUDPanel>
         )}
 
         <View style={styles.recentBlock}>
           <View style={styles.recentHead}>
-            <Text style={styles.sectionLabel}>RECENT</Text>
+            <Text style={hudType.label}>RECENT ACTIVITY</Text>
             <Pressable onPress={() => navigation.navigate('Activity')}>
               <Text style={styles.seeAll}>ACTIVITY ›</Text>
             </Pressable>
           </View>
-          <Panel>
+          <HUDPanel variant="standard">
             {recent.length === 0 ? (
-              <Text style={styles.sub}>No expenses yet.</Text>
+              <HudBody>No expenses yet.</HudBody>
             ) : (
               recent.map((e) => (
                 <ExpenseRow key={e.id} expense={e} currencyCode={currency} />
               ))
             )}
-          </Panel>
+          </HUDPanel>
         </View>
 
         <HudButton title="+ ADD EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
@@ -229,7 +225,12 @@ export function HomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 28, gap: 12 },
+  pad: {
+    paddingHorizontal: hud.screenPad,
+    paddingTop: 10,
+    paddingBottom: 28,
+    gap: hud.stackGap,
+  },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -246,57 +247,9 @@ const styles = StyleSheet.create({
   brandAccent: {
     color: colors.resource,
   },
-  heroPanel: {
-    paddingVertical: 18,
-    paddingHorizontal: 16,
-    gap: 4,
-  },
-  heroLabel: {
-    color: colors.resource,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 2.8,
-  },
-  safeToday: {
-    fontSize: 40,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: -0.6,
-  },
-  perUnit: {
-    color: colors.metal,
-    fontSize: 13,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.6,
-  },
-  availablePanel: { gap: 10, paddingVertical: 14 },
-  availableHead: { gap: 4 },
-  label: {
-    color: colors.warning,
-    fontSize: 11,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 2.6,
-  },
-  available: {
-    color: colors.ammo,
-    fontSize: 28,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: -0.4,
-  },
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  meta: {
-    color: colors.metal,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.4,
   },
   weekHint: {
     color: colors.textDim,
@@ -304,32 +257,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     fontWeight: '700',
     letterSpacing: 1,
+    textTransform: 'uppercase',
   },
-  sectionLabel: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 2.2,
-  },
-  sub: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, fontFamily: fonts.body },
-  alert: { borderColor: colors.warning },
-  alertTitle: {
-    color: colors.warning,
-    fontWeight: '700',
-    letterSpacing: 1.6,
-    fontSize: 12,
-    fontFamily: fonts.label,
-  },
-  alertBody: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
-    fontFamily: fonts.body,
-  },
-  railBlock: { gap: 10 },
+  railBlock: { gap: hud.gap },
   rail: { gap: 10, paddingRight: 8, paddingVertical: 2 },
-  recentBlock: { gap: 10 },
+  recentBlock: { gap: hud.gap },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   seeAll: {
     color: colors.resource,
@@ -337,5 +269,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     fontWeight: '700',
     letterSpacing: 1.4,
+    textTransform: 'uppercase',
   },
 });

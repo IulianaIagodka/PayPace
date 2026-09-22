@@ -27,6 +27,18 @@ import {
 import { formatMoney, formatShortDate } from '../services/formatting';
 import type { Bill, DailyExpense } from '../models/types';
 import { fonts } from '../theme/fonts';
+import { hud, hudType } from '../theme/hud';
+import {
+  HUDPanel,
+  HudBody,
+  HudLabel,
+  HudMeta,
+  HudValue,
+  type HUDPanelVariant,
+} from './HUDPanel';
+
+export { HUDPanel, HudBody, HudLabel, HudMeta, HudValue };
+export type { HUDPanelVariant };
 
 export function ScreenBackground({
   children,
@@ -56,39 +68,25 @@ export function ScreenBackground({
   );
 }
 
-/** Steel plate — thick bevel + rivets */
+/** Legacy alias — maps glow onto HUDPanel primary; otherwise standard */
 export function Panel({
   children,
   style,
-  alt,
   glow,
   innerGlow,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   style?: ViewStyle;
+  /** @deprecated ignored — use HUDPanel variants */
   alt?: boolean;
   glow?: boolean;
   innerGlow?: boolean;
 }) {
+  const variant: HUDPanelVariant = glow || innerGlow ? 'primary' : 'standard';
   return (
-    <View style={[styles.panelWrap, glow && styles.panelGlow, style]}>
-      <LinearGradient
-        colors={alt ? ['#2E2820', '#1A1612'] : ['#262218', '#141210']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[styles.panel, innerGlow && styles.panelInnerGlow]}
-      >
-        <View style={[styles.bevel, styles.bevelTL]} />
-        <View style={[styles.bevel, styles.bevelTR]} />
-        <View style={[styles.bevel, styles.bevelBL]} />
-        <View style={[styles.bevel, styles.bevelBR]} />
-        <View style={[styles.rivet, styles.rivetTL]} />
-        <View style={[styles.rivet, styles.rivetTR]} />
-        <View style={[styles.rivet, styles.rivetBL]} />
-        <View style={[styles.rivet, styles.rivetBR]} />
-        {children}
-      </LinearGradient>
-    </View>
+    <HUDPanel variant={variant} style={style}>
+      {children}
+    </HUDPanel>
   );
 }
 
@@ -181,19 +179,20 @@ export const SoftCard = Panel;
 
 export function SegmentedBar({
   ratio,
-  segments = 10,
-  height = 22,
   animateFrom,
-  compact,
   tipAmber = true,
 }: {
   ratio: number;
+  /** @deprecated ignored — meter segment count is unified */
   segments?: number;
+  /** @deprecated ignored — meter height is unified */
   height?: number;
   animateFrom?: number;
+  /** @deprecated ignored — meter geometry is unified */
   compact?: boolean;
   tipAmber?: boolean;
 }) {
+  const segments = hud.meterSegments;
   const clamped = Math.max(0, Math.min(ratio, 1));
   const anim = useRef(new Animated.Value(animateFrom ?? clamped)).current;
 
@@ -209,25 +208,24 @@ export function SegmentedBar({
   const lit = Math.round(clamped * segments);
 
   return (
-    <View style={[styles.barTrack, { height }, compact && styles.barTrackCompact]}>
+    <View style={[styles.barTrack, { height: hud.meterHeight }]}>
       {Array.from({ length: segments }).map((_, i) => {
         const bg =
           tipAmber && tone === 'healthy'
             ? segmentColor(i, lit, tone)
             : i < lit
               ? colorForTone(tone)
-              : '#121512';
+              : '#12100C';
         return (
           <View
             key={i}
             style={[
               styles.barSeg,
-              compact && styles.barSegCompact,
               {
                 backgroundColor: bg,
                 shadowColor: i < lit && tone === 'healthy' ? colors.resource : 'transparent',
                 shadowOpacity: i < lit ? 0.18 : 0,
-                shadowRadius: compact ? 1 : 2,
+                shadowRadius: 2,
               },
             ]}
           />
@@ -256,21 +254,18 @@ export function EnvelopeModule({
 }) {
   const remainingRatio = allocated > 0 ? Math.max(allocated - spent, 0) / allocated : 0;
   return (
-    <Panel style={styles.module}>
-      <View style={styles.moduleHead}>
-        <Text style={styles.moduleTitle}>{title}</Text>
-        <Text style={[styles.moduleAmount, { color: colorForTone(tone) }]}>
-          {formatMoney(spent, currencyCode)} / {formatMoney(allocated, currencyCode)}
-        </Text>
-      </View>
-      <SegmentedBar ratio={remainingRatio} segments={8} height={12} compact />
-      {depleted ? <Text style={styles.criticalLabel}>DEPLETED</Text> : null}
+    <HUDPanel variant="compact" label={title}>
+      <HudValue size="compact" style={{ color: colorForTone(tone) }}>
+        {formatMoney(spent, currencyCode)} / {formatMoney(allocated, currencyCode)}
+      </HudValue>
+      <SegmentedBar ratio={remainingRatio} tipAmber />
+      {depleted ? <HudLabel tone="warn">DEPLETED</HudLabel> : null}
       {warning && !depleted ? (
-        <Text style={styles.warnLabel}>
+        <HudLabel tone="warn">
           WARNING · reserve at {Math.round(remainingRatio * 100)}%
-        </Text>
+        </HudLabel>
       ) : null}
-    </Panel>
+    </HUDPanel>
   );
 }
 
@@ -344,42 +339,32 @@ export function CategoryCell({
         disabled={!onPress}
         style={{ flex: isRail ? undefined : 1, opacity: muted ? 0.48 : 1 }}
       >
-        <Panel style={isRail ? styles.cellRail : styles.cell}>
+        <HUDPanel
+          variant="compact"
+          label={title}
+          style={isRail ? styles.cellRail : styles.cell}
+          contentStyle={isRail ? styles.cellRailInner : undefined}
+        >
           {isRail ? (
-            <View style={styles.cellRailInner}>
+            <>
               <View style={styles.cellIconWrap}>
                 <Ionicons
                   name={iconName}
-                  size={20}
+                  size={18}
                   color={muted ? colors.textDim : colors.resource}
                 />
               </View>
-              <Text
-                style={[styles.cellTitleRail, muted && { color: colors.textDim }]}
-                numberOfLines={1}
-              >
-                {title}
-              </Text>
-              <Text
-                style={[styles.cellAmountRail, muted && { color: colors.textDim }]}
-                numberOfLines={1}
-              >
+              <HudValue size="compact" style={muted ? { color: colors.textDim } : undefined}>
                 {formatMoney(periodRemaining, currencyCode)}
                 <Text style={styles.cellAmountDim}>
                   {' '}
                   / {formatMoney(cycleRemaining, currencyCode)}
                 </Text>
-              </Text>
+              </HudValue>
               <View style={{ alignSelf: 'stretch' }}>
-                <SegmentedBar
-                  ratio={remainingRatio}
-                  segments={6}
-                  height={8}
-                  compact
-                  tipAmber={tipAmber}
-                />
+                <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
               </View>
-            </View>
+            </>
           ) : (
             <>
               <View style={styles.cellTitleRow}>
@@ -388,28 +373,19 @@ export function CategoryCell({
                   size={15}
                   color={muted ? colors.textDim : colors.textSecondary}
                 />
-                <Text style={[styles.cellTitle, muted && { color: colors.textDim }]} numberOfLines={1}>
-                  {title}
-                </Text>
-                <Text style={styles.cellHorizon}>{muted ? 'EMPTY' : horizonLabel}</Text>
+                <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
               </View>
-              <Text style={[styles.cellAmount, muted && { color: colors.textDim }]} numberOfLines={1}>
+              <HudValue size="compact" style={muted ? { color: colors.textDim } : undefined}>
                 {formatMoney(periodRemaining, currencyCode)}
                 <Text style={styles.cellAmountDim}>
                   {' '}
                   / {formatMoney(cycleRemaining, currencyCode)}
                 </Text>
-              </Text>
-              <SegmentedBar
-                ratio={remainingRatio}
-                segments={8}
-                height={9}
-                compact
-                tipAmber={tipAmber}
-              />
+              </HudValue>
+              <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
             </>
           )}
-        </Panel>
+        </HUDPanel>
       </Pressable>
     </Animated.View>
   );
@@ -452,8 +428,8 @@ export function AmountField({
   suffix?: string;
 } & TextInputProps) {
   return (
-    <View style={{ gap: 8 }}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+    <View style={{ gap: hud.gap }}>
+      <Text style={hudType.label}>{label}</Text>
       <View style={styles.fieldBox}>
         <TextInput
           value={value}
@@ -525,15 +501,14 @@ export function SafeSpendHero({
   isAtRisk: boolean;
 }) {
   return (
-    <View style={{ gap: 10 }}>
-      <Text style={styles.fieldLabel}>SAFE TO SPEND</Text>
-      <Text style={[styles.heroAmount, isAtRisk && { color: colors.danger }]}>
+    <HUDPanel variant="primary" label="SAFE TO SPEND">
+      <HudValue size="hero" style={isAtRisk ? { color: colors.danger } : undefined}>
         {formatMoney(Math.max(safeToday, 0), currencyCode)}
-      </Text>
-      <Text style={styles.meta}>
+      </HudValue>
+      <HudMeta>
         {formatMoney(remaining, currencyCode)} resources · {daysUntil} days left
-      </Text>
-    </View>
+      </HudMeta>
+    </HUDPanel>
   );
 }
 
@@ -547,11 +522,11 @@ export function CycleProgress({
   totalDays: number;
 }) {
   return (
-    <View style={{ gap: 8 }}>
-      <SegmentedBar ratio={1 - progress} segments={12} height={10} />
-      <Text style={styles.meta}>
+    <View style={{ gap: hud.gap }}>
+      <SegmentedBar ratio={1 - progress} />
+      <HudMeta>
         {daysElapsed} / {totalDays} days
-      </Text>
+      </HudMeta>
     </View>
   );
 }
@@ -589,54 +564,11 @@ const styles = StyleSheet.create({
     borderWidth: 18,
     borderColor: 'rgba(0,0,0,0.45)',
   },
-  panelWrap: {},
-  panelGlow: {
-    shadowColor: colors.resource,
-    shadowOpacity: 0.14,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 4,
-  },
-  panel: {
-    borderRadius: 0,
-    borderWidth: 2,
-    borderColor: colors.border,
-    padding: 14,
-    gap: 8,
-    overflow: 'hidden',
-  },
-  panelInnerGlow: {
-    borderColor: colors.resource,
-    borderWidth: 2,
-  },
-  bevel: {
-    position: 'absolute',
-    width: 14,
-    height: 14,
-    borderColor: colors.borderBright,
-    opacity: 1,
-  },
-  bevelTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3 },
-  bevelTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3 },
-  bevelBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3 },
-  bevelBR: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3 },
-  rivet: {
-    position: 'absolute',
-    width: 4,
-    height: 4,
-    backgroundColor: colors.metalDim,
-    borderWidth: 1,
-    borderColor: colors.borderBright,
-  },
-  rivetTL: { top: 5, left: 5 },
-  rivetTR: { top: 5, right: 5 },
-  rivetBL: { bottom: 5, left: 5 },
-  rivetBR: { bottom: 5, right: 5 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderWidth: 2,
+    borderWidth: hud.stroke,
     borderColor: colors.resource,
     backgroundColor: colors.resourceSoft,
     paddingHorizontal: 10,
@@ -654,7 +586,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: fonts.label,
     fontWeight: '700',
-    letterSpacing: 2,
+    letterSpacing: 2.2,
+    textTransform: 'uppercase',
   },
   btn: {
     borderRadius: 0,
@@ -662,7 +595,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: hud.stroke,
     overflow: 'hidden',
     minHeight: 54,
   },
@@ -702,109 +635,47 @@ const styles = StyleSheet.create({
   },
   barTrack: {
     flexDirection: 'row',
-    gap: 2,
+    gap: hud.meterGap,
     backgroundColor: '#080604',
-    borderWidth: 2,
+    borderWidth: hud.stroke,
     borderColor: colors.border,
     borderRadius: 0,
-    padding: 3,
+    padding: hud.meterPad,
   },
-  barTrackCompact: { gap: 2, padding: 2 },
   barSeg: { flex: 1, borderRadius: 0 },
-  barSegCompact: { borderRadius: 0 },
-  module: { gap: 8 },
-  moduleHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  moduleTitle: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.4,
-  },
-  moduleAmount: { color: colors.text, fontSize: 13, fontWeight: '700', fontFamily: fonts.body },
-  warnLabel: { color: colors.warning, fontSize: 11, letterSpacing: 0.8, fontWeight: '600' },
-  criticalLabel: { color: colors.critical, fontSize: 11, letterSpacing: 1, fontWeight: '700' },
-  cell: { gap: 8, paddingVertical: 12, paddingHorizontal: 12, minHeight: 92 },
-  cellRail: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    minHeight: 140,
-  },
+  cell: { flex: 1 },
+  cellRail: { width: 124 },
   cellRailInner: {
     alignItems: 'center',
-    gap: 8,
   },
   cellIconWrap: {
-    width: 36,
-    height: 36,
-    borderWidth: 1,
+    width: 32,
+    height: 32,
+    borderWidth: hud.stroke,
     borderColor: colors.borderBright,
     backgroundColor: colors.resourceSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cellTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  cellTitle: {
-    flex: 1,
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-  },
-  cellTitleRail: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    textAlign: 'center',
-  },
-  cellHorizon: {
-    color: colors.textDim,
-    fontSize: 9,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  cellAmount: {
-    fontSize: 13,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    color: colors.ammo,
-  },
-  cellAmountRail: {
-    fontSize: 11,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    color: colors.ammo,
-    textAlign: 'center',
-  },
-  cellAmountDim: { color: colors.textDim, fontWeight: '600' },
+  cellAmountDim: { color: colors.textDim, fontWeight: '600', fontFamily: fonts.display },
   emptyCell: {
     flex: 1,
     minHeight: 92,
     borderRadius: 0,
-    borderWidth: 2,
+    borderWidth: hud.stroke,
     borderColor: colors.borderSoft,
     backgroundColor: colors.panelDeep,
     opacity: 0.45,
-  },
-  fieldLabel: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.2,
   },
   fieldBox: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.panelAlt,
     borderRadius: 0,
-    borderWidth: 2,
+    borderWidth: hud.stroke,
     borderColor: colors.border,
-    paddingHorizontal: 14,
+    paddingHorizontal: hud.pad,
     paddingVertical: 12,
   },
   fieldInput: {
@@ -814,7 +685,7 @@ const styles = StyleSheet.create({
     color: colors.ammo,
     fontFamily: fonts.display,
   },
-  suffix: { color: colors.textSecondary, fontSize: 16, fontWeight: '600' },
+  suffix: { color: colors.textSecondary, fontSize: 16, fontWeight: '600', fontFamily: fonts.label },
   accessory: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -830,12 +701,11 @@ const styles = StyleSheet.create({
   meta: { color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body },
   deleteBtn: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 4 },
   deleteText: { color: colors.danger, fontWeight: '700', fontSize: 12, letterSpacing: 1 },
-  heroAmount: { color: colors.ammo, fontSize: 40, fontWeight: '800', fontFamily: fonts.display },
   headerBtn: {
     minHeight: 40,
     paddingHorizontal: 10,
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: hud.stroke,
     borderColor: colors.border,
     backgroundColor: colors.panel,
     borderRadius: 0,
@@ -846,5 +716,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1,
     fontFamily: fonts.label,
+    textTransform: 'uppercase',
   },
 });
