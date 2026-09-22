@@ -182,7 +182,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
           </Panel>
 
           <HudButton
-            title="Leave shared budget"
+            title="LEAVE SHARED BUDGET"
             onPress={() =>
               Alert.alert(
                 'Leave shared budget?',
@@ -232,7 +232,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
           <Text style={chrome.section}>Create a shared budget</Text>
           <Text style={chrome.sub}>You’ll get a code to send your partner.</Text>
           <HudButton
-            title="Create shared budget"
+            title="CREATE SHARED BUDGET"
             disabled={!name.trim() || busy}
             onPress={() => run(() => createHousehold(name))}
           />
@@ -253,7 +253,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
             onSubmitEditing={Keyboard.dismiss}
           />
           <HudButton
-            title="Join"
+            title="JOIN"
             disabled={!name.trim() || !code.trim() || busy}
             onPress={() => run(() => joinHousehold(code, name))}
           />
