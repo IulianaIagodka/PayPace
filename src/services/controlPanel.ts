@@ -7,6 +7,11 @@
 import type { PaceHorizon } from '../models/calculator';
 import type { DailyExpense, SafeSpendSnapshot, TrajectoryLabel } from '../models/types';
 
+function daysLabel(count: number): string {
+  const n = Math.max(0, Math.round(count));
+  return n === 1 ? '1 day' : `${n} days`;
+}
+
 export const CONTROL_GRID_KEYS = ['food', 'transport', 'kids', 'fun', 'home'] as const;
 
 export type ControlGridKey = (typeof CONTROL_GRID_KEYS)[number];
@@ -98,9 +103,9 @@ export function runwayMetaFor(
   snapshot: Pick<SafeSpendSnapshot, 'daysLeftInWeek' | 'daysUntilPayday'>,
 ): string {
   if (horizon === 'week') {
-    return `${snapshot.daysLeftInWeek}D RUNWAY · WEEK`;
+    return `${daysLabel(snapshot.daysLeftInWeek)} left in week`;
   }
-  return `${snapshot.daysUntilPayday}D TO CHECKPOINT`;
+  return `${daysLabel(snapshot.daysUntilPayday)} to payday`;
 }
 
 export function weekCycleHint(
@@ -110,7 +115,7 @@ export function weekCycleHint(
   formatMoney: (n: number) => string,
 ): string | null {
   if (horizon !== 'week') return null;
-  return `CYCLE RESERVE ${formatMoney(Math.max(cycleReserve, 0))} · ${daysUntilPayday}D TO PAYDAY`;
+  return `Cycle left ${formatMoney(Math.max(cycleReserve, 0))} · ${daysLabel(daysUntilPayday)} to payday`;
 }
 
 /** Pair modules into 2-col rows for the control grid. */

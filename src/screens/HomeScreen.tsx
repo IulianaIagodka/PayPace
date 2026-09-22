@@ -19,7 +19,7 @@ import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 import { hud, hudType } from '../theme/hud';
-import { formatMoney } from '../services/formatting';
+import { formatMoney, formatDays } from '../services/formatting';
 import { envelopeStatuses } from '../services/envelopes';
 import type { PaceHorizon } from '../models/calculator';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
@@ -137,15 +137,16 @@ export function HomeScreen({ navigation }: Props) {
           />
           <View style={styles.metaRow}>
             <HudMeta>{pct}% REMAINING</HudMeta>
-            <HudMeta>
+            <HudMeta style={styles.daysMeta}>
               {isWeek
-                ? `${periodDays}D LEFT IN WEEK`
-                : `${snapshot.daysUntilPayday}D TO PAYDAY`}
+                ? `${formatDays(periodDays)} left in week`
+                : `${formatDays(snapshot.daysUntilPayday)} to payday`}
             </HudMeta>
           </View>
           {isWeek ? (
             <Text style={styles.weekHint}>
-              Cycle left {formatMoney(available, currency)} · {snapshot.daysUntilPayday}D to payday
+              Cycle left {formatMoney(available, currency)} ·{' '}
+              {formatDays(snapshot.daysUntilPayday)} to payday
             </Text>
           ) : null}
         </HUDPanel>
@@ -251,13 +252,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  daysMeta: {
+    textTransform: 'none',
+    letterSpacing: 0.4,
+  },
   weekHint: {
     color: colors.textDim,
     fontSize: 11,
     fontFamily: fonts.label,
     fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    textTransform: 'none',
   },
   railBlock: { gap: hud.gap },
   rail: { gap: 10, paddingRight: 8, paddingVertical: 2 },
