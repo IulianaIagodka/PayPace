@@ -6,10 +6,10 @@ import { newId } from '../services/id';
 import {
   AmountField,
   CycleProgress,
-  HudButton,
-  Panel,
+  PrimaryButton,
   ScreenBackground,
-} from '../components/ui';
+  SoftCard,
+} from '../components/ui'
 import { FormScroll } from '../components/FormScroll';
 import { HudSelect } from '../components/HudSelect';
 import { nextPaydayAfter, scheduleOptions } from '../models/calculator';
@@ -18,8 +18,6 @@ import { asMoney, currencySymbol, formatMoney, fromDateKey, parseAmount, toDateK
 import { defaultEnvelopes } from '../services/envelopes';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { fonts } from '../theme/fonts';
-import { chrome } from '../theme/chrome';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PayCycle'>;
@@ -105,9 +103,9 @@ export function PayCycleScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <FormScroll contentContainerStyle={chrome.pad}>
-        <Text style={chrome.title}>EDIT CYCLE</Text>
-        <Text style={chrome.sub}>
+      <FormScroll contentContainerStyle={styles.pad}>
+        <Text style={styles.title}>Edit budget</Text>
+        <Text style={styles.sub}>
           Update your balance, payday, or buffers — safe-to-spend recalculates right away.
         </Text>
         <CycleProgress
@@ -115,20 +113,11 @@ export function PayCycleScreen({ navigation }: Props) {
           daysElapsed={snapshot.daysElapsed}
           totalDays={snapshot.totalDaysInCycle}
         />
-        <Panel glow>
-          <Row
-            label="SAFE TODAY"
-            value={formatMoney(Math.max(snapshot.safeToSpendToday, 0), store.settings.currencyCode)}
-          />
-          <Row
-            label="LEFT UNTIL PAYDAY"
-            value={formatMoney(snapshot.remainingUntilPayday, store.settings.currencyCode)}
-          />
-          <Row
-            label="SPENT THIS CYCLE"
-            value={formatMoney(snapshot.spentThisCycle, store.settings.currencyCode)}
-          />
-        </Panel>
+        <SoftCard>
+          <Row label="Safe today" value={formatMoney(Math.max(snapshot.safeToSpendToday, 0), store.settings.currencyCode)} />
+          <Row label="Left until payday" value={formatMoney(snapshot.remainingUntilPayday, store.settings.currencyCode)} />
+          <Row label="Spent this cycle" value={formatMoney(snapshot.spentThisCycle, store.settings.currencyCode)} />
+        </SoftCard>
         <AmountField label="Current balance" value={balance} onChangeText={setBalance} suffix={suffix} />
         <AmountField
           label="Days until payday"
@@ -147,9 +136,9 @@ export function PayCycleScreen({ navigation }: Props) {
         <AmountField label="Savings" value={savings} onChangeText={setSavings} suffix={suffix} />
         <AmountField label="Emergency buffer" value={emergency} onChangeText={setEmergency} suffix={suffix} />
         <AmountField label="Spending buffer" value={buffer} onChangeText={setBuffer} suffix={suffix} />
-        <HudButton title="SAVE CHANGES" onPress={save} />
-        <HudButton title="START NEXT PAY CYCLE" onPress={startNext} variant="secondary" />
-        {saved ? <Text style={styles.ok}>Updated — safe-to-spend refreshed.</Text> : null}
+        <PrimaryButton title="Save changes" onPress={save} />
+        <PrimaryButton title="Start next pay cycle" onPress={startNext} />
+        {saved && <Text style={styles.ok}>Updated — safe-to-spend refreshed.</Text>}
       </FormScroll>
     </ScreenBackground>
   );
@@ -157,31 +146,16 @@ export function PayCycleScreen({ navigation }: Props) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+      <Text style={{ color: colors.inkSecondary }}>{label}</Text>
+      <Text style={{ color: colors.ink, fontWeight: '600' }}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  ok: { color: colors.resource, fontSize: 13, fontFamily: fonts.body },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-  },
-  rowLabel: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    letterSpacing: 1.2,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-  },
-  rowValue: {
-    color: colors.text,
-    fontWeight: '700',
-    fontFamily: fonts.display,
-    fontSize: 14,
-  },
+  pad: { padding: 24, gap: 14, paddingBottom: 40 },
+  title: { fontSize: 32, fontWeight: '700', color: colors.ink },
+  sub: { color: colors.inkSecondary, fontSize: 14, lineHeight: 20 },
+  ok: { color: colors.success, fontSize: 14 },
 });

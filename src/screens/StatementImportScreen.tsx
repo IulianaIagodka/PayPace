@@ -24,7 +24,6 @@ import { dateInHorizon, findCycleForDate, horizonWindow } from '../services/cycl
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
-import { chrome } from '../theme/chrome';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'StatementImport'>;
@@ -78,9 +77,9 @@ export function StatementImportScreen({ navigation, route }: Props) {
   if (!store.settings.isPremium) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <ScrollView contentContainerStyle={chrome.pad}>
-          <Text style={chrome.title}>UPLOAD STATEMENT</Text>
-          <Text style={chrome.sub}>
+        <ScrollView contentContainerStyle={styles.pad}>
+          <Text style={styles.title}>UPLOAD STATEMENT</Text>
+          <Text style={styles.sub}>
             Plus imports a bank statement, sorts the rows by category, and puts each one in the right
             pay cycle.
           </Text>
@@ -164,15 +163,15 @@ export function StatementImportScreen({ navigation, route }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <FormScroll contentContainerStyle={chrome.pad}>
-        <Text style={chrome.title}>UPLOAD STATEMENT</Text>
-        <Text style={chrome.sub}>
+      <FormScroll contentContainerStyle={styles.pad}>
+        <Text style={styles.title}>UPLOAD STATEMENT</Text>
+        <Text style={styles.sub}>
           Import a bank export for this {horizon === 'week' ? 'week' : 'stretch until payday'}. Each
           row lands in the pay cycle that matches its date.
         </Text>
 
         <Panel>
-          <Text style={chrome.label}>DATE WINDOW</Text>
+          <Text style={styles.label}>DATE WINDOW</Text>
           <Text style={styles.fileName}>
             {formatShortDate(window.startKey)} → {formatShortDate(window.endKey)} ·{' '}
             {horizon === 'week' ? 'WEEK' : 'UNTIL PAYDAY'}
@@ -192,7 +191,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
 
         {fileLabel ? (
           <Panel>
-            <Text style={chrome.label}>FILE</Text>
+            <Text style={styles.label}>FILE</Text>
             <Text style={styles.fileName}>{fileLabel}</Text>
             {result ? (
               <Text style={styles.meta}>
@@ -206,13 +205,13 @@ export function StatementImportScreen({ navigation, route }: Props) {
         {busy ? (
           <Panel>
             <ActivityIndicator color={colors.resource} />
-            <Text style={chrome.sub}>Reading statement…</Text>
+            <Text style={styles.sub}>Reading statement…</Text>
           </Panel>
         ) : null}
 
         {cyclePreview.length ? (
           <Panel>
-            <Text style={chrome.label}>ADDS TO THESE CYCLES</Text>
+            <Text style={styles.label}>ADDS TO THESE CYCLES</Text>
             {cyclePreview.map((row) => (
               <View key={row.label} style={styles.cycleRow}>
                 <Text style={styles.rowTitle}>{row.label}</Text>
@@ -258,7 +257,23 @@ export function StatementImportScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  fileName: { color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: fonts.body },
+  pad: { padding: 20, gap: 14, paddingBottom: 40 },
+  title: {
+    color: colors.text,
+    fontSize: 22,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+  sub: { color: colors.textSecondary, fontSize: 13, lineHeight: 18, fontFamily: fonts.body },
+  label: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    fontFamily: fonts.label,
+  },
+  fileName: { color: colors.text, fontSize: 15, fontWeight: '600' },
   meta: { color: colors.textDim, fontSize: 12, fontFamily: fonts.body },
   filterRow: { paddingTop: 8 },
   cycleRow: {
@@ -275,6 +290,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  rowTitle: { color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: fonts.body },
-  rowAmount: { color: colors.ammo, fontSize: 15, fontWeight: '700', fontFamily: fonts.display },
+  rowTitle: { color: colors.text, fontSize: 15, fontWeight: '600' },
+  rowAmount: { color: colors.text, fontSize: 15, fontWeight: '700', fontFamily: fonts.display },
 });

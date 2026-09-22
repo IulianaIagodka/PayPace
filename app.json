@@ -5,13 +5,13 @@
     "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "scheme": "paypace",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#080B0F"
+      "backgroundColor": "#050505"
     },
     "ios": {
       "supportsTablet": false,
@@ -24,7 +24,7 @@
     "android": {
       "package": "app.paypace.paypace",
       "adaptiveIcon": {
-        "backgroundColor": "#080B0F",
+        "backgroundColor": "#050505",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"

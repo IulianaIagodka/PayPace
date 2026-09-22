@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HudButton, Panel, ScreenBackground, SegmentedBar } from '../components/ui';
+import { PrimaryButton, ScreenBackground, SecondaryButton, SegmentedBar, SoftCard } from '../components/ui';
 import { categoryTitle, allCategoryIds, nextCategoryInCycle } from '../services/categories';
 import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import { formatMoney } from '../services/formatting';
@@ -22,8 +22,6 @@ import {
 } from '../services/receiptAnalyzer';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { fonts } from '../theme/fonts';
-import { chrome } from '../theme/chrome';
 import type { RootStackParamList } from '../navigation/types';
 import type { ExpenseCategory } from '../models/types';
 
@@ -75,13 +73,13 @@ export function ReceiptScanScreen({ navigation }: Props) {
   if (!store.settings.isPremium) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <ScrollView contentContainerStyle={chrome.pad}>
-          <Text style={chrome.title}>Scan receipt</Text>
-          <Text style={chrome.sub}>
+        <ScrollView contentContainerStyle={styles.pad}>
+          <Text style={styles.title}>Scan receipt</Text>
+          <Text style={styles.sub}>
             Plus reads the receipt, sorts line items by category, and shows what’s left in each.
           </Text>
-          <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
-          <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
+          <PrimaryButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
+          <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
         </ScrollView>
       </ScreenBackground>
     );
@@ -148,41 +146,41 @@ export function ReceiptScanScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={chrome.pad} keyboardShouldPersistTaps="handled">
-        <Text style={chrome.title}>Scan receipt</Text>
-        <Text style={chrome.sub}>
+      <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
+        <Text style={styles.title}>Scan receipt</Text>
+        <Text style={styles.sub}>
           Snap a photo. We’ll group the items by category so you can see each balance.
         </Text>
 
-        <HudButton title="TAKE PHOTO" onPress={() => pick(true)} />
-        <HudButton title="CHOOSE FROM GALLERY" onPress={() => pick(false)} variant="secondary" />
+        <PrimaryButton title="Take photo" onPress={() => pick(true)} />
+        <SecondaryButton title="Choose from gallery" onPress={() => pick(false)} />
 
         {photoUri ? (
           <Image source={{ uri: photoUri }} style={styles.preview} resizeMode="cover" />
         ) : null}
 
         {scanning ? (
-          <Panel>
-            <ActivityIndicator color={colors.resource} />
-            <Text style={chrome.sub}>Reading the receipt…</Text>
-          </Panel>
+          <SoftCard>
+            <ActivityIndicator color={colors.accent} />
+            <Text style={styles.sub}>Reading the receipt…</Text>
+          </SoftCard>
         ) : null}
 
         {result ? (
           <>
-            <Panel>
-              <Text style={chrome.section}>
+            <SoftCard>
+              <Text style={styles.section}>
                 {result.merchant ?? 'Receipt'} · {result.source === 'ai' ? 'AI' : 'Demo scan'}
               </Text>
-              <Text style={chrome.sub}>
+              <Text style={styles.sub}>
                 Total recognized: {money(result.total ?? 0)}
               </Text>
-            </Panel>
+            </SoftCard>
 
             {grouped.map((group) => (
-              <Panel key={group.category}>
+              <SoftCard key={group.category}>
                 <View style={styles.groupHead}>
-                  <Text style={chrome.section}>{categoryTitle(group.category, { custom })}</Text>
+                  <Text style={styles.section}>{categoryTitle(group.category, { custom })}</Text>
                   <Text style={styles.amount}>{money(group.total)}</Text>
                 </View>
                 <Text style={styles.balanceHint}>
@@ -203,17 +201,17 @@ export function ReceiptScanScreen({ navigation }: Props) {
                     <Text style={styles.lineAmount}>{money(item.amount)}</Text>
                   </Pressable>
                 ))}
-              </Panel>
+              </SoftCard>
             ))}
 
-            <HudButton title="ADD EVERYTHING" onPress={saveAll} />
+            <PrimaryButton title="Add everything" onPress={saveAll} />
           </>
         ) : null}
 
-        <Text style={chrome.section}>Spending by category</Text>
-        <Panel>
+        <Text style={styles.section}>Spending by category</Text>
+        <SoftCard>
           {cycleCategoryBalances.every((c) => c.spent === 0) ? (
-            <Text style={chrome.sub}>
+            <Text style={styles.sub}>
               Nothing categorized yet — scan a receipt or log an expense.
             </Text>
           ) : (
@@ -229,7 +227,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
               </View>
             ))
           )}
-        </Panel>
+        </SoftCard>
 
         <Pressable onPress={() => navigation.navigate('CategoryBalances')}>
           <Text style={styles.link}>See all categories</Text>
@@ -240,24 +238,26 @@ export function ReceiptScanScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  preview: { width: '100%', height: 200, borderRadius: 2, backgroundColor: colors.panelDeep, borderWidth: 1, borderColor: colors.border },
+  pad: { padding: 24, gap: 14, paddingBottom: 40 },
+  title: { fontSize: 32, fontWeight: '700', color: colors.ink },
+  sub: { color: colors.inkSecondary, fontSize: 15, lineHeight: 21 },
+  section: { color: colors.ink, fontSize: 17, fontWeight: '700' },
+  preview: { width: '100%', height: 200, borderRadius: 16, backgroundColor: colors.whiteSoft },
   groupHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  amount: { color: colors.ammo, fontWeight: '700', fontSize: 16, fontFamily: fonts.display },
-  balanceHint: { color: colors.textSecondary, fontSize: 13, marginBottom: 6, fontFamily: fonts.body },
+  amount: { color: colors.ink, fontWeight: '700', fontSize: 16 },
+  balanceHint: { color: colors.inkSecondary, fontSize: 13, marginBottom: 6 },
   line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
-  lineName: { color: colors.text, fontSize: 15, fontFamily: fonts.body },
-  tapHint: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
-  lineAmount: { color: colors.ammo, fontWeight: '600', fontFamily: fonts.display },
+  lineName: { color: colors.ink, fontSize: 15 },
+  tapHint: { color: colors.inkSecondary, fontSize: 12, marginTop: 2 },
+  lineAmount: { color: colors.ink, fontWeight: '600' },
   balanceRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   barTrack: {
     height: 8,
-    borderRadius: 1,
-    backgroundColor: colors.panelDeep,
+    borderRadius: 99,
+    backgroundColor: 'rgba(24, 42, 34, 0.08)',
     overflow: 'hidden',
     marginTop: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  barFill: { height: '100%', borderRadius: 1 },
-  link: { color: colors.resource, fontWeight: '700', fontSize: 13, letterSpacing: 1.2, fontFamily: fonts.label },
+  barFill: { height: '100%', borderRadius: 99 },
+  link: { color: colors.accent, fontWeight: '700', fontSize: 15 },
 });

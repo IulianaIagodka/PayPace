@@ -8,7 +8,6 @@ import { currencySymbol, parsePositiveAmount, toDateKey } from '../services/form
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
-import { chrome } from '../theme/chrome';
 import { ensureEnvelopes } from '../services/envelopes';
 import type { EnvelopeKey } from '../models/types';
 import type { RootStackParamList } from '../navigation/types';
@@ -46,9 +45,9 @@ export function AddExpenseScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <FormScroll contentContainerStyle={chrome.pad}>
-        <Text style={chrome.title}>ADD EXPENSE</Text>
-        <Text style={chrome.sub}>
+      <FormScroll contentContainerStyle={styles.pad}>
+        <Text style={styles.title}>ADD EXPENSE</Text>
+        <Text style={styles.sub}>
           Log it yourself anytime. Photos and bank statements are Plus.
         </Text>
 
@@ -117,13 +116,22 @@ export function AddExpenseScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  pad: { padding: 20, gap: 14, paddingBottom: 40 },
+  title: {
+    color: colors.text,
+    fontSize: 22,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+  sub: { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
   importRow: { flexDirection: 'row', gap: 10 },
   importCard: {
     flex: 1,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.resource,
     backgroundColor: colors.resourceSoft,
-    borderRadius: 2,
+    borderRadius: 4,
     padding: 14,
     gap: 6,
     minHeight: 96,
@@ -157,28 +165,21 @@ const styles = StyleSheet.create({
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   cat: {
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.panel,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderRadius: 2,
+    borderRadius: 4,
     minWidth: '30%',
   },
-  catOn: { borderColor: colors.resource, backgroundColor: '#143040' },
-  catText: {
-    color: colors.textSecondary,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 1,
-    fontFamily: fonts.label,
-  },
+  catOn: { borderColor: colors.resource, backgroundColor: '#14301A' },
+  catText: { color: colors.textSecondary, fontWeight: '700', fontSize: 11, letterSpacing: 1 },
   catTextOn: { color: colors.resource },
   note: {
     color: colors.text,
     fontSize: 16,
     fontWeight: '600',
     paddingVertical: 4,
-    fontFamily: fonts.body,
   },
 });

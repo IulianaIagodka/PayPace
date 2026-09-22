@@ -1,11 +1,9 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { Panel, ResourceBattery, ScreenBackground } from '../components/ui';
+import { Panel, ScreenBackground, SegmentedBar } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors, colorForTone } from '../theme/colors';
-import { fonts } from '../theme/fonts';
-import { chrome } from '../theme/chrome';
 import { formatMoney } from '../services/formatting';
 import type { MainTabParamList } from '../navigation/types';
 
@@ -28,9 +26,9 @@ export function StatusScreen({}: Props) {
   if (!activeCycle) {
     return (
       <ScreenBackground>
-        <View style={chrome.pad}>
-          <Text style={chrome.title}>STATUS</Text>
-          <Text style={chrome.sub}>No active cycle.</Text>
+        <View style={styles.pad}>
+          <Text style={styles.title}>STATUS</Text>
+          <Text style={styles.sub}>No active cycle.</Text>
         </View>
       </ScreenBackground>
     );
@@ -48,11 +46,10 @@ export function StatusScreen({}: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={chrome.pad}>
-        <Text style={chrome.title}>STATUS</Text>
-        <Text style={chrome.sub}>Cycle telemetry · remaining energy · trajectory</Text>
+      <ScrollView contentContainerStyle={styles.pad}>
+        <Text style={styles.title}>STATUS</Text>
 
-        <Panel glow>
+        <Panel>
           <Row label="INCOME" value={formatMoney(income, currency)} />
           <Row label="SPENT" value={formatMoney(snapshot.spentThisCycle, currency)} />
           <Row label="REMAINING" value={formatMoney(Math.max(remaining, 0), currency)} />
@@ -69,15 +66,15 @@ export function StatusScreen({}: Props) {
         </Panel>
 
         <Panel>
-          <Text style={chrome.section}>TRAJECTORY</Text>
+          <Text style={styles.label}>TRAJECTORY</Text>
           <Text style={[styles.traj, { color: colorForTone(trajTone as any) }]}>
             {snapshot.trajectory}
           </Text>
-          <ResourceBattery ratio={snapshot.resourcesRemainingRatio} segments={12} />
+          <SegmentedBar ratio={snapshot.resourcesRemainingRatio} segments={12} height={14} />
         </Panel>
 
         <Panel>
-          <Text style={chrome.section}>CYCLE TIMELINE</Text>
+          <Text style={styles.label}>CYCLE TIMELINE</Text>
           <View style={styles.timeline}>
             {timeline.map((d) => (
               <View
@@ -90,7 +87,7 @@ export function StatusScreen({}: Props) {
               />
             ))}
           </View>
-          <Text style={chrome.sub}>
+          <Text style={styles.sub}>
             Day {snapshot.daysElapsed} of {snapshot.totalDaysInCycle} · today marked
           </Text>
         </Panel>
@@ -111,7 +108,7 @@ function Row({
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={[styles.rowValue, strong && { color: colors.resource, fontSize: 17 }]}>
+      <Text style={[styles.rowValue, strong && { color: colors.resource, fontSize: 18 }]}>
         {value}
       </Text>
     </View>
@@ -119,48 +116,37 @@ function Row({
 }
 
 const styles = StyleSheet.create({
-  traj: {
-    fontSize: 26,
+  pad: { padding: 20, gap: 14, paddingBottom: 40 },
+  title: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 2 },
+  label: {
+    color: colors.textSecondary,
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1.4,
-    fontFamily: fonts.display,
-    marginVertical: 4,
   },
+  sub: { color: colors.textSecondary, fontSize: 12 },
+  traj: { fontSize: 28, fontWeight: '800', letterSpacing: 1 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 9,
+    paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  rowLabel: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    letterSpacing: 1.2,
-    fontWeight: '700',
-    fontFamily: fonts.label,
-  },
-  rowValue: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
-    fontFamily: fonts.display,
-  },
-  timeline: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
+  rowLabel: { color: colors.textSecondary, fontSize: 11, letterSpacing: 1, fontWeight: '600' },
+  rowValue: { color: colors.text, fontSize: 15, fontWeight: '700' },
+  timeline: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   tick: {
     width: 10,
     height: 18,
-    borderRadius: 1,
+    borderRadius: 2,
     backgroundColor: colors.borderSoft,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  tickPassed: { backgroundColor: colors.healthy, borderColor: colors.resourceDim },
+  tickPassed: { backgroundColor: colors.healthy },
   tickToday: {
     backgroundColor: colors.warning,
     width: 12,
     height: 22,
-    borderColor: colors.warning,
   },
 });

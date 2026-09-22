@@ -12,12 +12,10 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HudButton, Panel, ScreenBackground } from '../components/ui';
+import { PrimaryButton, ScreenBackground, SecondaryButton, SoftCard } from '../components/ui';
 import { FormScroll } from '../components/FormScroll';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { fonts } from '../theme/fonts';
-import { chrome } from '../theme/chrome';
 import type { RootStackParamList } from '../navigation/types';
 import { formatMoney } from '../services/formatting';
 
@@ -62,14 +60,14 @@ export function SharedBudgetScreen({ navigation }: Props) {
   if (!store.settings.isPremium && !household) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <FormScroll contentContainerStyle={chrome.pad}>
-          <Text style={chrome.title}>Shared budget</Text>
-          <Text style={chrome.sub}>
+        <FormScroll contentContainerStyle={styles.pad}>
+          <Text style={styles.title}>Shared budget</Text>
+          <Text style={styles.sub}>
             Plus lets you and a partner share one payday budget. Each expense is tagged with who
             logged it.
           </Text>
-          <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
-          <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
+          <PrimaryButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
+          <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
         </FormScroll>
       </ScreenBackground>
     );
@@ -102,21 +100,21 @@ export function SharedBudgetScreen({ navigation }: Props) {
   if (household) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <FormScroll contentContainerStyle={chrome.pad}>
-          <Text style={chrome.title}>Shared budget</Text>
-          <Text style={chrome.sub}>
+        <FormScroll contentContainerStyle={styles.pad}>
+          <Text style={styles.title}>Shared budget</Text>
+          <Text style={styles.sub}>
             One budget for two. You both see the same balance, payday, bills, and spending.
           </Text>
 
-          <Panel>
-            <Text style={chrome.section}>{household.name}</Text>
-            <Text style={chrome.label}>Invite code</Text>
+          <SoftCard>
+            <Text style={styles.section}>{household.name}</Text>
+            <Text style={styles.codeLabel}>Invite code</Text>
             <Text style={styles.code}>{household.inviteCode}</Text>
             <View style={styles.rowGap}>
-              <HudButton title="COPY CODE" onPress={copyCode} />
-              <HudButton title="SHARE CODE" onPress={shareCode} variant="secondary" />
+              <PrimaryButton title="Copy code" onPress={copyCode} />
+              <SecondaryButton title="Share code" onPress={shareCode} />
             </View>
-            <Text style={chrome.sub}>
+            <Text style={styles.hint}>
               {cloudSyncReady
                 ? syncStatus === 'syncing'
                   ? 'Syncing…'
@@ -126,12 +124,12 @@ export function SharedBudgetScreen({ navigation }: Props) {
                 : 'On this phone only — add Supabase keys to sync (see SHARED-BUDGET.md)'}
             </Text>
             {cloudSyncReady ? (
-              <HudButton title="SYNC NOW" onPress={() => run(() => syncHouseholdNow())} variant="secondary" />
+              <SecondaryButton title="Sync now" onPress={() => run(() => syncHouseholdNow())} />
             ) : null}
-          </Panel>
+          </SoftCard>
 
-          <Panel>
-            <Text style={chrome.section}>People</Text>
+          <SoftCard>
+            <Text style={styles.section}>People</Text>
             {household.members.map((member) => (
               <View key={member.id} style={styles.memberRow}>
                 <View style={{ flex: 1 }}>
@@ -139,38 +137,38 @@ export function SharedBudgetScreen({ navigation }: Props) {
                     {member.displayName}
                     {member.id === localMember?.id ? ' · you' : ''}
                   </Text>
-                  <Text style={chrome.sub}>{member.role === 'owner' ? 'Started this budget' : 'Partner'}</Text>
+                  <Text style={styles.hint}>{member.role === 'owner' ? 'Started this budget' : 'Partner'}</Text>
                 </View>
               </View>
             ))}
             {household.members.length < 2 ? (
-              <Text style={chrome.sub}>Waiting for your partner to join with the code.</Text>
+              <Text style={styles.hint}>Waiting for your partner to join with the code.</Text>
             ) : null}
-          </Panel>
+          </SoftCard>
 
-          <Panel>
-            <Text style={chrome.section}>Your name on expenses</Text>
+          <SoftCard>
+            <Text style={styles.section}>Your name on expenses</Text>
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder="e.g. Ira"
-              placeholderTextColor={colors.textDim}
-              style={chrome.field}
+              placeholderTextColor={colors.inkSecondary}
+              style={styles.field}
               returnKeyType="done"
               blurOnSubmit
               onSubmitEditing={Keyboard.dismiss}
             />
-            <HudButton
-              title="SAVE NAME"
+            <PrimaryButton
+              title="Save name"
               disabled={!name.trim() || busy}
               onPress={() => run(() => renameLocalMember(name))}
             />
-          </Panel>
+          </SoftCard>
 
-          <Panel>
-            <Text style={chrome.section}>Spending this cycle</Text>
+          <SoftCard>
+            <Text style={styles.section}>Spending this cycle</Text>
             {spentByMember.length === 0 ? (
-              <Text style={chrome.sub}>No shared spending yet.</Text>
+              <Text style={styles.hint}>No shared spending yet.</Text>
             ) : (
               spentByMember.map((row) => (
                 <View key={row.name} style={styles.memberRow}>
@@ -179,10 +177,10 @@ export function SharedBudgetScreen({ navigation }: Props) {
                 </View>
               ))
             )}
-          </Panel>
+          </SoftCard>
 
-          <HudButton
-            title="LEAVE SHARED BUDGET"
+          <PrimaryButton
+            title="Leave shared budget"
             onPress={() =>
               Alert.alert(
                 'Leave shared budget?',
@@ -198,7 +196,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
               )
             }
           />
-          {busy ? <ActivityIndicator color={colors.resource} /> : null}
+          {busy ? <ActivityIndicator color={colors.accent} /> : null}
         </FormScroll>
       </ScreenBackground>
     );
@@ -206,79 +204,93 @@ export function SharedBudgetScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <FormScroll contentContainerStyle={chrome.pad}>
-        <Text style={chrome.title}>Shared budget</Text>
-        <Text style={chrome.sub}>
+      <FormScroll contentContainerStyle={styles.pad}>
+        <Text style={styles.title}>Shared budget</Text>
+        <Text style={styles.sub}>
           Share one payday budget with your partner. Same balance, same safe-to-spend — expenses
           tagged by name.
         </Text>
 
-        <Panel>
-          <Text style={chrome.section}>Your name</Text>
+        <SoftCard>
+          <Text style={styles.section}>Your name</Text>
           <TextInput
             value={name}
             onChangeText={setName}
             placeholder="e.g. Ira"
-            placeholderTextColor={colors.textDim}
-            style={chrome.field}
+            placeholderTextColor={colors.inkSecondary}
+            style={styles.field}
             autoCapitalize="words"
             returnKeyType="done"
             blurOnSubmit
             onSubmitEditing={Keyboard.dismiss}
           />
-        </Panel>
+        </SoftCard>
 
-        <Panel>
-          <Text style={chrome.section}>Create a shared budget</Text>
-          <Text style={chrome.sub}>You’ll get a code to send your partner.</Text>
-          <HudButton
-            title="CREATE SHARED BUDGET"
+        <SoftCard>
+          <Text style={styles.section}>Create a shared budget</Text>
+          <Text style={styles.hint}>You’ll get a code to send your partner.</Text>
+          <PrimaryButton
+            title="Create shared budget"
             disabled={!name.trim() || busy}
             onPress={() => run(() => createHousehold(name))}
           />
-        </Panel>
+        </SoftCard>
 
-        <Panel>
-          <Text style={chrome.section}>Join with a code</Text>
+        <SoftCard>
+          <Text style={styles.section}>Join with a code</Text>
           <TextInput
             value={code}
             onChangeText={setCode}
             placeholder="Invite code"
-            placeholderTextColor={colors.textDim}
-            style={chrome.field}
+            placeholderTextColor={colors.inkSecondary}
+            style={styles.field}
             autoCapitalize="characters"
             autoCorrect={false}
             returnKeyType="done"
             blurOnSubmit
             onSubmitEditing={Keyboard.dismiss}
           />
-          <HudButton
-            title="JOIN"
+          <PrimaryButton
+            title="Join"
             disabled={!name.trim() || !code.trim() || busy}
             onPress={() => run(() => joinHousehold(code, name))}
           />
           {!cloudSyncReady ? (
-            <Text style={chrome.sub}>
+            <Text style={styles.hint}>
               Joining needs cloud sync. Add your Supabase URL and anon key, then rebuild (see
               SHARED-BUDGET.md).
             </Text>
           ) : null}
-        </Panel>
+        </SoftCard>
 
-        {busy ? <ActivityIndicator color={colors.resource} /> : null}
+        {busy ? <ActivityIndicator color={colors.accent} /> : null}
       </FormScroll>
     </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  pad: { padding: 24, gap: 14, paddingBottom: 40 },
+  title: { fontSize: 32, fontWeight: '700', color: colors.ink },
+  sub: { color: colors.inkSecondary, fontSize: 15, lineHeight: 21 },
+  section: { color: colors.ink, fontSize: 17, fontWeight: '700' },
+  codeLabel: { color: colors.inkSecondary, fontSize: 13, marginTop: 4 },
   code: {
-    color: colors.resource,
-    fontSize: 30,
+    color: colors.accent,
+    fontSize: 34,
     fontWeight: '700',
     letterSpacing: 4,
     marginVertical: 6,
-    fontFamily: fonts.display,
+  },
+  hint: { color: colors.inkSecondary, fontSize: 13, lineHeight: 18 },
+  field: {
+    backgroundColor: colors.whiteSoft,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.ink,
   },
   memberRow: {
     flexDirection: 'row',
@@ -287,7 +299,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 12,
   },
-  memberName: { color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: fonts.body },
-  amount: { color: colors.ammo, fontSize: 15, fontWeight: '700', fontFamily: fonts.display },
+  memberName: { color: colors.ink, fontSize: 16, fontWeight: '600' },
+  amount: { color: colors.ink, fontSize: 16, fontWeight: '700' },
   rowGap: { gap: 10 },
 });
