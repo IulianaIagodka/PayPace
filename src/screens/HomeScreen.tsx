@@ -122,6 +122,7 @@ export function HomeScreen({ navigation }: Props) {
             ratio={snapshot.resourcesRemainingRatio}
             animateFrom={drainFrom}
             tipAmber
+            height={22}
           />
           <View style={styles.metaRow}>
             <HudMeta>{pct}% REMAINING</HudMeta>
