@@ -5,6 +5,7 @@ import { ExpenseRow, Panel, ScreenBackground } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
+import { chrome } from '../theme/chrome';
 import { formatMoney } from '../services/formatting';
 import type { MainTabParamList } from '../navigation/types';
 
@@ -17,14 +18,14 @@ export function ActivityScreen({}: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>ACTIVITY</Text>
-        <Text style={styles.sub}>Spent this pay cycle</Text>
+      <ScrollView contentContainerStyle={chrome.pad}>
+        <Text style={chrome.title}>ACTIVITY</Text>
+        <Text style={chrome.sub}>Spent this pay cycle</Text>
         <Text style={styles.total}>{formatMoney(snapshot.spentThisCycle, currency)}</Text>
 
         <Panel>
           {expenses.length === 0 ? (
-            <Text style={styles.sub}>No expenses yet.</Text>
+            <Text style={chrome.sub}>No expenses yet.</Text>
           ) : (
             expenses.map((e) => (
               <ExpenseRow
@@ -52,25 +53,11 @@ export function ActivityScreen({}: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 12, paddingBottom: 40 },
-  title: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: '700',
-    letterSpacing: 2,
-    fontFamily: fonts.display,
-  },
-  sub: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    letterSpacing: 1.2,
-    fontWeight: '600',
-    fontFamily: fonts.label,
-  },
   total: {
     color: colors.resource,
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '700',
     fontFamily: fonts.display,
+    letterSpacing: -0.4,
   },
 });

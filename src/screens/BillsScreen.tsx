@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, Text, TextInput, View } from 'react-native';
 import { addDays } from 'date-fns';
-import { AmountField, BillRow, PrimaryButton, ScreenBackground, SoftCard } from '../components/ui';
+import { AmountField, BillRow, HudButton, Panel, ScreenBackground } from '../components/ui';
 import { FormScroll } from '../components/FormScroll';
 import { currencySymbol, formatMoney, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { chrome } from '../theme/chrome';
 
 export function BillsScreen() {
   const { activeCycle, addBill, updateBill, deleteBill, store } = useBudget();
@@ -19,60 +20,58 @@ export function BillsScreen() {
   const paid = activeCycle.bills.filter((b) => b.isPaid);
 
   return (
-    <ScreenBackground>
-      <FormScroll contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>Upcoming bills</Text>
-        <Text style={styles.sub}>
+    <ScreenBackground edges={['left', 'right', 'bottom']}>
+      <FormScroll contentContainerStyle={chrome.pad}>
+        <Text style={chrome.title}>BILLS</Text>
+        <Text style={chrome.sub}>
           Total reserved: {formatMoney(upcoming.reduce((s, b) => s + b.amount, 0), currency)}
         </Text>
 
-        <SoftCard>
+        <Panel>
           {upcoming.length === 0 ? (
-            <Text style={styles.sub}>No unpaid bills.</Text>
+            <Text style={chrome.sub}>No unpaid bills.</Text>
           ) : (
             upcoming.map((bill) => (
               <View key={bill.id} style={{ gap: 8 }}>
                 <BillRow bill={bill} currencyCode={currency} />
                 <View style={{ flexDirection: 'row', gap: 12 }}>
-                  <Pressable
-                    onPress={() => updateBill({ ...bill, isPaid: true })}
-                  >
-                    <Text style={styles.link}>Mark paid</Text>
+                  <Pressable onPress={() => updateBill({ ...bill, isPaid: true })}>
+                    <Text style={chrome.link}>MARK PAID</Text>
                   </Pressable>
                   <Pressable onPress={() => deleteBill(bill.id)}>
-                    <Text style={[styles.link, { color: colors.danger }]}>Delete</Text>
+                    <Text style={[chrome.link, { color: colors.danger }]}>DELETE</Text>
                   </Pressable>
                 </View>
               </View>
             ))
           )}
-        </SoftCard>
+        </Panel>
 
         {paid.length > 0 && (
           <>
-            <Text style={styles.section}>Already paid</Text>
-            <SoftCard>
+            <Text style={chrome.section}>ALREADY PAID</Text>
+            <Panel>
               {paid.map((b) => (
                 <BillRow key={b.id} bill={b} currencyCode={currency} />
               ))}
-            </SoftCard>
+            </Panel>
           </>
         )}
 
-        <Text style={styles.section}>Add a bill</Text>
+        <Text style={chrome.section}>ADD A BILL</Text>
         <TextInput
           value={name}
           onChangeText={setName}
           placeholder="Name"
-          placeholderTextColor={colors.inkSecondary}
-          style={styles.textField}
+          placeholderTextColor={colors.textDim}
+          style={chrome.field}
           returnKeyType="done"
           blurOnSubmit
           onSubmitEditing={Keyboard.dismiss}
         />
         <AmountField label="Amount" value={amount} onChangeText={setAmount} suffix={suffix} />
-        <PrimaryButton
-          title="Save bill"
+        <HudButton
+          title="SAVE BILL"
           onPress={async () => {
             const value = parsePositiveAmount(amount);
             if (!name.trim() || value == null) return;
@@ -91,20 +90,3 @@ export function BillsScreen() {
     </ScreenBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  pad: { padding: 24, gap: 14 },
-  title: { fontSize: 32, fontWeight: '700', color: colors.ink },
-  sub: { color: colors.inkSecondary, fontSize: 15 },
-  section: { color: colors.ink, fontSize: 18, fontWeight: '700', marginTop: 8 },
-  link: { color: colors.accent, fontWeight: '600' },
-  textField: {
-    backgroundColor: colors.whiteSoft,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.ink,
-  },
-});

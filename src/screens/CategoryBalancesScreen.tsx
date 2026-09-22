@@ -5,7 +5,9 @@ import { HudButton, Panel, ScreenBackground, SegmentedBar } from '../components/
 import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import { formatMoney } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
-import { colors, toneForRatio } from '../theme/colors';
+import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
+import { chrome } from '../theme/chrome';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CategoryBalances'>;
@@ -18,9 +20,9 @@ export function CategoryBalancesScreen({ navigation }: Props) {
   if (!store.settings.isPremium) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <ScrollView contentContainerStyle={styles.pad}>
-          <Text style={styles.title}>BY CATEGORY</Text>
-          <Text style={styles.sub}>Plus shows how much you’ve spent in each category.</Text>
+        <ScrollView contentContainerStyle={chrome.pad}>
+          <Text style={chrome.title}>BY CATEGORY</Text>
+          <Text style={chrome.sub}>Plus shows how much you’ve spent in each category.</Text>
           <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
         </ScrollView>
       </ScreenBackground>
@@ -29,9 +31,9 @@ export function CategoryBalancesScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>BY CATEGORY</Text>
-        <Text style={styles.sub}>What you’ve spent in each category this pay cycle.</Text>
+      <ScrollView contentContainerStyle={chrome.pad}>
+        <Text style={chrome.title}>BY CATEGORY</Text>
+        <Text style={chrome.sub}>What you’ve spent in each category this pay cycle.</Text>
         <Panel>
           {rows.map((row) => (
             <View key={row.category} style={styles.row}>
@@ -50,10 +52,18 @@ export function CategoryBalancesScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 14 },
-  title: { fontSize: 22, fontWeight: '800', color: colors.text, letterSpacing: 1.5 },
-  sub: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
-  name: { color: colors.text, fontWeight: '600', fontSize: 14 },
-  amount: { color: colors.text, fontWeight: '700', fontSize: 15 },
+  name: {
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 13,
+    letterSpacing: 1,
+    fontFamily: fonts.label,
+  },
+  amount: {
+    color: colors.ammo,
+    fontWeight: '700',
+    fontSize: 15,
+    fontFamily: fonts.display,
+  },
 });

@@ -15,7 +15,7 @@ import { newId } from '../services/id';
 import {
   AmountField,
   CycleProgress,
-  PrimaryButton,
+  HudButton,
   SafeSpendHero,
   ScreenBackground,
   SoftCard,
@@ -27,6 +27,8 @@ import type { Bill, ExpenseCategory, PayCycle, PaySchedule } from '../models/typ
 import { asMoney, currencySymbol, parseAmount, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
+import { chrome } from '../theme/chrome';
 
 const billSuggestions: { name: string; category: ExpenseCategory }[] = [
   { name: 'Rent', category: 'rent' },
@@ -118,7 +120,7 @@ export function OnboardingScreen() {
               No monthly spreadsheet. Just a clear number for today — and peace of mind until payday.
             </Text>
           </View>
-          <PrimaryButton title="Get started" onPress={() => setStep('balance')} />
+          <HudButton title="GET STARTED" onPress={() => setStep('balance')} />
         </View>
       </ScreenBackground>
     );
@@ -143,7 +145,7 @@ export function OnboardingScreen() {
               totalDays={snap.totalDaysInCycle}
             />
           </View>
-          <PrimaryButton title="Go to home" onPress={() => completeOnboarding(draftCycle)} />
+          <HudButton title="GO TO HOME" onPress={() => completeOnboarding(draftCycle)} />
         </View>
       </ScreenBackground>
     );
@@ -162,8 +164,8 @@ export function OnboardingScreen() {
               <Text style={styles.title}>How much money do you have right now?</Text>
               <Text style={styles.sub}>Your available balance — what you can actually use.</Text>
               <AmountField label="Available balance" value={balance} onChangeText={setBalance} suffix={suffix} />
-              <PrimaryButton
-                title="Continue"
+              <HudButton
+                title="CONTINUE"
                 disabled={parseAmount(balance) == null}
                 onPress={() => setStep('payday')}
               />
@@ -193,7 +195,7 @@ export function OnboardingScreen() {
                 options={scheduleOptions.map((item) => ({ value: item.id, label: item.title }))}
                 onChange={setSchedule}
               />
-              <PrimaryButton title="Continue" onPress={() => setStep('bills')} />
+              <HudButton title="CONTINUE" onPress={() => setStep('bills')} />
             </View>
           )}
 
@@ -218,14 +220,14 @@ export function OnboardingScreen() {
                 value={billName}
                 onChangeText={setBillName}
                 placeholder="Bill name"
-                placeholderTextColor={colors.inkSecondary}
-                style={styles.textField}
+                placeholderTextColor={colors.textDim}
+                style={chrome.field}
                 returnKeyType="done"
                 blurOnSubmit
                 onSubmitEditing={Keyboard.dismiss}
               />
               <AmountField label="Amount" value={billAmount} onChangeText={setBillAmount} suffix={suffix} />
-              <Secondaryish title="Add bill" onPress={addBill} />
+              <HudButton title="ADD BILL" onPress={addBill} variant="secondary" />
 
               {bills.length > 0 && (
                 <SoftCard>
@@ -241,8 +243,8 @@ export function OnboardingScreen() {
               <AmountField label="Emergency buffer (optional)" value={emergency} onChangeText={setEmergency} suffix={suffix} />
               <AmountField label="Spending buffer (optional)" value={buffer} onChangeText={setBuffer} suffix={suffix} />
 
-              <PrimaryButton
-                title={bills.length ? 'Calculate safe spend' : 'See my safe spend'}
+              <HudButton
+                title={bills.length ? 'CALCULATE SAFE SPEND' : 'SEE MY SAFE SPEND'}
                 onPress={() => setStep('result')}
               />
             </View>
@@ -253,27 +255,21 @@ export function OnboardingScreen() {
   );
 }
 
-function Secondaryish({ title, onPress }: { title: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={styles.secondary}>
-      <Text style={styles.secondaryText}>{title}</Text>
-    </Pressable>
-  );
-}
-
 function Dots({ step }: { step: Step }) {
   const order: Step[] = ['balance', 'payday', 'bills'];
   const idx = order.indexOf(step);
   return (
-    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+    <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
       {order.map((s, i) => (
         <View
           key={s}
           style={{
-            height: 8,
+            height: 6,
             width: i === idx ? 28 : 10,
-            borderRadius: 99,
-            backgroundColor: i <= idx ? colors.accent : 'rgba(24, 42, 34, 0.12)',
+            borderRadius: 1,
+            backgroundColor: i <= idx ? colors.resource : colors.borderSoft,
+            borderWidth: 1,
+            borderColor: i <= idx ? colors.resourceDim : colors.border,
           }}
         />
       ))}
@@ -282,34 +278,33 @@ function Dots({ step }: { step: Step }) {
 }
 
 const styles = StyleSheet.create({
-  pad: { flexGrow: 1, padding: 24, paddingBottom: 40, gap: 16 },
-  brand: { fontSize: 44, fontWeight: '700' },
-  brandPay: { color: colors.ink },
-  brandPace: { color: colors.accentMid },
-  title: { fontSize: 30, fontWeight: '700', color: colors.ink, lineHeight: 36 },
-  sub: { fontSize: 16, color: colors.inkSecondary, lineHeight: 22 },
-  rowTitle: { color: colors.ink, fontSize: 16, fontWeight: '600' },
+  pad: { flexGrow: 1, padding: 20, paddingBottom: 40, gap: 16 },
+  brand: { fontSize: 40, fontWeight: '700', fontFamily: fonts.display, letterSpacing: 2 },
+  brandPay: { color: colors.text },
+  brandPace: { color: colors.resource },
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: colors.text,
+    lineHeight: 32,
+    fontFamily: fonts.display,
+    letterSpacing: 0.5,
+  },
+  sub: { fontSize: 15, color: colors.textSecondary, lineHeight: 22, fontFamily: fonts.body },
+  rowTitle: { color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: fonts.body },
   chip: {
-    backgroundColor: colors.whiteSoft,
-    borderRadius: 12,
+    backgroundColor: colors.panelAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 2,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  chipText: { color: colors.ink, fontWeight: '600', fontSize: 13 },
-  textField: {
-    backgroundColor: colors.whiteSoft,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.ink,
+  chipText: {
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 12,
+    letterSpacing: 1,
+    fontFamily: fonts.label,
   },
-  secondary: {
-    backgroundColor: colors.accentSoft,
-    borderRadius: 18,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  secondaryText: { color: colors.accent, fontSize: 16, fontWeight: '600' },
 });

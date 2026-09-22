@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
     color: colors.ammo,
     fontSize: 15,
     fontWeight: '600',
+    fontFamily: fonts.body,
   },
   menu: {
     borderWidth: 1.5,

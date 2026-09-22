@@ -5,6 +5,8 @@ import { AmountField, HudButton, Panel, ScreenBackground } from '../components/u
 import { FormScroll } from '../components/FormScroll';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
+import { chrome } from '../theme/chrome';
 import { currencySymbol, formatMoney, parseAmount } from '../services/formatting';
 import { calculateSafeSpend } from '../models/calculator';
 import { ensureEnvelopes } from '../services/envelopes';
@@ -21,7 +23,6 @@ export function AllocateScreen({ navigation }: Props) {
   const spendPool = useMemo(() => {
     if (!activeCycle) return 0;
     const snap = calculateSafeSpend({ ...activeCycle, expenses: [] });
-    // pool before expenses = remaining + spent
     return snap.remainingUntilPayday + snap.spentThisCycle;
   }, [activeCycle]);
 
@@ -32,9 +33,9 @@ export function AllocateScreen({ navigation }: Props) {
   if (!store.settings.isPremium) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <FormScroll contentContainerStyle={styles.pad}>
-          <Text style={styles.title}>ALLOCATE RESOURCES</Text>
-          <Text style={styles.sub}>
+        <FormScroll contentContainerStyle={chrome.pad}>
+          <Text style={chrome.title}>ALLOCATE</Text>
+          <Text style={chrome.sub}>
             Plus lets you split spending across categories and see what’s left in each one.
           </Text>
           <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
@@ -47,15 +48,14 @@ export function AllocateScreen({ navigation }: Props) {
   if (!activeCycle) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <View style={styles.pad}>
-          <Text style={styles.title}>ALLOCATE RESOURCES</Text>
-          <Text style={styles.sub}>No active cycle.</Text>
+        <View style={chrome.pad}>
+          <Text style={chrome.title}>ALLOCATE</Text>
+          <Text style={chrome.sub}>No active cycle.</Text>
         </View>
       </ScreenBackground>
     );
   }
 
-  const allocated = draft.reduce((s, e) => s + (parseAmount(String(e.allocated)) ?? e.allocated), 0);
   const unallocated = spendPool - draft.reduce((s, e) => s + e.allocated, 0);
 
   const updateAlloc = (id: string, raw: string) => {
@@ -72,13 +72,13 @@ export function AllocateScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <FormScroll contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>ALLOCATE RESOURCES</Text>
-        <Text style={styles.sub}>Decide how much each category gets this pay cycle.</Text>
+      <FormScroll contentContainerStyle={chrome.pad}>
+        <Text style={chrome.title}>ALLOCATE</Text>
+        <Text style={chrome.sub}>Decide how much each category gets this pay cycle.</Text>
 
-        <Panel>
-          <Text style={styles.label}>SPENDING POOL</Text>
-          <Text style={styles.big}>{formatMoney(spendPool, currency)}</Text>
+        <Panel glow>
+          <Text style={chrome.label}>SPENDING POOL</Text>
+          <Text style={chrome.big}>{formatMoney(spendPool, currency)}</Text>
           <Text
             style={[
               styles.unalloc,
@@ -92,7 +92,7 @@ export function AllocateScreen({ navigation }: Props) {
 
         {draft.map((env) => (
           <Panel key={env.id}>
-            <Text style={styles.label}>{env.title}</Text>
+            <Text style={chrome.label}>{env.title}</Text>
             <AmountField
               label="ALLOCATION"
               value={String(env.allocated || '')}
@@ -129,12 +129,13 @@ export function AllocateScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 12, paddingBottom: 40 },
-  title: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 1.5 },
-  sub: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
-  label: { color: colors.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 1.4 },
-  big: { color: colors.text, fontSize: 32, fontWeight: '800' },
-  unalloc: { color: colors.warning, fontSize: 13, fontWeight: '700', letterSpacing: 1 },
+  unalloc: {
+    color: colors.warning,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    fontFamily: fonts.label,
+  },
   quick: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   chip: {
     borderWidth: 1,
@@ -142,7 +143,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.panelAlt,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 2,
   },
-  chipText: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },
+  chipText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+    fontFamily: fonts.label,
+    letterSpacing: 1,
+  },
 });

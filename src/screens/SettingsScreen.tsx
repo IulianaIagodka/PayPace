@@ -10,6 +10,8 @@ import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../mode
 import { CURRENCIES } from '../services/currencies';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
+import { chrome } from '../theme/chrome';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
 type Props = CompositeScreenProps<
@@ -60,23 +62,23 @@ export function SettingsScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <FormScroll contentContainerStyle={styles.pad}>
-        <Text style={styles.brand}>
+      <FormScroll contentContainerStyle={chrome.pad}>
+        <Text style={chrome.brand}>
           PAY<Text style={{ color: colors.resource }}>PACE</Text>
         </Text>
-        <Text style={styles.sub}>Money is energy. Tune your payday budget here.</Text>
+        <Text style={chrome.sub}>Money is energy. Tune your payday budget here.</Text>
 
         <Panel>
-          <Text style={styles.section}>BUDGET</Text>
+          <Text style={chrome.section}>BUDGET</Text>
           <HudButton title="ALLOCATE RESOURCES" onPress={() => navigation.navigate('Allocate')} />
-          <Text style={styles.sub}>Plus · set how much each category gets.</Text>
+          <Text style={chrome.sub}>Plus · set how much each category gets.</Text>
           <HudButton title="EDIT CYCLE" onPress={() => navigation.navigate('PayCycle')} variant="secondary" />
           <HudButton title="BILLS" onPress={() => navigation.navigate('Bills')} variant="secondary" />
         </Panel>
 
         <Panel>
-          <Text style={styles.section}>SHARE</Text>
-          <Text style={styles.sub}>
+          <Text style={chrome.section}>SHARE</Text>
+          <Text style={chrome.sub}>
             {household
               ? `Linked · ${household.members.map((m) => m.displayName).join(' & ')}`
               : 'Plus · share one budget with your partner.'}
@@ -85,7 +87,7 @@ export function SettingsScreen({ navigation }: Props) {
         </Panel>
 
         <Panel>
-          <Text style={styles.section}>SYSTEM</Text>
+          <Text style={chrome.section}>SYSTEM</Text>
 
           <HudSelect
             label="CURRENCY"
@@ -94,7 +96,7 @@ export function SettingsScreen({ navigation }: Props) {
             onChange={(code) => updateSettings({ currencyCode: code })}
           />
 
-          <View style={styles.divider} />
+          <View style={chrome.divider} />
           <HudSelect
             label="REMAINING HORIZON"
             value={paceHorizon}
@@ -103,7 +105,7 @@ export function SettingsScreen({ navigation }: Props) {
             onChange={(value) => updateSettings({ paceHorizon: value })}
           />
 
-          <View style={styles.divider} />
+          <View style={chrome.divider} />
           <HudSelect
             label="WEEK STARTS ON"
             value={weekStartsOn}
@@ -112,9 +114,9 @@ export function SettingsScreen({ navigation }: Props) {
             onChange={(value) => updateSettings({ weekStartsOn: value })}
           />
 
-          <View style={styles.divider} />
-          <Text style={styles.label}>PLUS</Text>
-          <Text style={styles.sub}>
+          <View style={chrome.divider} />
+          <Text style={chrome.label}>PLUS</Text>
+          <Text style={chrome.sub}>
             Free: available balance, safe-to-spend, bills, and manual expenses.{'\n'}
             Plus: leftover by category (including Eating out), custom categories, receipt scan, bank
             statements, history, and shared budget.
@@ -125,13 +127,13 @@ export function SettingsScreen({ navigation }: Props) {
             <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
           )}
 
-          <View style={styles.divider} />
-          <Text style={styles.label}>CUSTOM CATEGORIES</Text>
-          <Text style={styles.sub}>Plus · add your own (Pets, Gym, Travel…). They show up when you log and allocate.</Text>
+          <View style={chrome.divider} />
+          <Text style={chrome.label}>CUSTOM CATEGORIES</Text>
+          <Text style={chrome.sub}>Plus · add your own (Pets, Gym, Travel…). They show up when you log and allocate.</Text>
           {s.isPremium ? (
             <>
               {customs.length === 0 ? (
-                <Text style={styles.sub}>No custom categories yet.</Text>
+                <Text style={chrome.sub}>No custom categories yet.</Text>
               ) : (
                 customs.map((c) => (
                   <View key={c.id} style={styles.customRow}>
@@ -158,7 +160,7 @@ export function SettingsScreen({ navigation }: Props) {
                 onChangeText={setNewCategory}
                 placeholder="New category name"
                 placeholderTextColor={colors.textDim}
-                style={styles.input}
+                style={chrome.field}
                 autoCapitalize="words"
                 returnKeyType="done"
                 blurOnSubmit
@@ -178,7 +180,7 @@ export function SettingsScreen({ navigation }: Props) {
             <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} variant="secondary" />
           )}
 
-          <View style={styles.divider} />
+          <View style={chrome.divider} />
           <HudButton
             title="START OVER"
             variant="danger"
@@ -196,23 +198,6 @@ export function SettingsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 14, paddingBottom: 40 },
-  brand: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 3 },
-  sub: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
-  section: {
-    color: colors.text,
-    fontWeight: '800',
-    fontSize: 12,
-    letterSpacing: 1.6,
-    marginBottom: 4,
-  },
-  label: {
-    color: colors.textSecondary,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 1.4,
-  },
-  divider: { height: 1, backgroundColor: colors.border, marginVertical: 12 },
   customRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -220,16 +205,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 12,
   },
-  customName: { color: colors.text, fontSize: 15, fontWeight: '600', flex: 1 },
-  remove: { color: colors.danger, fontWeight: '700', fontSize: 13 },
-  input: {
-    backgroundColor: colors.panelDeep,
-    borderWidth: 1,
-    borderColor: colors.border,
+  customName: {
     color: colors.text,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
     fontSize: 15,
     fontWeight: '600',
+    flex: 1,
+    fontFamily: fonts.body,
+  },
+  remove: {
+    color: colors.danger,
+    fontWeight: '700',
+    fontSize: 12,
+    letterSpacing: 1,
+    fontFamily: fonts.label,
   },
 });
