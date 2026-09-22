@@ -1,10 +1,20 @@
 import React from 'react';
-import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/colors';
 import { hud, hudType, type HUDPanelVariant } from '../theme/hud';
 
 export type { HUDPanelVariant };
+
+const METAL_GRAIN = require('../../assets/metal-grain.png');
 
 /**
  * Shared HUD module shell.
@@ -37,16 +47,46 @@ export function HUDPanel({
 
   return (
     <View style={style}>
-      <LinearGradient
-        colors={isPrimary ? ['#1E3318', '#10180E'] : ['#262218', '#141210']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+      <View
         style={[
           styles.shell,
           { borderColor: border },
           isCompact ? styles.padCompact : styles.pad,
         ]}
       >
+        <LinearGradient
+          colors={isPrimary ? ['#1E3318', '#10180E'] : ['#2A241C', '#1A1612', '#12100C']}
+          locations={isPrimary ? [0, 1] : [0, 0.55, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.15, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        {/* Brushed streaks — uneven metal plate */}
+        <LinearGradient
+          colors={[
+            'rgba(210,198,160,0.07)',
+            'transparent',
+            'rgba(40,34,28,0.18)',
+            'transparent',
+            'rgba(190,178,140,0.05)',
+          ]}
+          locations={[0, 0.22, 0.48, 0.72, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0.35 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        <View pointerEvents="none" style={styles.grainWrap}>
+          <Image source={METAL_GRAIN} style={styles.grain} resizeMode="repeat" />
+        </View>
+        <LinearGradient
+          colors={['rgba(255,245,220,0.06)', 'transparent']}
+          locations={[0, 0.55]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+
         <View style={[styles.corner, styles.cornerTL, { borderColor: corner }]} />
         <View style={[styles.corner, styles.cornerTR, { borderColor: corner }]} />
         <View style={[styles.corner, styles.cornerBL, { borderColor: corner }]} />
@@ -56,12 +96,12 @@ export function HUDPanel({
         <View style={[styles.rivet, styles.rivetBL]} />
         <View style={[styles.rivet, styles.rivetBR]} />
         {label ? (
-          <Text style={labelStyle} numberOfLines={1}>
+          <Text style={[labelStyle, styles.fg]} numberOfLines={1}>
             {label}
           </Text>
         ) : null}
-        <View style={[styles.content, contentStyle]}>{children}</View>
-      </LinearGradient>
+        <View style={[styles.content, styles.fg, contentStyle]}>{children}</View>
+      </View>
     </View>
   );
 }
@@ -120,12 +160,24 @@ const styles = StyleSheet.create({
     borderWidth: hud.stroke,
     overflow: 'hidden',
     gap: hud.gap,
+    backgroundColor: colors.panel,
   },
   pad: {
     padding: hud.pad,
   },
   padCompact: {
     padding: hud.padCompact,
+  },
+  grainWrap: {
+    ...StyleSheet.absoluteFill,
+  },
+  grain: {
+    width: '100%',
+    height: '100%',
+    opacity: 0.55,
+  },
+  fg: {
+    zIndex: 1,
   },
   content: {
     gap: hud.gap,
@@ -134,6 +186,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: hud.cornerSize,
     height: hud.cornerSize,
+    zIndex: 2,
   },
   cornerTL: { top: 0, left: 0, borderTopWidth: hud.cornerStroke, borderLeftWidth: hud.cornerStroke },
   cornerTR: { top: 0, right: 0, borderTopWidth: hud.cornerStroke, borderRightWidth: hud.cornerStroke },
@@ -156,6 +209,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.metalDim,
     borderWidth: 1,
     borderColor: colors.borderBright,
+    zIndex: 2,
   },
   rivetTL: { top: hud.rivetInset, left: hud.rivetInset },
   rivetTR: { top: hud.rivetInset, right: hud.rivetInset },
