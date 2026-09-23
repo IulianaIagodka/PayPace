@@ -71,12 +71,25 @@ export function SettingsScreen({ navigation }: Props) {
 
         <Panel>
           <Text style={styles.section}>BUDGET</Text>
-          <HudButton
-            title="ALLOCATE RESOURCES"
-            onPress={() => navigation.navigate('Allocate')}
-            variant="secondary"
-          />
-          <Text style={styles.subTight}>Plus · set how much each category gets.</Text>
+          {s.isPremium ? (
+            <HudButton
+              title="ALLOCATE RESOURCES"
+              onPress={() => navigation.navigate('Allocate')}
+              variant="secondary"
+            />
+          ) : (
+            <>
+              <Text style={styles.subTight}>
+                Allocate resources is Plus — split the cycle across categories and track what’s left
+                in each.
+              </Text>
+              <HudButton
+                title="UNLOCK ALLOCATE · PLUS"
+                onPress={() => setPremium(true)}
+                variant="secondary"
+              />
+            </>
+          )}
           <HudButton
             title="EDIT CYCLE"
             onPress={() => navigation.navigate('PayCycle')}
