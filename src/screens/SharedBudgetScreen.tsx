@@ -57,14 +57,14 @@ export function SharedBudgetScreen({ navigation }: Props) {
     return Array.from(map.values()).sort((a, b) => b.total - a.total);
   }, [activeCycle?.expenses]);
 
-  if (!store.settings.isPremium && !household) {
+  if (!store.settings.isPremium) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
         <FormScroll contentContainerStyle={styles.pad}>
           <Text style={styles.title}>Shared budget</Text>
           <Text style={styles.sub}>
-            Plus lets you and a partner share one payday budget. Each expense is tagged with who
-            logged it.
+            Shared budget is Plus only. Share one payday budget with a partner — each expense is
+            tagged with who logged it.
           </Text>
           <HudButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
           <HudButton title="Back" onPress={() => navigation.goBack()} variant="secondary" />
