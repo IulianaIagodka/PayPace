@@ -1,7 +1,18 @@
 import { addDays, addMonths, differenceInCalendarDays, endOfWeek, startOfDay } from 'date-fns';
 import type { PayCycle, PaySchedule, SafeSpendSnapshot, TrajectoryLabel } from './types';
-import { asMoney, fromDateKey } from '../services/formatting';
+import { asMoney, fromDateKey, toDateKey } from '../services/formatting';
+import {
+  adaptiveFutureDaily,
+  remainingForFutureDays,
+  resolveDayPaceLock,
+  spentBeforeDate,
+  spentOnDate,
+  todayBudgetRemaining,
+  weekBudgetRemaining,
+  type DayPaceLock,
+} from '../services/dayPace';
 
+export type { DayPaceLock };
 export type WeekStartsOn = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export type PaceHorizon = 'week' | 'month';
 
@@ -79,6 +90,24 @@ export function daysRemainingInWeek(now = new Date(), weekStartsOn: WeekStartsOn
   return Math.max(differenceInCalendarDays(weekEnd, today) + 1, 1);
 }
 
+/** Build or reuse the locked daily allowance for the local calendar day. */
+export function buildDayPaceLock(cycle: PayCycle, now = new Date()): DayPaceLock {
+  const todayKey = toDateKey(startOfDay(now));
+  const { daysUntilPayday, unpaidBillsTotal, balance, reservedTotal } = cycleMetrics(cycle, now);
+  const spendPool = balance - unpaidBillsTotal - reservedTotal;
+  const expenses = cycle.expenses.map((e) => ({
+    date: e.date,
+    amount: asMoney(e.amount),
+  }));
+  const poolAtDayStart = spendPool - spentBeforeDate(expenses, todayKey);
+  const daysToCover = Math.max(daysUntilPayday, 1);
+  return resolveDayPaceLock(cycle.dayPaceLock, todayKey, poolAtDayStart, daysToCover);
+}
+
+/**
+ * Safe-to-spend snapshot.
+ * Principle: today's budget is predictable (day-locked); the future is adaptive.
+ */
 export function calculateSafeSpend(
   cycle: PayCycle,
   now = new Date(),
@@ -94,20 +123,37 @@ export function calculateSafeSpend(
     reservedTotal,
   } = cycleMetrics(cycle, now);
 
+  const todayKey = toDateKey(startOfDay(now));
+  const expenses = cycle.expenses.map((e) => ({
+    date: e.date,
+    amount: asMoney(e.amount),
+  }));
+  const spentToday = spentOnDate(expenses, todayKey);
+
   const spendPool = balance - unpaidBillsTotal - reservedTotal;
   const remainingUntilPayday = spendPool - spentThisCycle;
   const daysToCover = Math.max(daysUntilPayday, 1);
-  const safeToSpendToday = remainingUntilPayday > 0 ? remainingUntilPayday / daysToCover : 0;
+
+  const poolAtDayStart = spendPool - spentBeforeDate(expenses, todayKey);
+  const dayLock = resolveDayPaceLock(cycle.dayPaceLock, todayKey, poolAtDayStart, daysToCover);
+  const todayAllowance = dayLock.allowance;
+  const safeToSpendToday = todayBudgetRemaining(todayAllowance, spentToday);
 
   const daysLeftInWeek = Math.min(daysRemainingInWeek(now, weekStartsOn), daysToCover);
-  // MONTH = remaining pay-cycle window (days until payday), not calendar month.
   const daysLeftInMonth = daysToCover;
   const weekShare = daysLeftInWeek / daysToCover;
   const monthShare = 1;
 
+  const daysAfterToday = Math.max(daysUntilPayday - 1, 0);
+  const futurePool = remainingForFutureDays(remainingUntilPayday, safeToSpendToday);
+  const futureDaily = adaptiveFutureDaily(futurePool, daysAfterToday);
+
   const safeToSpendThisWeek =
     remainingUntilPayday > 0
-      ? Math.min(safeToSpendToday * daysLeftInWeek, remainingUntilPayday)
+      ? Math.min(
+          weekBudgetRemaining(safeToSpendToday, futureDaily, daysLeftInWeek),
+          remainingUntilPayday,
+        )
       : 0;
   const safeToSpendThisMonth = remainingUntilPayday > 0 ? remainingUntilPayday : 0;
 
@@ -127,7 +173,7 @@ export function calculateSafeSpend(
   let trajectory: TrajectoryLabel = 'ON TARGET';
   if (projected < 0 || remainingUntilPayday < 0) trajectory = 'DEFICIT';
   else if (projectedShortfallDays != null) trajectory = 'LOW RESERVE';
-  else if (projected > safeToSpendToday * 2) trajectory = 'WITH RESERVE';
+  else if (projected > todayAllowance * 2) trajectory = 'WITH RESERVE';
   else trajectory = 'ON TARGET';
 
   const capacity = Math.max(spendPool, 1);
@@ -136,6 +182,8 @@ export function calculateSafeSpend(
   return {
     remainingUntilPayday,
     safeToSpendToday,
+    todayAllowance,
+    spentToday,
     safeToSpendThisWeek,
     safeToSpendThisMonth,
     daysLeftInWeek,

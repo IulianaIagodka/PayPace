@@ -57,9 +57,17 @@ export function mergePayCycles(localCycles: PayCycle[], remoteCycles: PayCycle[]
     const preferRemoteMeta = remoteTs >= localTs;
     const base = preferRemoteMeta ? remote : local;
     const other = preferRemoteMeta ? local : remote;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const dayPaceLock =
+      base.dayPaceLock?.date === todayKey
+        ? base.dayPaceLock
+        : other.dayPaceLock?.date === todayKey
+          ? other.dayPaceLock
+          : (base.dayPaceLock ?? other.dayPaceLock);
     map.set(remote.id, {
       ...other,
       ...base,
+      dayPaceLock,
       bills: mergeById(local.bills, remote.bills) as Bill[],
       expenses: mergeById(local.expenses, remote.expenses)
         .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)) as DailyExpense[],

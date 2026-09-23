@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { newId } from '../services/id';
-import { calculateSafeSpend } from '../models/calculator';
+import { calculateSafeSpend, buildDayPaceLock } from '../models/calculator';
 import {
   emptyStore,
   type AppSettings,
@@ -270,6 +270,8 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         : {
             remainingUntilPayday: 0,
             safeToSpendToday: 0,
+            todayAllowance: 0,
+            spentToday: 0,
             safeToSpendThisWeek: 0,
             safeToSpendThisMonth: 0,
             daysLeftInWeek: 0,
@@ -291,6 +293,23 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           },
     [activeCycle, store.settings.weekStartsOn],
   );
+
+  // Persist day lock so today's allowance stays stable across reloads / partners.
+  useEffect(() => {
+    if (!ready || !activeCycle) return;
+    const today = toDateKey(new Date());
+    if (activeCycle.dayPaceLock?.date === today) return;
+    const lock = buildDayPaceLock(activeCycle, new Date());
+    const current = storeRef.current;
+    const cycle = current.cycles.find((c) => c.id === activeCycle.id);
+    if (!cycle || cycle.dayPaceLock?.date === today) return;
+    void commit({
+      ...current,
+      cycles: current.cycles.map((c) =>
+        c.id === activeCycle.id ? withCycleTouch({ ...c, dayPaceLock: lock }) : c,
+      ),
+    });
+  }, [ready, activeCycle, commit]);
 
   const attribution = useCallback(() => {
     const member = localMember;
