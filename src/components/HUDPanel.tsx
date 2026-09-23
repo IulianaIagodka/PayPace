@@ -78,7 +78,9 @@ export function HUDPanel({
           pointerEvents="none"
         />
         <View pointerEvents="none" style={styles.grainWrap}>
-          <Image source={METAL_GRAIN} style={styles.grain} resizeMode="repeat" />
+          {!isCompact ? (
+            <Image source={METAL_GRAIN} style={styles.grain} resizeMode="repeat" />
+          ) : null}
         </View>
         <LinearGradient
           colors={['rgba(255,245,220,0.06)', 'transparent']}
@@ -169,9 +171,19 @@ const styles = StyleSheet.create({
     padding: hud.padCompact,
   },
   grainWrap: {
-    ...StyleSheet.absoluteFill,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    overflow: 'hidden',
   },
   grain: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     width: '100%',
     height: '100%',
     opacity: 0.55,

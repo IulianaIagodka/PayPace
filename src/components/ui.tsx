@@ -331,13 +331,16 @@ export function CategoryCell({
   const isRail = layout === 'rail';
 
   useEffect(() => {
+    // Rail sits inside a nested horizontal ScrollView — native-driven Animated
+    // wrappers steal the pan responder and break left/right scrolling.
+    if (isRail) return;
     Animated.timing(enter, {
       toValue: 1,
       duration: 240,
       delay: 40 + index * 40,
       useNativeDriver: true,
     }).start();
-  }, [enter, index]);
+  }, [enter, index, isRail]);
 
   const iconName = (ENVELOPE_ICON_NAMES[iconKey] ??
     ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
@@ -352,11 +355,62 @@ export function CategoryCell({
     </View>
   );
 
+  const panel = (
+    <HUDPanel
+      variant="compact"
+      label={title}
+      style={isRail ? styles.cellRail : styles.cell}
+      contentStyle={isRail ? styles.cellRailInner : undefined}
+    >
+      {isRail ? (
+        <>
+          <View style={styles.cellIconWrap}>
+            <Ionicons
+              name={iconName}
+              size={18}
+              color={muted ? colors.textDim : colors.resource}
+            />
+          </View>
+          {amountLine}
+          <View style={{ alignSelf: 'stretch' }}>
+            <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={styles.cellTitleRow}>
+            <Ionicons
+              name={iconName}
+              size={15}
+              color={muted ? colors.textDim : colors.textSecondary}
+            />
+            <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
+          </View>
+          {amountLine}
+          <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
+        </>
+      )}
+    </HUDPanel>
+  );
+
+  if (isRail) {
+    return (
+      <View style={styles.railItem}>
+        <Pressable
+          onPress={onPress}
+          disabled={!onPress}
+          style={{ opacity: muted ? 0.48 : 1 }}
+        >
+          {panel}
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <Animated.View
       style={{
-        flex: isRail ? undefined : 1,
-        width: isRail ? 124 : undefined,
+        flex: 1,
         opacity: enter,
         transform: [
           {
@@ -371,43 +425,9 @@ export function CategoryCell({
       <Pressable
         onPress={onPress}
         disabled={!onPress}
-        style={{ flex: isRail ? undefined : 1, opacity: muted ? 0.48 : 1 }}
+        style={{ flex: 1, opacity: muted ? 0.48 : 1 }}
       >
-        <HUDPanel
-          variant="compact"
-          label={title}
-          style={isRail ? styles.cellRail : styles.cell}
-          contentStyle={isRail ? styles.cellRailInner : undefined}
-        >
-          {isRail ? (
-            <>
-              <View style={styles.cellIconWrap}>
-                <Ionicons
-                  name={iconName}
-                  size={18}
-                  color={muted ? colors.textDim : colors.resource}
-                />
-              </View>
-              {amountLine}
-              <View style={{ alignSelf: 'stretch' }}>
-                <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
-              </View>
-            </>
-          ) : (
-            <>
-              <View style={styles.cellTitleRow}>
-                <Ionicons
-                  name={iconName}
-                  size={15}
-                  color={muted ? colors.textDim : colors.textSecondary}
-                />
-                <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
-              </View>
-              {amountLine}
-              <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
-            </>
-          )}
-        </HUDPanel>
+        {panel}
       </Pressable>
     </Animated.View>
   );
@@ -667,6 +687,7 @@ const styles = StyleSheet.create({
   barSeg: { flex: 1, borderRadius: 0 },
   cell: { flex: 1 },
   cellRail: { width: 124 },
+  railItem: { width: 124 },
   cellRailInner: {
     alignItems: 'center',
   },

@@ -146,8 +146,11 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={hudType.label}>CATEGORIES</Text>
             <ScrollView
               horizontal
+              nestedScrollEnabled
+              directionalLockEnabled
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.rail}
+              style={styles.railScroll}
             >
               {railModules.map((mod, index) => (
                 <CategoryCell
@@ -238,7 +241,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   railBlock: { gap: hud.gap },
-  rail: { gap: 10, paddingRight: 8, paddingVertical: 2 },
+  railScroll: { overflow: 'visible' },
+  rail: { gap: 10, paddingRight: 8, paddingVertical: 2, flexGrow: 0 },
   recentBlock: { gap: hud.gap },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   seeAll: {
