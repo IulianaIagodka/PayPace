@@ -194,7 +194,7 @@ export const CONTROL_PANEL_COPY = {
   tabs: {
     home: 'PACE',
     activity: 'LOG',
-    status: 'SYSTEMS',
+    status: 'PACE',
     settings: 'CONFIG',
   },
   home: {
@@ -209,7 +209,7 @@ export const CONTROL_PANEL_COPY = {
     burnCriticalTitle: 'BURN RATE CRITICAL',
   },
   status: {
-    title: 'SYSTEMS',
+    title: 'PACE',
     sysTag: 'TELEMETRY // CYCLE HEALTH',
     poolLabel: 'RESOURCE POOL',
     trajectoryLabel: 'TRAJECTORY',

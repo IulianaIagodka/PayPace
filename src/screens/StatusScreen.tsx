@@ -27,7 +27,7 @@ export function StatusScreen({}: Props) {
     return (
       <ScreenBackground>
         <View style={styles.pad}>
-          <Text style={styles.title}>STATUS</Text>
+          <Text style={styles.title}>PACE</Text>
           <Text style={styles.sub}>No active cycle.</Text>
         </View>
       </ScreenBackground>
@@ -47,7 +47,7 @@ export function StatusScreen({}: Props) {
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>STATUS</Text>
+        <Text style={styles.title}>PACE</Text>
 
         <Panel>
           <Row label="INCOME" value={formatMoney(income, currency)} />

@@ -127,7 +127,7 @@ function MainTabs() {
         name="Status"
         component={StatusScreen}
         options={{
-          title: 'STATUS',
+          title: 'PACE',
           tabBarIcon: ({ focused }) => <TabIcon name="stats-chart" focused={focused} />,
         }}
       />
