@@ -1,85 +1,144 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { ExpenseRow, Panel, ScreenBackground, useTabBarClearance } from '../components/ui';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import {
+  ExpenseRow,
+  HudBody,
+  HudButton,
+  HUDPanel,
+  HudMeta,
+  HudValue,
+  ScreenBackground,
+  useTabBarClearance,
+} from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
-import { formatMoney } from '../services/formatting';
-import type { MainTabParamList } from '../navigation/types';
+import { hud, hudType } from '../theme/hud';
+import { formatMoney, formatShortDate } from '../services/formatting';
+import { CONTROL_PANEL_COPY } from '../services/controlPanel';
+import type { DailyExpense } from '../models/types';
+import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
-type Props = BottomTabScreenProps<MainTabParamList, 'Activity'>;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParamList, 'Activity'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
-export function ActivityScreen({}: Props) {
+const copy = CONTROL_PANEL_COPY.activity;
+
+export function ActivityScreen({ navigation }: Props) {
   const { activeCycle, store, deleteExpense, snapshot } = useBudget();
   const currency = store.settings.currencyCode;
-  const expenses = activeCycle?.expenses ?? [];
-  const tabClearance = useTabBarClearance(32);
+  const tabClearance = useTabBarClearance(28);
+
+  const grouped = useMemo(() => {
+    const list = [...(activeCycle?.expenses ?? [])];
+    list.sort((a, b) => {
+      if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+      return (b.updatedAt ?? b.date).localeCompare(a.updatedAt ?? a.date);
+    });
+    const map = new Map<string, DailyExpense[]>();
+    for (const expense of list) {
+      const bucket = map.get(expense.date) ?? [];
+      bucket.push(expense);
+      map.set(expense.date, bucket);
+    }
+    return Array.from(map.entries());
+  }, [activeCycle?.expenses]);
+
+  const count = activeCycle?.expenses.length ?? 0;
+
+  const onDelete = (expense: DailyExpense) => {
+    Alert.alert('Delete this expense?', expense.name, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => deleteExpense(expense.id),
+      },
+    ]);
+  };
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}>
-        <View style={styles.head}>
-          <Text style={styles.title}>TRANS</Text>
-          <Text style={styles.total}>{formatMoney(snapshot.spentThisCycle, currency)}</Text>
-        </View>
-        <Text style={styles.sub}>This pay cycle</Text>
+        <Text style={styles.brand}>{copy.title}</Text>
+        <Text style={hudType.meta}>{copy.sysTag}</Text>
 
-        <Panel>
-          {expenses.length === 0 ? (
-            <Text style={styles.sub}>No expenses yet.</Text>
-          ) : (
-            expenses.map((e) => (
-              <ExpenseRow
-                key={e.id}
-                expense={e}
-                currencyCode={currency}
-                compact
-                onDelete={() =>
-                  Alert.alert('Delete this expense?', e.name, [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Delete',
-                      style: 'destructive',
-                      onPress: () => deleteExpense(e.id),
-                    },
-                  ])
-                }
-              />
-            ))
-          )}
-        </Panel>
+        <HUDPanel variant="standard" label={copy.totalLabel}>
+          <HudValue>{formatMoney(snapshot.spentThisCycle, currency)}</HudValue>
+          <HudMeta>
+            {count === 0
+              ? 'Nothing logged this cycle'
+              : `${count} entr${count === 1 ? 'y' : 'ies'} · pay cycle`}
+          </HudMeta>
+        </HUDPanel>
+
+        <View style={styles.feedHead}>
+          <Text style={hudType.label}>{copy.feedLabel}</Text>
+        </View>
+
+        {grouped.length === 0 ? (
+          <HUDPanel variant="standard">
+            <HudBody>{copy.empty}</HudBody>
+            <HudButton title="+ ADD EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
+          </HUDPanel>
+        ) : (
+          grouped.map(([date, items]) => {
+            const dayTotal = items.reduce((sum, e) => sum + e.amount, 0);
+            return (
+              <HUDPanel
+                key={date}
+                variant="compact"
+                label={formatShortDate(date)}
+              >
+                <View style={styles.dayMeta}>
+                  <HudMeta>
+                    {items.length} · {formatMoney(dayTotal, currency)}
+                  </HudMeta>
+                </View>
+                {items.map((expense) => (
+                  <ExpenseRow
+                    key={expense.id}
+                    expense={expense}
+                    currencyCode={currency}
+                    compact
+                    onDelete={() => onDelete(expense)}
+                  />
+                ))}
+              </HUDPanel>
+            );
+          })
+        )}
+
+        {grouped.length > 0 ? (
+          <HudButton title="+ ADD EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
+        ) : null}
       </ScrollView>
     </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  pad: { paddingHorizontal: 16, paddingTop: 12, gap: 8 },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: 12,
+  pad: {
+    paddingHorizontal: hud.screenPad,
+    paddingTop: 10,
+    gap: hud.stackGap,
   },
-  title: {
+  brand: {
     color: colors.text,
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 2,
-    fontFamily: fonts.display,
-  },
-  sub: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    letterSpacing: 1,
-    fontWeight: '600',
-    fontFamily: fonts.label,
-  },
-  total: {
-    color: colors.ammo,
     fontSize: 22,
-    fontWeight: '800',
     fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: 3.5,
+  },
+  feedHead: {
+    marginTop: 2,
+  },
+  dayMeta: {
+    marginBottom: 4,
   },
 });
