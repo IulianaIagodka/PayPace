@@ -1,20 +1,11 @@
 import React from 'react';
-import {
-  Image,
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type TextStyle,
-  type ViewStyle,
-} from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/colors';
 import { hud, hudType, type HUDPanelVariant } from '../theme/hud';
+import { MetalPlateTexture } from './MetalPlateTexture';
 
 export type { HUDPanelVariant };
-
-const METAL_GRAIN = require('../../assets/metal-grain.png');
 
 /**
  * Shared HUD module shell.
@@ -44,6 +35,7 @@ export function HUDPanel({
   const tone = labelTone ?? (isPrimary ? 'primary' : 'default');
   const labelStyle =
     tone === 'primary' ? hudType.labelPrimary : tone === 'warn' ? hudType.labelWarn : hudType.label;
+  const grainSeed = `${variant}:${label ?? 'panel'}`;
 
   return (
     <View style={style}>
@@ -62,29 +54,10 @@ export function HUDPanel({
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         />
-        {/* Brushed streaks — uneven metal plate */}
+        <MetalPlateTexture seed={grainSeed} compact={isCompact} />
         <LinearGradient
-          colors={[
-            'rgba(210,198,160,0.07)',
-            'transparent',
-            'rgba(40,34,28,0.18)',
-            'transparent',
-            'rgba(190,178,140,0.05)',
-          ]}
-          locations={[0, 0.22, 0.48, 0.72, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0.35 }}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-        <View pointerEvents="none" style={styles.grainWrap}>
-          {!isCompact ? (
-            <Image source={METAL_GRAIN} style={styles.grain} resizeMode="repeat" />
-          ) : null}
-        </View>
-        <LinearGradient
-          colors={['rgba(255,245,220,0.06)', 'transparent']}
-          locations={[0, 0.55]}
+          colors={['rgba(255,245,220,0.05)', 'transparent']}
+          locations={[0, 0.5]}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         />
@@ -169,24 +142,6 @@ const styles = StyleSheet.create({
   },
   padCompact: {
     padding: hud.padCompact,
-  },
-  grainWrap: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    overflow: 'hidden',
-  },
-  grain: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    opacity: 0.55,
   },
   fg: {
     zIndex: 1,
