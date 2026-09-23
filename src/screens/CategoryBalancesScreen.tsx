@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, Panel, ScreenBackground, SegmentedBar } from '../components/ui';
+import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import { formatMoney } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
@@ -11,7 +12,7 @@ import type { RootStackParamList } from '../navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'CategoryBalances'>;
 
 export function CategoryBalancesScreen({ navigation }: Props) {
-  const { store, activeCycle, setPremium } = useBudget();
+  const { store, activeCycle } = useBudget();
   const currency = store.settings.currencyCode;
   const rows = categoryBalancesForDisplay(activeCycle, store.settings.customCategories ?? []);
 
@@ -21,7 +22,8 @@ export function CategoryBalancesScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>BY CATEGORY</Text>
           <Text style={styles.sub}>Plus shows how much you’ve spent in each category.</Text>
-          <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
+          <PlusUnlockButton />
+          <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
         </ScrollView>
       </ScreenBackground>
     );

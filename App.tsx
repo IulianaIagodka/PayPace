@@ -33,6 +33,8 @@ import { StatementImportScreen } from './src/screens/StatementImportScreen';
 import { CategoryBalancesScreen } from './src/screens/CategoryBalancesScreen';
 import { SharedBudgetScreen } from './src/screens/SharedBudgetScreen';
 import { AmountDoneAccessory, TAB_BAR_ROW_HEIGHT } from './src/components/ui';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { PlusEntitlementSync } from './src/components/PlusEntitlementSync';
 import { colors } from './src/theme/colors';
 import { fonts } from './src/theme/fonts';
 
@@ -222,10 +224,13 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <BudgetProvider>
-        <RootNavigator />
-        <AmountDoneAccessory />
-      </BudgetProvider>
+      <ErrorBoundary>
+        <BudgetProvider>
+          <PlusEntitlementSync />
+          <RootNavigator />
+          <AmountDoneAccessory />
+        </BudgetProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }

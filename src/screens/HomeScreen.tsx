@@ -15,6 +15,7 @@ import {
   SegmentedBar,
   useTabBarClearance,
 } from '../components/ui';
+import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -42,7 +43,7 @@ type Props = CompositeScreenProps<
 const POPULAR_KEYS = ['food', 'home', 'kids', 'fun', 'transport', 'other'] as const;
 
 export function HomeScreen({ navigation }: Props) {
-  const { activeCycle, snapshot, store, setPremium, updateSettings } = useBudget();
+  const { activeCycle, snapshot, store, updateSettings } = useBudget();
   const currency = store.settings.currencyCode;
   const horizon: PaceHorizon = store.settings.paceHorizon ?? 'week';
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
@@ -199,10 +200,7 @@ export function HomeScreen({ navigation }: Props) {
               Plus shows how much is left in each category — food, transport, kids, and the rest —
               and lets you set those amounts.
             </HudBody>
-            <HudButton
-              title="TRY PLUS (DEMO)"
-              onPress={() => setPremium(true)}
-            />
+            <PlusUnlockButton />
           </HUDPanel>
         )}
 

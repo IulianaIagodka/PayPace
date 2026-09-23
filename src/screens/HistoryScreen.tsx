@@ -2,6 +2,7 @@ import React from 'react';
 import { Alert, ScrollView, StyleSheet, Text } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ExpenseRow, PrimaryButton, ScreenBackground, SoftCard } from '../components/ui';
+import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
@@ -20,6 +21,7 @@ export function HistoryScreen({ navigation }: Props) {
           <Text style={styles.sub}>
             Look back across finished pay cycles and how your safe-to-spend held up.
           </Text>
+          <PlusUnlockButton />
           <PrimaryButton title="Back" onPress={() => navigation.goBack()} />
         </ScrollView>
       </ScreenBackground>

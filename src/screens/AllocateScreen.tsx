@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AmountField, HudButton, Panel, ScreenBackground } from '../components/ui';
+import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { FormScroll } from '../components/FormScroll';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
@@ -14,7 +15,7 @@ import type { RootStackParamList } from '../navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'Allocate'>;
 
 export function AllocateScreen({ navigation }: Props) {
-  const { activeCycle, setEnvelopes, store, setPremium } = useBudget();
+  const { activeCycle, setEnvelopes, store } = useBudget();
   const suffix = currencySymbol(store.settings.currencyCode);
   const currency = store.settings.currencyCode;
 
@@ -37,7 +38,7 @@ export function AllocateScreen({ navigation }: Props) {
           <Text style={styles.sub}>
             Plus lets you split spending across categories and see what’s left in each one.
           </Text>
-          <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
+          <PlusUnlockButton />
           <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
         </FormScroll>
       </ScreenBackground>

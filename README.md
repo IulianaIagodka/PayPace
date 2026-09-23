@@ -29,6 +29,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 After changing keys, **rebuild** — an old TestFlight build will not pick up new secrets.
 
 If receipt scan fails, the app now shows the real error (missing key, billing, bad photo) instead of a silent demo receipt.
+Statement import throws if the file can’t be parsed (no invented expenses).
 
 ## Free vs Plus
 
@@ -37,12 +38,22 @@ If receipt scan fails, the app now shows the real error (missing key, billing, b
 | Available balance, safe-to-spend, days to payday | Leftover by category (Food, Eating out, …) |
 | Bills | Allocate amounts per category |
 | Manual expenses | Custom categories |
-| | Receipt photo scan |
-| | Bank statement import |
+| **3 receipt photo scans** | Unlimited receipt scans |
+| | Bank statement import (CSV/text) |
 | | Spend-by-category detail + history |
 | | Shared budget with a partner |
 
-Demo unlock: **Settings → TRY PLUS (DEMO)**.
+- **Dev:** Settings → **TRY PLUS (DEMO)** (`__DEV__` only).  
+- **Store builds:** **GET PLUS** / **RESTORE PURCHASES** (RevenueCat + App Store IAP).  
+- Your checklist: **[RELEASE-YOU.md](./RELEASE-YOU.md)**.
+
+Also set in `.env` / EAS when ready:
+
+```bash
+EXPO_PUBLIC_REVENUECAT_IOS_KEY=appl_...
+EXPO_PUBLIC_PRIVACY_POLICY_URL=https://paypace.app/privacy
+EXPO_PUBLIC_SUPPORT_URL=https://paypace.app/support
+```
 
 ## Preview
 

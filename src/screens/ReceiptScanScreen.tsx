@@ -12,6 +12,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PrimaryButton, ScreenBackground, SecondaryButton, SegmentedBar, SoftCard } from '../components/ui';
+import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { categoryTitle, allCategoryIds, nextCategoryInCycle } from '../services/categories';
 import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import { formatMoney } from '../services/formatting';
@@ -33,7 +34,7 @@ import type { ExpenseCategory } from '../models/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'ReceiptScan'>;
 
 export function ReceiptScanScreen({ navigation }: Props) {
-  const { store, activeCycle, addExpenses, setPremium, recordReceiptScan } = useBudget();
+  const { store, activeCycle, addExpenses, recordReceiptScan } = useBudget();
   const currency = store.settings.currencyCode;
   const custom = store.settings.customCategories ?? [];
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -87,7 +88,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
             You’ve used your {FREE_RECEIPT_SCAN_LIMIT} free receipt scans. Plus unlocks unlimited
             scans, plus statements and category tools.
           </Text>
-          <PrimaryButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
+          <PlusUnlockButton />
           <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
         </ScrollView>
       </ScreenBackground>

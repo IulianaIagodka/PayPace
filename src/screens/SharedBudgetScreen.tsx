@@ -13,6 +13,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, ScreenBackground, SoftCard } from '../components/ui';
+import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { FormScroll } from '../components/FormScroll';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
@@ -34,7 +35,6 @@ export function SharedBudgetScreen({ navigation }: Props) {
     leaveHousehold,
     renameLocalMember,
     syncHouseholdNow,
-    setPremium,
   } = useBudget();
 
   const household = store.household;
@@ -66,7 +66,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
             Shared budget is Plus only. Share one payday budget with a partner — each expense is
             tagged with who logged it.
           </Text>
-          <HudButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
+          <PlusUnlockButton />
           <HudButton title="Back" onPress={() => navigation.goBack()} variant="secondary" />
         </FormScroll>
       </ScreenBackground>

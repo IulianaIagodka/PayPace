@@ -11,6 +11,7 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, Panel, ScreenBackground } from '../components/ui';
+import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { FormScroll } from '../components/FormScroll';
 import { categoryTitle, nextCategoryInCycle } from '../services/categories';
 import { formatMoney, formatShortDate, toDateKey } from '../services/formatting';
@@ -29,7 +30,7 @@ import type { RootStackParamList } from '../navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'StatementImport'>;
 
 export function StatementImportScreen({ navigation, route }: Props) {
-  const { store, activeCycle, importExpensesByDate, setPremium } = useBudget();
+  const { store, activeCycle, importExpensesByDate } = useBudget();
   const currency = store.settings.currencyCode;
   const custom = store.settings.customCategories ?? [];
   const weekStartsOn = store.settings.weekStartsOn ?? 1;
@@ -90,7 +91,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
             Plus imports a bank statement, sorts the rows by category, and puts each one in the right
             pay cycle.
           </Text>
-          <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
+          <PlusUnlockButton />
           <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
         </ScrollView>
       </ScreenBackground>

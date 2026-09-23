@@ -202,12 +202,13 @@ function parseLooseText(text: string): StatementLineItem[] {
 
 /**
  * Parse a bank statement / CSV export into expense line items.
- * Falls back to a dated demo set when the file cannot be parsed.
+ * Throws when the file cannot be parsed — never invents demo rows in production.
  */
 export async function analyzeStatementFile(
   uri: string,
   fileName: string,
   mimeType?: string | null,
+  options?: { allowDemo?: boolean },
 ): Promise<StatementImportResult> {
   const lowerName = (fileName || '').toLowerCase();
   const isProbablyBinary =
@@ -215,24 +216,33 @@ export async function analyzeStatementFile(
     (mimeType ?? '').includes('pdf') ||
     (mimeType ?? '').includes('image');
 
-  try {
-    if (!isProbablyBinary) {
-      const response = await fetch(uri);
-      const text = await response.text();
-      if (text && !text.includes('\u0000') && text.length < 2_000_000) {
-        const parsed =
-          lowerName.endsWith('.csv') || text.includes(';') || text.includes(',')
-            ? parseDelimited(text)
-            : parseLooseText(text);
-        if (parsed.length) {
-          return { sourceName: fileName || 'statement', items: parsed, source: 'parsed' };
-        }
-      }
-    }
-  } catch {
-    // fall through to demo
+  if (isProbablyBinary) {
+    if (options?.allowDemo) return demoStatement(fileName || 'statement');
+    throw new Error(
+      'PDF/image statements aren’t supported yet. Export a CSV or text statement from your bank, then try again.',
+    );
   }
 
-  await new Promise((r) => setTimeout(r, 600));
-  return demoStatement(fileName || 'statement');
+  try {
+    const response = await fetch(uri);
+    const text = await response.text();
+    if (text && !text.includes('\u0000') && text.length < 2_000_000) {
+      const parsed =
+        lowerName.endsWith('.csv') || text.includes(';') || text.includes(',')
+          ? parseDelimited(text)
+          : parseLooseText(text);
+      if (parsed.length) {
+        return { sourceName: fileName || 'statement', items: parsed, source: 'parsed' };
+      }
+    }
+  } catch (error) {
+    if (options?.allowDemo) return demoStatement(fileName || 'statement');
+    const detail = error instanceof Error ? error.message : 'Could not read the file.';
+    throw new Error(detail);
+  }
+
+  if (options?.allowDemo) return demoStatement(fileName || 'statement');
+  throw new Error(
+    'Couldn’t find expenses in that file. Use a CSV export with date, description, and amount columns.',
+  );
 }

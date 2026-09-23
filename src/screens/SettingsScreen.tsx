@@ -1,14 +1,29 @@
 import React, { useState } from 'react';
-import { Alert, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Keyboard,
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, Panel, ScreenBackground, useTabBarClearance } from '../components/ui';
+import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { FormScroll } from '../components/FormScroll';
 import { HudSelect } from '../components/HudSelect';
 import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../models/calculator';
 import { CURRENCIES } from '../services/currencies';
 import { FREE_RECEIPT_SCAN_LIMIT } from '../services/receiptScanQuota';
+import {
+  allowDemoPremiumUnlock,
+  PRIVACY_POLICY_URL,
+  SUPPORT_URL,
+} from '../services/plusBilling';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -140,14 +155,36 @@ export function SettingsScreen({ navigation }: Props) {
             history, shared budget.
           </Text>
           {s.isPremium ? (
-            <HudButton
-              title="BACK TO FREE (DEMO)"
-              onPress={() => setPremium(false)}
-              variant="secondary"
-            />
+            allowDemoPremiumUnlock() ? (
+              <HudButton
+                title="BACK TO FREE (DEMO)"
+                onPress={() => setPremium(false)}
+                variant="secondary"
+              />
+            ) : (
+              <Text style={styles.subTight}>Plus is active on this device.</Text>
+            )
           ) : (
-            <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
+            <>
+              <PlusUnlockButton />
+              {!allowDemoPremiumUnlock() ? (
+                <PlusUnlockButton preferRestore variant="secondary" />
+              ) : null}
+            </>
           )}
+
+          <View style={styles.divider} />
+          <Text style={styles.label}>LEGAL</Text>
+          <HudButton
+            title="PRIVACY POLICY"
+            variant="secondary"
+            onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+          />
+          <HudButton
+            title="SUPPORT"
+            variant="secondary"
+            onPress={() => Linking.openURL(SUPPORT_URL)}
+          />
 
           {s.isPremium ? (
             <>
