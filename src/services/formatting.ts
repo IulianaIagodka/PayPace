@@ -27,6 +27,12 @@ export function formatMoney(
   return `${sign}${symbol}${abs}`;
 }
 
+/** Lowercase day count: "1 day", "5 days". */
+export function formatDays(count: number): string {
+  const n = Math.max(0, Math.round(count));
+  return n === 1 ? '1 day' : `${n} days`;
+}
+
 /** Coerce persisted values to finite numbers (guards string concat bugs). */
 export function asMoney(value: unknown): number {
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0;

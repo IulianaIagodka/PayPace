@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { newId } from '../services/id';
-import { calculateSafeSpend } from '../models/calculator';
+import { buildDayPaceLock, calculateSafeSpend } from '../models/calculator';
 import {
   emptyStore,
   type AppSettings,
@@ -35,7 +35,34 @@ import {
   cloudFetchByInviteCode,
   cloudUpsertPayload,
   isCloudSyncConfigured,
+  subscribeHouseholdChanges,
 } from '../services/householdCloud';
+import { HOUSEHOLD_POLL_MS } from '../services/householdSyncPolicy';
+import type { PaceMetrics } from '../services/partnerMetricsNotify';
+import { notifyPaceMetricsChanged } from '../services/partnerNotify';
+
+/** Background reconcile while the app is open. Live partner edits use Realtime. */
+
+function paceMetricsFromStore(data: AppStoreData): PaceMetrics {
+  const cycle = data.cycles.find((c) => c.isActive) ?? data.cycles[0] ?? null;
+  if (!cycle) {
+    return {
+      remainingUntilPayday: 0,
+      safeToSpendToday: 0,
+      spentThisCycle: 0,
+      unpaidBillsTotal: 0,
+      currentBalance: 0,
+    };
+  }
+  const snap = calculateSafeSpend(cycle, new Date(), data.settings.weekStartsOn ?? 1);
+  return {
+    remainingUntilPayday: snap.remainingUntilPayday,
+    safeToSpendToday: snap.safeToSpendToday,
+    spentThisCycle: snap.spentThisCycle,
+    unpaidBillsTotal: snap.unpaidBillsTotal,
+    currentBalance: asMoney(cycle.currentBalance),
+  };
+}
 
 type BudgetContextValue = {
   ready: boolean;
@@ -92,6 +119,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
   const storeRef = useRef(store);
   storeRef.current = store;
   const syncingRef = useRef(false);
+  const syncHouseholdNowRef = useRef<(() => Promise<void>) | null>(null);
 
   const persist = useCallback(async (next: AppStoreData) => {
     setStore(next);
@@ -100,14 +128,14 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const pushIfShared = useCallback(async (next: AppStoreData) => {
-    if (!next.household || !isCloudSyncConfigured()) return;
+    if (!next.household || !isCloudSyncConfigured()) return 'disabled' as const;
     const payload = toSharedPayload({
       household: next.household,
       currencyCode: next.settings.currencyCode,
       cycles: next.cycles,
       customCategories: next.settings.customCategories,
     });
-    await cloudUpsertPayload(payload);
+    return cloudUpsertPayload(payload);
   }, []);
 
   const commit = useCallback(
@@ -126,9 +154,16 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       await persist(payload);
       if (!opts?.skipPush) {
         try {
-          await pushIfShared(payload);
-          setSyncStatus('idle');
-          setSyncError(null);
+          const result = await pushIfShared(payload);
+          if (result === 'skipped_stale') {
+            // Cloud is newer — pull instead of keeping a silent stale local push.
+            setSyncStatus('idle');
+            setSyncError(null);
+            void syncHouseholdNowRef.current?.();
+          } else {
+            setSyncStatus('idle');
+            setSyncError(null);
+          }
         } catch (error) {
           setSyncStatus('error');
           setSyncError(error instanceof Error ? error.message : 'Sync failed');
@@ -142,6 +177,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     async (remote: SharedHouseholdPayload, localMemberId: string | null) => {
       const current = storeRef.current;
       if (!current.household) return;
+      const beforeMetrics = paceMetricsFromStore(current);
       const localPayload = toSharedPayload({
         household: current.household,
         currencyCode: current.settings.currencyCode,
@@ -174,6 +210,16 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         next.localMemberId = next.household.members[0]?.id ?? null;
       }
       await persist(next);
+
+      // Partner (or remote) edits that move headline numbers → local notification.
+      if (remote.revision > (current.household.revision ?? 0)) {
+        void notifyPaceMetricsChanged({
+          before: beforeMetrics,
+          after: paceMetricsFromStore(next),
+          currencyCode: next.settings.currencyCode,
+          enabled: true,
+        });
+      }
     },
     [persist],
   );
@@ -189,7 +235,10 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         await applyRemotePayload(remote, current.localMemberId);
         const after = storeRef.current;
         if (after.household) {
-          await pushIfShared(after);
+          // Only push when we are not behind — otherwise wait for the next pull.
+          if (after.household.revision >= remote.revision) {
+            await pushIfShared(after);
+          }
         }
       } else {
         await pushIfShared(current);
@@ -204,6 +253,8 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     }
   }, [applyRemotePayload, pushIfShared]);
 
+  syncHouseholdNowRef.current = syncHouseholdNow;
+
   useEffect(() => {
     loadStore().then((data) => {
       setStore(data);
@@ -214,15 +265,25 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!ready || !store.household || !isCloudSyncConfigured()) return;
+    const householdId = store.household.id;
+
     void syncHouseholdNow();
-    const timer = setInterval(() => void syncHouseholdNow(), 20_000);
+    const timer = setInterval(() => void syncHouseholdNow(), HOUSEHOLD_POLL_MS);
+
     const onAppState = (state: AppStateStatus) => {
       if (state === 'active') void syncHouseholdNow();
     };
     const sub = AppState.addEventListener('change', onAppState);
+
+    // Partner writes → pull immediately (fixes “only updates after restart”).
+    const unsubscribeRealtime = subscribeHouseholdChanges(householdId, () => {
+      void syncHouseholdNow();
+    });
+
     return () => {
       clearInterval(timer);
       sub.remove();
+      unsubscribeRealtime();
     };
   }, [ready, store.household?.id, syncHouseholdNow]);
 
@@ -243,6 +304,8 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         : {
             remainingUntilPayday: 0,
             safeToSpendToday: 0,
+            todayAllowance: 0,
+            spentToday: 0,
             safeToSpendThisWeek: 0,
             safeToSpendThisMonth: 0,
             daysLeftInWeek: 0,
@@ -264,6 +327,23 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           },
     [activeCycle, store.settings.weekStartsOn],
   );
+
+  // Persist day lock so today's allowance stays stable across reloads / partners.
+  useEffect(() => {
+    if (!ready || !activeCycle) return;
+    const today = toDateKey(new Date());
+    if (activeCycle.dayPaceLock?.date === today) return;
+    const lock = buildDayPaceLock(activeCycle, new Date());
+    const current = storeRef.current;
+    const cycle = current.cycles.find((c) => c.id === activeCycle.id);
+    if (!cycle || cycle.dayPaceLock?.date === today) return;
+    void commit({
+      ...current,
+      cycles: current.cycles.map((c) =>
+        c.id === activeCycle.id ? withCycleTouch({ ...c, dayPaceLock: lock }) : c,
+      ),
+    });
+  }, [ready, activeCycle, commit]);
 
   const attribution = useCallback(() => {
     const member = localMember;
@@ -364,6 +444,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         envelopeKey,
         id: expense.id ?? newId(),
         date: expense.date ?? toDateKey(new Date()),
+        updatedAt: stamp(),
       };
       await commit({
         ...store,
@@ -392,6 +473,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
             envelopeKey: expense.envelopeKey ?? categoryToEnvelopeKey(expense.category),
             id: expense.id ?? newId(),
             date: expense.date ?? toDateKey(new Date()),
+            updatedAt: stamp(),
           } satisfies DailyExpense;
         })
         .filter(Boolean) as DailyExpense[];
@@ -424,6 +506,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           envelopeKey: expense.envelopeKey ?? categoryToEnvelopeKey(expense.category),
           id: expense.id ?? newId(),
           date,
+          updatedAt: stamp(),
         };
         const list = byCycle.get(target.id) ?? [];
         list.push(next);

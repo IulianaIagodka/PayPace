@@ -1,10 +1,8 @@
 # PayPace
 
-Payday → payday resource control. Money = energy.
+Payday → payday budgeting. Money = energy.
 
 One Expo app at the **repo root**. Develop from the **phone** or the **Mac**. Ship TestFlight from **EAS cloud** or a **local Mac** IPA.
-
-PayPace is a **dark sci-fi money control panel** — reserves, burn rate, runway, and pacing until the next checkpoint (payday) — not a classic budgeting spreadsheet.
 
 ## Setup
 
@@ -71,9 +69,11 @@ npm run build:ios:submit         # cloud build + auto-submit (uses EAS minutes)
 |---------|------|
 | `npm start` | Expo dev server |
 | `npm run typecheck` | TypeScript |
-| `npm test` | All unit/E2E scripts (shared budget + control panel) |
+| `npm test` | All unit/E2E scripts (shared budget + control panel + sync + status) |
 | `npm run test:shared` | Shared-budget E2E simulation |
-| `npm run test:control` | Resource control-panel unit tests |
+| `npm run test:control` | Control-panel helper unit tests |
+| `npm run test:sync` | Shared-household sync policy tests |
+| `npm run test:status` | Money status chip tests |
 | `npm run build:ios` | EAS iOS production build (cloud) |
 | `npm run build:ios:local` | Local Mac IPA only |
 | `npm run build:ios:local:submit` | Local Mac IPA + TestFlight (one script) |

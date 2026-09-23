@@ -1,12 +1,11 @@
 import React from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { ExpenseRow, Panel, PanelLabel, ScreenBackground } from '../components/ui';
+import { ExpenseRow, Panel, ScreenBackground, useTabBarClearance } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 import { formatMoney } from '../services/formatting';
-import { CONTROL_PANEL_COPY } from '../services/controlPanel';
 import type { MainTabParamList } from '../navigation/types';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Activity'>;
@@ -15,33 +14,27 @@ export function ActivityScreen({}: Props) {
   const { activeCycle, store, deleteExpense, snapshot } = useBudget();
   const currency = store.settings.currencyCode;
   const expenses = activeCycle?.expenses ?? [];
+  const tabClearance = useTabBarClearance(32);
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.pad}>
+      <ScrollView contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}>
         <View style={styles.head}>
-          <Text style={styles.title}>{CONTROL_PANEL_COPY.activity.title}</Text>
-          <Text style={styles.sysTag}>{CONTROL_PANEL_COPY.activity.sysTag}</Text>
-        </View>
-
-        <Panel>
-          <PanelLabel tone="warn">{CONTROL_PANEL_COPY.activity.totalLabel}</PanelLabel>
+          <Text style={styles.title}>TRANS</Text>
           <Text style={styles.total}>{formatMoney(snapshot.spentThisCycle, currency)}</Text>
-          <Text style={styles.sub}>
-            {expenses.length} event{expenses.length === 1 ? '' : 's'} logged against reserves
-          </Text>
-        </Panel>
+        </View>
+        <Text style={styles.sub}>This pay cycle</Text>
 
         <Panel>
-          <PanelLabel>{CONTROL_PANEL_COPY.activity.feedLabel}</PanelLabel>
           {expenses.length === 0 ? (
-            <Text style={styles.sub}>{CONTROL_PANEL_COPY.activity.empty}</Text>
+            <Text style={styles.sub}>No expenses yet.</Text>
           ) : (
             expenses.map((e) => (
               <ExpenseRow
                 key={e.id}
                 expense={e}
                 currencyCode={currency}
+                compact
                 onDelete={() =>
                   Alert.alert('Delete this expense?', e.name, [
                     { text: 'Cancel', style: 'cancel' },
@@ -62,32 +55,31 @@ export function ActivityScreen({}: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 12, paddingBottom: 40 },
-  head: { gap: 4 },
+  pad: { paddingHorizontal: 16, paddingTop: 12, gap: 8 },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   title: {
     color: colors.text,
-    fontSize: 22,
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 2,
     fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: 2.4,
-  },
-  sysTag: {
-    color: colors.textDim,
-    fontSize: 10,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.8,
   },
   sub: {
     color: colors.textSecondary,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    fontFamily: fonts.body,
+    fontSize: 11,
+    letterSpacing: 1,
+    fontWeight: '600',
+    fontFamily: fonts.label,
   },
   total: {
     color: colors.ammo,
-    fontSize: 32,
+    fontSize: 22,
+    fontWeight: '800',
     fontFamily: fonts.display,
-    fontWeight: '700',
   },
 });

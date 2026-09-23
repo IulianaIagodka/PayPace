@@ -56,6 +56,8 @@ function snap(partial: Partial<SafeSpendSnapshot> = {}): SafeSpendSnapshot {
   return {
     remainingUntilPayday: 4000,
     safeToSpendToday: 200,
+    todayAllowance: 200,
+    spentToday: 0,
     safeToSpendThisWeek: 1000,
     safeToSpendThisMonth: 4000,
     daysLeftInWeek: 5,
@@ -128,17 +130,24 @@ assertEq(statusToneFor('ON PACE'), 'ok', 'on pace tone');
 section('controlPanel · reserves / runway / horizon');
 assertEq(reservesLabelFor('week'), 'RESERVES · THIS WEEK', 'week reserves label');
 assertEq(reservesLabelFor('month'), 'RESERVES · UNTIL CHECKPOINT', 'month reserves label');
+assertEq(reservesLabelFor('day'), 'RESERVES · TODAY', 'day reserves label');
 assertEq(reservesAmountFor('week', snap()), 1000, 'week uses week safe');
 assertEq(reservesAmountFor('month', snap()), 4000, 'month uses remaining');
+assertEq(reservesAmountFor('day', snap()), 200, 'day uses safe today');
 assertEq(reservesAmountFor('month', snap({ remainingUntilPayday: -50 })), 0, 'floor at 0');
-assertEq(runwayMetaFor('week', snap()), '5D RUNWAY · WEEK', 'week runway meta');
-assertEq(runwayMetaFor('month', snap()), '20D TO CHECKPOINT', 'month runway meta');
+assertEq(runwayMetaFor('week', snap()), '5 days left in week', 'week runway meta');
+assertEq(runwayMetaFor('month', snap()), '20 days to payday', 'month runway meta');
+assertEq(runwayMetaFor('day', snap()), 'today', 'day runway meta');
 assertEq(
   weekCycleHint('week', 4000, 20, (n) => `$${n}`),
-  'CYCLE RESERVE $4000 · 20D TO PAYDAY',
+  'Cycle left $4000 · 20 days to payday',
   'week hint text',
 );
 assertEq(weekCycleHint('month', 4000, 20, (n) => `$${n}`), null, 'month has no week hint');
+assert(
+  weekCycleHint('day', 4000, 20, (n) => `$${n}`)?.includes('Cycle left') === true,
+  'day still shows cycle hint',
+);
 
 section('controlPanel · module grid helpers');
 assert(CONTROL_GRID_KEYS.length === 5, 'five core modules');
@@ -191,7 +200,7 @@ section('controlPanel · buildControlPanelView');
   assertEq(healthy.reservesLabel, 'RESERVES · UNTIL CHECKPOINT', 'view month reserves label');
   assertEq(healthy.reservesAmount, 4000, 'view reserves amount');
   assertEq(healthy.resourcesPct, 80, 'view pct');
-  assertEq(healthy.runwayLabel, '20D TO CHECKPOINT', 'view runway');
+  assertEq(healthy.runwayLabel, '20 days to payday', 'view runway');
   assertEq(healthy.weekHint, null, 'month weekHint null');
   assertEq(healthy.recommendedPacing, 200, 'view pacing');
   assertEq(healthy.burnDaily, 100, 'view burn');
@@ -202,8 +211,8 @@ section('controlPanel · buildControlPanelView');
   const week = buildControlPanelView(snap(), 'week', (n) => `PLN ${n}`);
   assertEq(week.reservesLabel, 'RESERVES · THIS WEEK', 'week label');
   assertEq(week.reservesAmount, 1000, 'week amount');
-  assertEq(week.runwayLabel, '5D RUNWAY · WEEK', 'week runway');
-  assert(week.weekHint?.includes('CYCLE RESERVE'), 'week hint present');
+  assertEq(week.runwayLabel, '5 days left in week', 'week runway');
+  assert(week.weekHint?.includes('Cycle left'), 'week hint present');
   assertEq(week.periodShare, 0.25, 'week share');
   assert(week.isWeekHorizon, 'week horizon flag');
 
@@ -244,26 +253,26 @@ section('controlPanel · buildControlPanelView');
 
 section('controlPanel · copy contracts (screens / chrome)');
 assertEq(CONTROL_PANEL_COPY.tabs.home, 'PACE', 'tab PACE');
-assertEq(CONTROL_PANEL_COPY.tabs.activity, 'LOG', 'tab LOG');
-assertEq(CONTROL_PANEL_COPY.tabs.status, 'SYSTEMS', 'tab SYSTEMS');
+assertEq(CONTROL_PANEL_COPY.tabs.activity, 'TRANS', 'tab TRANS');
+assertEq(CONTROL_PANEL_COPY.tabs.status, 'PACE', 'tab PACE status');
 assertEq(CONTROL_PANEL_COPY.tabs.settings, 'CONFIG', 'tab CONFIG');
 assertEq(CONTROL_PANEL_COPY.home.pacingLabel, 'RECOMMENDED PACING', 'pacing label');
 assertEq(CONTROL_PANEL_COPY.home.modulesLabel, 'MODULES', 'modules label');
-assertEq(CONTROL_PANEL_COPY.home.drainLogLabel, 'DRAIN LOG', 'drain log');
+assertEq(CONTROL_PANEL_COPY.home.drainLogLabel, 'TRANS', 'drain log');
 assertEq(CONTROL_PANEL_COPY.home.logExpense, '+ LOG EXPENSE', 'log expense CTA');
 assertEq(CONTROL_PANEL_COPY.home.burnCriticalTitle, 'BURN RATE CRITICAL', 'burn alert');
 assertEq(CONTROL_PANEL_COPY.home.modulesPlusTitle, 'MODULES · PLUS', 'plus upsell title');
-assertEq(CONTROL_PANEL_COPY.home.drainEmpty, 'No drain events logged.', 'drain empty');
-assertEq(CONTROL_PANEL_COPY.status.title, 'SYSTEMS', 'status title');
+assertEq(CONTROL_PANEL_COPY.home.drainEmpty, 'No expenses yet.', 'drain empty');
+assertEq(CONTROL_PANEL_COPY.status.title, 'PACE', 'status title');
 assertEq(CONTROL_PANEL_COPY.status.sysTag, 'TELEMETRY // CYCLE HEALTH', 'status sys tag');
 assertEq(CONTROL_PANEL_COPY.status.poolLabel, 'RESOURCE POOL', 'pool label');
 assertEq(CONTROL_PANEL_COPY.status.trajectoryLabel, 'TRAJECTORY', 'trajectory label');
 assertEq(CONTROL_PANEL_COPY.status.timelineLabel, 'CHECKPOINT TIMELINE', 'timeline label');
-assertEq(CONTROL_PANEL_COPY.activity.title, 'DRAIN LOG', 'activity title');
-assertEq(CONTROL_PANEL_COPY.activity.sysTag, 'EXPENSE EVENTS // THIS CYCLE', 'activity sys tag');
-assertEq(CONTROL_PANEL_COPY.activity.totalLabel, 'TOTAL DRAIN', 'total drain');
-assertEq(CONTROL_PANEL_COPY.activity.feedLabel, 'EVENT FEED', 'event feed');
-assertEq(CONTROL_PANEL_COPY.activity.empty, 'No drain events yet.', 'activity empty');
+assertEq(CONTROL_PANEL_COPY.activity.title, 'TRANS', 'activity title');
+assertEq(CONTROL_PANEL_COPY.activity.sysTag, 'TRANSACTIONS // THIS CYCLE', 'activity sys tag');
+assertEq(CONTROL_PANEL_COPY.activity.totalLabel, 'TOTAL SPENT', 'total drain');
+assertEq(CONTROL_PANEL_COPY.activity.feedLabel, 'TRANSACTION FEED', 'event feed');
+assertEq(CONTROL_PANEL_COPY.activity.empty, 'No expenses yet.', 'activity empty');
 assertEq(CONTROL_PANEL_COPY.onboarding.cta, 'INITIALIZE', 'onboarding CTA');
 assertEq(CONTROL_PANEL_COPY.onboarding.enter, 'ENTER CONTROL PANEL', 'enter CTA');
 assertEq(CONTROL_PANEL_COPY.onboarding.ready, 'SYSTEM READY', 'system ready');

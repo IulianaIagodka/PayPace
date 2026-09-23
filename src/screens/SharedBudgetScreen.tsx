@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { PrimaryButton, ScreenBackground, SecondaryButton, SoftCard } from '../components/ui';
+import { HudButton, ScreenBackground, SoftCard } from '../components/ui';
 import { FormScroll } from '../components/FormScroll';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
@@ -66,8 +66,8 @@ export function SharedBudgetScreen({ navigation }: Props) {
             Plus lets you and a partner share one payday budget. Each expense is tagged with who
             logged it.
           </Text>
-          <PrimaryButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
-          <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
+          <HudButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
+          <HudButton title="Back" onPress={() => navigation.goBack()} variant="secondary" />
         </FormScroll>
       </ScreenBackground>
     );
@@ -111,8 +111,8 @@ export function SharedBudgetScreen({ navigation }: Props) {
             <Text style={styles.codeLabel}>Invite code</Text>
             <Text style={styles.code}>{household.inviteCode}</Text>
             <View style={styles.rowGap}>
-              <PrimaryButton title="Copy code" onPress={copyCode} />
-              <SecondaryButton title="Share code" onPress={shareCode} />
+              <HudButton title="Copy code" onPress={copyCode} variant="secondary" />
+              <HudButton title="Share code" onPress={shareCode} variant="secondary" />
             </View>
             <Text style={styles.hint}>
               {cloudSyncReady
@@ -124,7 +124,11 @@ export function SharedBudgetScreen({ navigation }: Props) {
                 : 'On this phone only — add Supabase keys to sync (see SHARED-BUDGET.md)'}
             </Text>
             {cloudSyncReady ? (
-              <SecondaryButton title="Sync now" onPress={() => run(() => syncHouseholdNow())} />
+              <HudButton
+                title="Sync now"
+                onPress={() => run(() => syncHouseholdNow())}
+                variant="secondary"
+              />
             ) : null}
           </SoftCard>
 
@@ -158,10 +162,11 @@ export function SharedBudgetScreen({ navigation }: Props) {
               blurOnSubmit
               onSubmitEditing={Keyboard.dismiss}
             />
-            <PrimaryButton
+            <HudButton
               title="Save name"
               disabled={!name.trim() || busy}
               onPress={() => run(() => renameLocalMember(name))}
+              variant="secondary"
             />
           </SoftCard>
 
@@ -179,8 +184,9 @@ export function SharedBudgetScreen({ navigation }: Props) {
             )}
           </SoftCard>
 
-          <PrimaryButton
+          <HudButton
             title="Leave shared budget"
+            variant="danger"
             onPress={() =>
               Alert.alert(
                 'Leave shared budget?',
@@ -229,10 +235,11 @@ export function SharedBudgetScreen({ navigation }: Props) {
         <SoftCard>
           <Text style={styles.section}>Create a shared budget</Text>
           <Text style={styles.hint}>You’ll get a code to send your partner.</Text>
-          <PrimaryButton
+          <HudButton
             title="Create shared budget"
             disabled={!name.trim() || busy}
             onPress={() => run(() => createHousehold(name))}
+            variant="secondary"
           />
         </SoftCard>
 
@@ -250,10 +257,11 @@ export function SharedBudgetScreen({ navigation }: Props) {
             blurOnSubmit
             onSubmitEditing={Keyboard.dismiss}
           />
-          <PrimaryButton
+          <HudButton
             title="Join"
             disabled={!name.trim() || !code.trim() || busy}
             onPress={() => run(() => joinHousehold(code, name))}
+            variant="secondary"
           />
           {!cloudSyncReady ? (
             <Text style={styles.hint}>

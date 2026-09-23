@@ -32,10 +32,9 @@ import { ReceiptScanScreen } from './src/screens/ReceiptScanScreen';
 import { StatementImportScreen } from './src/screens/StatementImportScreen';
 import { CategoryBalancesScreen } from './src/screens/CategoryBalancesScreen';
 import { SharedBudgetScreen } from './src/screens/SharedBudgetScreen';
-import { AmountDoneAccessory } from './src/components/ui';
+import { AmountDoneAccessory, TAB_BAR_ROW_HEIGHT } from './src/components/ui';
 import { colors } from './src/theme/colors';
 import { fonts } from './src/theme/fonts';
-import { CONTROL_PANEL_COPY } from './src/services/controlPanel';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -89,13 +88,19 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: 'transparent' },
         tabBarStyle: {
-          backgroundColor: '#100E0B',
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(8,6,4,0.55)',
           borderTopColor: colors.borderBright,
           borderTopWidth: 2,
-          height: 50 + bottomPad,
+          height: TAB_BAR_ROW_HEIGHT + bottomPad,
           paddingBottom: bottomPad,
           paddingTop: 6,
+          elevation: 0,
         },
         tabBarActiveTintColor: colors.resource,
         tabBarInactiveTintColor: colors.textDim,
@@ -108,35 +113,35 @@ function MainTabs() {
         },
       }}
     >
-          <Tab.Screen
+      <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          title: CONTROL_PANEL_COPY.tabs.home,
-          tabBarIcon: ({ focused }) => <TabIcon name="radio-button-on" focused={focused} />,
+          title: 'HOME',
+          tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
         }}
       />
       <Tab.Screen
         name="Activity"
         component={ActivityScreen}
         options={{
-          title: CONTROL_PANEL_COPY.tabs.activity,
-          tabBarIcon: ({ focused }) => <TabIcon name="list" focused={focused} />,
+          title: 'TRANS',
+          tabBarIcon: ({ focused }) => <TabIcon name="receipt-outline" focused={focused} />,
         }}
       />
       <Tab.Screen
         name="Status"
         component={StatusScreen}
         options={{
-          title: CONTROL_PANEL_COPY.tabs.status,
-          tabBarIcon: ({ focused }) => <TabIcon name="pulse" focused={focused} />,
+          title: 'PACE',
+          tabBarIcon: ({ focused }) => <TabIcon name="stats-chart" focused={focused} />,
         }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
         options={{
-          title: CONTROL_PANEL_COPY.tabs.settings,
+          title: 'SETTINGS',
           tabBarIcon: ({ focused }) => <TabIcon name="settings-sharp" focused={focused} />,
         }}
       />
@@ -175,8 +180,8 @@ function RootNavigator() {
           }}
         >
           <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-          <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: CONTROL_PANEL_COPY.addExpenseTitle }} />
-          <Stack.Screen name="Allocate" component={AllocateScreen} options={{ title: CONTROL_PANEL_COPY.allocateTitle }} />
+          <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'ADD EXPENSE' }} />
+          <Stack.Screen name="Allocate" component={AllocateScreen} options={{ title: 'ALLOCATE' }} />
           <Stack.Screen name="Bills" component={BillsScreen} options={{ title: 'BILLS' }} />
           <Stack.Screen name="PayCycle" component={PayCycleScreen} options={{ title: 'EDIT CYCLE' }} />
           <Stack.Screen name="History" component={HistoryScreen} options={{ title: 'HISTORY' }} />

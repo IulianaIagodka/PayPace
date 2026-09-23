@@ -7,6 +7,11 @@
 import type { PaceHorizon } from '../models/calculator';
 import type { DailyExpense, SafeSpendSnapshot, TrajectoryLabel } from '../models/types';
 
+function daysLabel(count: number): string {
+  const n = Math.max(0, Math.round(count));
+  return n === 1 ? '1 day' : `${n} days`;
+}
+
 export const CONTROL_GRID_KEYS = ['food', 'transport', 'kids', 'fun', 'home'] as const;
 
 export type ControlGridKey = (typeof CONTROL_GRID_KEYS)[number];
@@ -77,19 +82,23 @@ export function statusToneFor(label: StatusLabel): TelemetryTone {
 }
 
 export function reservesLabelFor(horizon: PaceHorizon): string {
-  return horizon === 'week' ? 'RESERVES · THIS WEEK' : 'RESERVES · UNTIL CHECKPOINT';
+  if (horizon === 'day') return 'RESERVES · TODAY';
+  if (horizon === 'week') return 'RESERVES · THIS WEEK';
+  return 'RESERVES · UNTIL CHECKPOINT';
 }
 
 export function reservesAmountFor(
   horizon: PaceHorizon,
   snapshot: Pick<
     SafeSpendSnapshot,
-    'remainingUntilPayday' | 'safeToSpendThisWeek' | 'safeToSpendThisMonth'
+    | 'remainingUntilPayday'
+    | 'safeToSpendToday'
+    | 'safeToSpendThisWeek'
+    | 'safeToSpendThisMonth'
   >,
 ): number {
-  if (horizon === 'week') {
-    return Math.max(snapshot.safeToSpendThisWeek, 0);
-  }
+  if (horizon === 'day') return Math.max(snapshot.safeToSpendToday, 0);
+  if (horizon === 'week') return Math.max(snapshot.safeToSpendThisWeek, 0);
   return Math.max(snapshot.remainingUntilPayday, 0);
 }
 
@@ -97,10 +106,11 @@ export function runwayMetaFor(
   horizon: PaceHorizon,
   snapshot: Pick<SafeSpendSnapshot, 'daysLeftInWeek' | 'daysUntilPayday'>,
 ): string {
+  if (horizon === 'day') return 'today';
   if (horizon === 'week') {
-    return `${snapshot.daysLeftInWeek}D RUNWAY · WEEK`;
+    return `${daysLabel(snapshot.daysLeftInWeek)} left in week`;
   }
-  return `${snapshot.daysUntilPayday}D TO CHECKPOINT`;
+  return `${daysLabel(snapshot.daysUntilPayday)} to payday`;
 }
 
 export function weekCycleHint(
@@ -109,8 +119,11 @@ export function weekCycleHint(
   daysUntilPayday: number,
   formatMoney: (n: number) => string,
 ): string | null {
+  if (horizon === 'day') {
+    return `Cycle left ${formatMoney(Math.max(cycleReserve, 0))} · ${daysLabel(daysUntilPayday)} to payday`;
+  }
   if (horizon !== 'week') return null;
-  return `CYCLE RESERVE ${formatMoney(Math.max(cycleReserve, 0))} · ${daysUntilPayday}D TO PAYDAY`;
+  return `Cycle left ${formatMoney(Math.max(cycleReserve, 0))} · ${daysLabel(daysUntilPayday)} to payday`;
 }
 
 /** Pair modules into 2-col rows for the control grid. */
@@ -145,11 +158,17 @@ export function buildControlPanelView(
   formatMoney: (n: number) => string,
 ): ControlPanelView {
   const isWeek = horizon === 'week';
+  const isDay = horizon === 'day';
   const recommendedPacing = Math.max(snapshot.safeToSpendToday, 0);
   const burnDaily = burnRateDaily(snapshot.spentThisCycle, snapshot.daysElapsed);
   const burnHot = isBurnHot(burnDaily, recommendedPacing);
   const statusLabel = statusLabelFor(snapshot.trajectory, burnHot);
   const cycleReserve = Math.max(snapshot.remainingUntilPayday, 0);
+  const periodShare = isDay
+    ? 1 / Math.max(snapshot.daysUntilPayday, 1)
+    : isWeek
+      ? snapshot.weekShare
+      : snapshot.monthShare;
 
   return {
     reservesLabel: reservesLabelFor(horizon),
@@ -165,7 +184,7 @@ export function buildControlPanelView(
     statusTone: statusToneFor(statusLabel),
     chipLabel: systemChipLabel(snapshot.remainingUntilPayday, snapshot.isAtRisk),
     pacingTone: snapshot.remainingUntilPayday < 0 ? 'danger' : 'ok',
-    periodShare: isWeek ? snapshot.weekShare : snapshot.monthShare,
+    periodShare,
     isWeekHorizon: isWeek,
   };
 }
@@ -174,8 +193,8 @@ export function buildControlPanelView(
 export const CONTROL_PANEL_COPY = {
   tabs: {
     home: 'PACE',
-    activity: 'LOG',
-    status: 'SYSTEMS',
+    activity: 'TRANS',
+    status: 'PACE',
     settings: 'CONFIG',
   },
   home: {
@@ -184,24 +203,24 @@ export const CONTROL_PANEL_COPY = {
     pacingHint: 'Daily drain ceiling until next checkpoint',
     modulesLabel: 'MODULES',
     modulesPlusTitle: 'MODULES · PLUS',
-    drainLogLabel: 'DRAIN LOG',
-    drainEmpty: 'No drain events logged.',
+    drainLogLabel: 'TRANS',
+    drainEmpty: 'No expenses yet.',
     logExpense: '+ LOG EXPENSE',
     burnCriticalTitle: 'BURN RATE CRITICAL',
   },
   status: {
-    title: 'SYSTEMS',
+    title: 'PACE',
     sysTag: 'TELEMETRY // CYCLE HEALTH',
     poolLabel: 'RESOURCE POOL',
     trajectoryLabel: 'TRAJECTORY',
     timelineLabel: 'CHECKPOINT TIMELINE',
   },
   activity: {
-    title: 'DRAIN LOG',
-    sysTag: 'EXPENSE EVENTS // THIS CYCLE',
-    totalLabel: 'TOTAL DRAIN',
-    feedLabel: 'EVENT FEED',
-    empty: 'No drain events yet.',
+    title: 'TRANS',
+    sysTag: 'TRANSACTIONS // THIS CYCLE',
+    totalLabel: 'TOTAL SPENT',
+    feedLabel: 'TRANSACTION FEED',
+    empty: 'No expenses yet.',
   },
   onboarding: {
     title: 'Your money control panel.\nSurvive until payday.',

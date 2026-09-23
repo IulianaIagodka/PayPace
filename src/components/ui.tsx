@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   colors,
   colorForTone,
@@ -36,9 +36,19 @@ import {
   HudValue,
   type HUDPanelVariant,
 } from './HUDPanel';
+import { MetalPlateTexture } from './MetalPlateTexture';
 
 export { HUDPanel, HudBody, HudLabel, HudMeta, HudValue };
 export type { HUDPanelVariant };
+
+/** Matches App.tsx tab bar content row (excludes safe-area inset). */
+export const TAB_BAR_ROW_HEIGHT = 50;
+
+/** Bottom padding so tab-scene content clears the absolute translucent tab bar. */
+export function useTabBarClearance(extra = 24) {
+  const insets = useSafeAreaInsets();
+  return TAB_BAR_ROW_HEIGHT + Math.max(insets.bottom, 10) + extra;
+}
 
 export function ScreenBackground({
   children,
@@ -49,18 +59,20 @@ export function ScreenBackground({
 }) {
   return (
     <View style={styles.root}>
-      <LinearGradient
-        colors={['#1A1410', '#0C0A08', '#060504']}
-        locations={[0, 0.45, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      {/* Scanline grit — Doom CRT feel */}
-      <View pointerEvents="none" style={styles.scanlines}>
-        {Array.from({ length: 48 }).map((_, i) => (
-          <View key={i} style={styles.scanline} />
-        ))}
+      <View pointerEvents="none" style={styles.backdrop}>
+        <LinearGradient
+          colors={['#1A1410', '#0C0A08', '#060504']}
+          locations={[0, 0.45, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+        <MetalPlateTexture seed="paypace-screen-grain" intensity="screen" />
+        <View style={styles.scanlines}>
+          {Array.from({ length: 64 }).map((_, i) => (
+            <View key={i} style={styles.scanline} />
+          ))}
+        </View>
+        <View style={styles.vignette} />
       </View>
-      <View pointerEvents="none" style={styles.vignette} />
       <SafeAreaView style={styles.flex} edges={edges}>
         {children}
       </SafeAreaView>
@@ -90,74 +102,27 @@ export function Panel({
   );
 }
 
-export function StatusChip({ label = 'SYSTEM ONLINE' }: { label?: string }) {
-  const pulse = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 0.35, duration: 900, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1, duration: 900, useNativeDriver: true }),
-      ]),
-    ).start();
-  }, [pulse]);
-
-  return (
-    <View style={styles.chip}>
-      <Animated.View style={[styles.chipDot, { opacity: pulse }]} />
-      <Text style={styles.chipText}>{label}</Text>
-    </View>
-  );
-}
-
-/** Section label — wraps shared HudLabel for control-panel screens */
-export function PanelLabel({
-  children,
-  tone = 'dim',
+export function StatusChip({
+  label = 'OK',
+  tone = 'ok',
 }: {
-  children: string;
-  tone?: 'dim' | 'warn' | 'ok';
+  label?: string;
+  /** Money situation — colors the chip. */
+  tone?: 'ok' | 'tense' | 'critical';
 }) {
-  const hudTone = tone === 'ok' ? 'primary' : tone === 'warn' ? 'warn' : 'default';
-  return (
-    <View style={styles.panelLabelRow}>
-      <View
-        style={[
-          styles.panelLabelTick,
-          {
-            backgroundColor:
-              tone === 'ok' ? colors.resource : tone === 'warn' ? colors.warning : colors.textSecondary,
-          },
-        ]}
-      />
-      <HudLabel tone={hudTone}>{children}</HudLabel>
-    </View>
-  );
-}
+  const accent =
+    tone === 'critical' ? colors.danger : tone === 'tense' ? colors.warning : colors.resource;
+  const bg =
+    tone === 'critical'
+      ? 'rgba(196, 90, 66, 0.12)'
+      : tone === 'tense'
+        ? 'rgba(212, 168, 74, 0.12)'
+        : colors.resourceSoft;
 
-/** Compact telemetry readout for burn / runway / status strips */
-export function TelemetryCell({
-  label,
-  value,
-  tone = 'normal',
-}: {
-  label: string;
-  value: string;
-  tone?: 'normal' | 'ok' | 'warn' | 'danger';
-}) {
-  const valueColor =
-    tone === 'ok'
-      ? colors.resource
-      : tone === 'warn'
-        ? colors.warning
-        : tone === 'danger'
-          ? colors.danger
-          : colors.ammo;
   return (
-    <View style={styles.telemetryCell}>
-      <Text style={styles.telemetryLabel}>{label}</Text>
-      <Text style={[styles.telemetryValue, { color: valueColor }]} numberOfLines={1}>
-        {value}
-      </Text>
+    <View style={[styles.chip, { borderColor: accent, backgroundColor: bg }]}>
+      <View style={[styles.chipDot, { backgroundColor: accent }]} />
+      <Text style={[styles.chipText, { color: accent }]}>{label}</Text>
     </View>
   );
 }
@@ -188,7 +153,7 @@ export function HudButton({
     >
       {variant === 'primary' ? (
         <LinearGradient
-          colors={['#2A4A1E', '#152412', '#0E180C']}
+          colors={['#1E3318', '#10180E']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -229,13 +194,6 @@ export function HudButton({
           </Text>
         )}
       </View>
-      {variant === 'primary' ? (
-        <View pointerEvents="none" style={styles.btnVents}>
-          <View style={styles.btnVent} />
-          <View style={styles.btnVent} />
-          <View style={styles.btnVent} />
-        </View>
-      ) : null}
     </Pressable>
   );
 }
@@ -251,11 +209,12 @@ export function SegmentedBar({
   ratio,
   animateFrom,
   tipAmber = true,
+  height,
 }: {
   ratio: number;
   /** @deprecated ignored — meter segment count is unified */
   segments?: number;
-  /** @deprecated ignored — meter height is unified */
+  /** Override track height; defaults to hud.meterHeight */
   height?: number;
   animateFrom?: number;
   /** @deprecated ignored — meter geometry is unified */
@@ -265,6 +224,7 @@ export function SegmentedBar({
   const segments = hud.meterSegments;
   const clamped = Math.max(0, Math.min(ratio, 1));
   const anim = useRef(new Animated.Value(animateFrom ?? clamped)).current;
+  const trackHeight = height ?? hud.meterHeight;
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -278,7 +238,7 @@ export function SegmentedBar({
   const lit = Math.round(clamped * segments);
 
   return (
-    <View style={[styles.barTrack, { height: hud.meterHeight }]}>
+    <View style={[styles.barTrack, { height: trackHeight }]}>
       {Array.from({ length: segments }).map((_, i) => {
         const bg =
           tipAmber && tone === 'healthy'
@@ -322,12 +282,18 @@ export function EnvelopeModule({
   warning?: boolean;
   depleted?: boolean;
 }) {
-  const remainingRatio = allocated > 0 ? Math.max(allocated - spent, 0) / allocated : 0;
+  const remaining = Math.max(allocated - spent, 0);
+  const planned = Math.max(allocated, 0);
+  const remainingRatio = planned > 0 ? remaining / planned : 0;
   return (
     <HUDPanel variant="compact" label={title}>
-      <HudValue size="compact" style={{ color: colorForTone(tone) }}>
-        {formatMoney(spent, currencyCode)} / {formatMoney(allocated, currencyCode)}
-      </HudValue>
+      <View style={styles.amountRow}>
+        <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
+          {formatMoney(remaining, currencyCode)}
+        </Text>
+        <Text style={styles.amountSep}> / </Text>
+        <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
+      </View>
       <SegmentedBar ratio={remainingRatio} tipAmber />
       {depleted ? <HudLabel tone="warn">DEPLETED</HudLabel> : null}
       {warning && !depleted ? (
@@ -348,7 +314,7 @@ export function CategoryCell({
   tone,
   index = 0,
   onPress,
-  periodShare = 1,
+  periodShare: _periodShare = 1,
   horizonLabel = 'CYCLE',
   depleted = false,
   layout = 'grid',
@@ -369,30 +335,94 @@ export function CategoryCell({
   layout?: 'grid' | 'rail';
 }) {
   const cycleRemaining = Math.max(allocated - spent, 0);
-  const periodRemaining = cycleRemaining * Math.max(0, Math.min(periodShare, 1));
-  const remainingRatio = allocated > 0 ? cycleRemaining / allocated : 0;
+  const planned = Math.max(allocated, 0);
+  const remainingRatio = planned > 0 ? cycleRemaining / planned : 0;
   const enter = useRef(new Animated.Value(0)).current;
   const muted = depleted || remainingRatio <= 0;
   const tipAmber = tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
   const isRail = layout === 'rail';
 
   useEffect(() => {
+    // Rail sits inside a nested horizontal ScrollView — native-driven Animated
+    // wrappers steal the pan responder and break left/right scrolling.
+    if (isRail) return;
     Animated.timing(enter, {
       toValue: 1,
       duration: 240,
       delay: 40 + index * 40,
       useNativeDriver: true,
     }).start();
-  }, [enter, index]);
+  }, [enter, index, isRail]);
 
   const iconName = (ENVELOPE_ICON_NAMES[iconKey] ??
     ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
 
+  const amountLine = (
+    <View style={styles.amountRow}>
+      <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
+        {formatMoney(cycleRemaining, currencyCode)}
+      </Text>
+      <Text style={styles.amountSep}> / </Text>
+      <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
+    </View>
+  );
+
+  const panel = (
+    <HUDPanel
+      variant="compact"
+      label={title}
+      style={isRail ? styles.cellRail : styles.cell}
+      contentStyle={isRail ? styles.cellRailInner : undefined}
+    >
+      {isRail ? (
+        <>
+          <View style={styles.cellIconWrap}>
+            <Ionicons
+              name={iconName}
+              size={18}
+              color={muted ? colors.textDim : colors.resource}
+            />
+          </View>
+          {amountLine}
+          <View style={{ alignSelf: 'stretch' }}>
+            <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={styles.cellTitleRow}>
+            <Ionicons
+              name={iconName}
+              size={15}
+              color={muted ? colors.textDim : colors.textSecondary}
+            />
+            <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
+          </View>
+          {amountLine}
+          <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
+        </>
+      )}
+    </HUDPanel>
+  );
+
+  if (isRail) {
+    return (
+      <View style={styles.railItem}>
+        <Pressable
+          onPress={onPress}
+          disabled={!onPress}
+          style={{ opacity: muted ? 0.48 : 1 }}
+        >
+          {panel}
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <Animated.View
       style={{
-        flex: isRail ? undefined : 1,
-        width: isRail ? 124 : undefined,
+        flex: 1,
         opacity: enter,
         transform: [
           {
@@ -407,69 +437,19 @@ export function CategoryCell({
       <Pressable
         onPress={onPress}
         disabled={!onPress}
-        style={{ flex: isRail ? undefined : 1, opacity: muted ? 0.48 : 1 }}
+        style={{ flex: 1, opacity: muted ? 0.48 : 1 }}
       >
-        <HUDPanel
-          variant="compact"
-          label={title}
-          style={isRail ? styles.cellRail : styles.cell}
-          contentStyle={isRail ? styles.cellRailInner : undefined}
-        >
-          {isRail ? (
-            <>
-              <View style={styles.cellIconWrap}>
-                <Ionicons
-                  name={iconName}
-                  size={18}
-                  color={muted ? colors.textDim : colors.resource}
-                />
-              </View>
-              <HudValue size="compact" style={muted ? { color: colors.textDim } : undefined}>
-                {formatMoney(periodRemaining, currencyCode)}
-                <Text style={styles.cellAmountDim}>
-                  {' '}
-                  / {formatMoney(cycleRemaining, currencyCode)}
-                </Text>
-              </HudValue>
-              <View style={{ alignSelf: 'stretch' }}>
-                <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
-              </View>
-            </>
-          ) : (
-            <>
-              <View style={styles.cellTitleRow}>
-                <Ionicons
-                  name={iconName}
-                  size={15}
-                  color={muted ? colors.textDim : colors.textSecondary}
-                />
-                <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
-              </View>
-              <HudValue size="compact" style={muted ? { color: colors.textDim } : undefined}>
-                {formatMoney(periodRemaining, currencyCode)}
-                <Text style={styles.cellAmountDim}>
-                  {' '}
-                  / {formatMoney(cycleRemaining, currencyCode)}
-                </Text>
-              </HudValue>
-              <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
-            </>
-          )}
-        </HUDPanel>
+        {panel}
       </Pressable>
     </Animated.View>
   );
 }
 
-/** Empty steel plate with hazard stripes — keeps modular grid balanced */
+/** Empty steel plate to keep the 2-col grid balanced */
 export function EmptyCell() {
   return (
     <View style={{ flex: 1 }}>
-      <View style={styles.emptyCell}>
-        {Array.from({ length: 7 }).map((_, i) => (
-          <View key={i} style={[styles.hazardStripe, { left: i * 18 - 20 }]} />
-        ))}
-      </View>
+      <View style={styles.emptyCell} />
     </View>
   );
 }
@@ -525,23 +505,33 @@ export function ExpenseRow({
   expense,
   currencyCode,
   onDelete,
+  compact = false,
 }: {
   expense: DailyExpense;
   currencyCode: string;
   onDelete?: () => void;
+  compact?: boolean;
 }) {
   return (
-    <View style={styles.row}>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text style={styles.rowTitle}>{expense.name}</Text>
-        <Text style={styles.meta}>
+    <View style={[styles.row, compact && styles.rowCompact]}>
+      <View style={{ flex: 1, gap: compact ? 0 : 2 }}>
+        <Text style={[styles.rowTitle, compact && styles.rowTitleCompact]} numberOfLines={1}>
+          {expense.name}
+        </Text>
+        <Text style={[styles.meta, compact && styles.metaCompact]}>
           {formatShortDate(expense.date)}
           {expense.memberName ? ` · ${expense.memberName}` : ''}
         </Text>
       </View>
-      <Text style={styles.rowAmount}>{formatMoney(expense.amount, currencyCode)}</Text>
+      <Text style={[styles.rowAmount, compact && styles.rowAmountCompact]}>
+        {formatMoney(expense.amount, currencyCode)}
+      </Text>
       {onDelete ? (
-        <Pressable onPress={onDelete} hitSlop={10} style={styles.deleteBtn}>
+        <Pressable
+          onPress={onDelete}
+          hitSlop={10}
+          style={[styles.deleteBtn, compact && styles.deleteBtnCompact]}
+        >
           <Text style={styles.deleteText}>DEL</Text>
         </Pressable>
       ) : null}
@@ -575,7 +565,7 @@ export function SafeSpendHero({
   isAtRisk: boolean;
 }) {
   return (
-    <HUDPanel variant="primary" label="SAFE TO SPEND">
+    <HUDPanel variant="standard" label="SAFE TO SPEND">
       <HudValue size="hero" style={isAtRisk ? { color: colors.danger } : undefined}>
         {formatMoney(Math.max(safeToday, 0), currencyCode)}
       </HudValue>
@@ -615,7 +605,13 @@ export function HeaderIconButton({ label, onPress }: { label: string; onPress: (
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: {
+    flex: 1,
+    backgroundColor: colors.bg,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFill,
+  },
   scanlines: {
     position: 'absolute',
     top: 0,
@@ -635,8 +631,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    borderWidth: 18,
-    borderColor: 'rgba(0,0,0,0.45)',
+    borderWidth: 22,
+    borderColor: 'rgba(0,0,0,0.5)',
   },
   chip: {
     flexDirection: 'row',
@@ -662,35 +658,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 2.2,
     textTransform: 'uppercase',
-  },
-  panelLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  panelLabelTick: {
-    width: 10,
-    height: 3,
-  },
-  telemetryCell: {
-    flex: 1,
-    gap: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 2,
-  },
-  telemetryLabel: {
-    color: colors.textDim,
-    fontSize: 10,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.6,
-    textTransform: 'uppercase',
-  },
-  telemetryValue: {
-    fontSize: 14,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: 0.4,
   },
   btn: {
     borderRadius: 0,
@@ -723,20 +690,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  btnVents: {
-    position: 'absolute',
-    right: 12,
-    top: 10,
-    bottom: 10,
-    width: 18,
-    justifyContent: 'space-evenly',
-    opacity: 0.55,
-  },
-  btnVent: {
-    height: 2,
-    backgroundColor: colors.resource,
-    transform: [{ rotate: '-28deg' }],
-  },
   btnText: {
     color: colors.resource,
     fontSize: 15,
@@ -745,10 +698,13 @@ const styles = StyleSheet.create({
     letterSpacing: 2.6,
   },
   btnPlus: {
-    fontSize: 15,
-    lineHeight: 18,
+    fontSize: 24,
+    lineHeight: 24,
     letterSpacing: 0,
     marginRight: 8,
+    marginTop: -1,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   barTrack: {
     flexDirection: 'row',
@@ -762,6 +718,7 @@ const styles = StyleSheet.create({
   barSeg: { flex: 1, borderRadius: 0 },
   cell: { flex: 1 },
   cellRail: { width: 124 },
+  railItem: { width: 124 },
   cellRailInner: {
     alignItems: 'center',
   },
@@ -775,7 +732,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cellTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  cellAmountDim: { color: colors.textDim, fontWeight: '600', fontFamily: fonts.display },
+  amountRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+  },
+  amountLeft: {
+    ...hudType.valueCompact,
+  },
+  amountSep: {
+    color: colors.textDim,
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: fonts.display,
+  },
+  amountPlanned: {
+    color: colors.textDim,
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: fonts.display,
+  },
   emptyCell: {
     flex: 1,
     minHeight: 92,
@@ -783,17 +759,7 @@ const styles = StyleSheet.create({
     borderWidth: hud.stroke,
     borderColor: colors.borderSoft,
     backgroundColor: colors.panelDeep,
-    opacity: 0.7,
-    overflow: 'hidden',
-  },
-  hazardStripe: {
-    position: 'absolute',
-    top: -20,
-    bottom: -20,
-    width: 10,
-    backgroundColor: colors.border,
-    opacity: 0.35,
-    transform: [{ rotate: '28deg' }],
+    opacity: 0.45,
   },
   fieldBox: {
     flexDirection: 'row',
@@ -822,11 +788,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  rowCompact: {
+    paddingVertical: 5,
+    gap: 8,
+  },
   rowTitle: { color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: fonts.body },
+  rowTitleCompact: { fontSize: 13 },
   rowAmount: { color: colors.ammo, fontSize: 15, fontWeight: '700', fontFamily: fonts.display },
+  rowAmountCompact: { fontSize: 13 },
   meta: { color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body },
+  metaCompact: { fontSize: 10 },
   deleteBtn: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 4 },
+  deleteBtnCompact: { minHeight: 28 },
   deleteText: { color: colors.danger, fontWeight: '700', fontSize: 12, letterSpacing: 1 },
   headerBtn: {
     minHeight: 40,

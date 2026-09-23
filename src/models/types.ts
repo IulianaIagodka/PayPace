@@ -82,6 +82,14 @@ export interface PayCycle {
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
+  /**
+   * Locked daily allowance for a calendar day.
+   * Today stays predictable; future days adapt from leftover.
+   */
+  dayPaceLock?: {
+    date: string;
+    allowance: number;
+  };
 }
 
 export type HouseholdMemberRole = 'owner' | 'partner';
@@ -115,8 +123,8 @@ export interface AppSettings {
   displayName: string;
   /** Week start: 0=Sun … 6=Sat (date-fns). Default Monday = 1. */
   weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  /** Show remaining for the current calendar week or month (categories follow). */
-  paceHorizon: 'week' | 'month';
+  /** Show remaining for today, the current calendar week, or until payday. */
+  paceHorizon: 'day' | 'week' | 'month';
   /** User-defined categories (Plus). */
   customCategories: CustomCategory[];
 }
@@ -140,7 +148,12 @@ export type TrajectoryLabel = 'WITH RESERVE' | 'ON TARGET' | 'LOW RESERVE' | 'DE
 
 export interface SafeSpendSnapshot {
   remainingUntilPayday: number;
+  /** Remaining of today's locked daily allowance (after today's spend). */
   safeToSpendToday: number;
+  /** Locked allowance for today (does not shrink with spend — only remaining does). */
+  todayAllowance: number;
+  /** Spend recorded on today's date key. */
+  spentToday: number;
   /** Remaining allowance for the current calendar week (weekStartsOn → +6). */
   safeToSpendThisWeek: number;
   /** Remaining allowance until next payday (pay-cycle window, not calendar month). */
