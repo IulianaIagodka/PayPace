@@ -626,6 +626,9 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       });
     },
     createHousehold: async (displayName, householdName) => {
+      if (!store.settings.isPremium) {
+        throw new Error('Shared budget is a Plus feature.');
+      }
       const trimmed = displayName.trim();
       if (!trimmed) throw new Error('Enter your name');
       const deviceId = await getDeviceId();
@@ -658,6 +661,9 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       return household;
     },
     joinHousehold: async (inviteCode, displayName) => {
+      if (!store.settings.isPremium) {
+        throw new Error('Shared budget is a Plus feature.');
+      }
       const trimmed = displayName.trim();
       const code = normalizeInviteCode(inviteCode);
       if (!trimmed) throw new Error('Enter your name');

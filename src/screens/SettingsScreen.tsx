@@ -88,7 +88,7 @@ export function SettingsScreen({ navigation }: Props) {
           <HudButton title="BILLS" onPress={() => navigation.navigate('Bills')} variant="secondary" />
         </Panel>
 
-        {s.isPremium || household ? (
+        {s.isPremium ? (
           <Panel>
             <Text style={styles.section}>SHARE</Text>
             {household ? (
