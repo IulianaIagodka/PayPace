@@ -1,7 +1,8 @@
 /**
  * Local notifications when shared-budget metrics move.
- * Works while the app is open or backgrounded on-device; full remote push
- * while killed still needs device tokens + a server sender.
+ * Works while the app is open or backgrounded on-device.
+ * No remote APNs / push entitlement — `expo-notifications` is used from JS only
+ * so store builds do not require Push Notifications on the provisioning profile.
  */
 
 import { Platform } from 'react-native';
