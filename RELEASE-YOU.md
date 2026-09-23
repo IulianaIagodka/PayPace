@@ -69,7 +69,7 @@ Actions: https://github.com/IulianaIagodka/PayPace/actions
 - 3 безкоштовні скани чеків  
 - Shared Budget лише в Plus  
 - Statement більше не підставляє фейкові витрати  
-- Plus CTA → **StoreKit** purchase / restore (`expo-iap`), демо лише в dev  
+- Plus CTA → **MONTHLY** / **YEARLY** StoreKit subscriptions + restore (`expo-iap`), демо лише в dev  
 - Privacy / Support лінки в Settings  
 - Error boundary  
 

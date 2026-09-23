@@ -4,7 +4,7 @@ PayPace can sync one household budget between two phones (you + partner). **Shar
 
 ## How it works
 
-1. Unlock Plus (Settings → **TRY PLUS (DEMO)** for now)
+1. Unlock Plus (Settings → **PLUS MONTHLY** / **PLUS YEARLY**, or **TRY PLUS (DEMO)** in `__DEV__`)
 2. One person opens **Settings → Shared budget → Create**
 3. Shares the invite code
 4. Partner opens **Join**, enters name + code
