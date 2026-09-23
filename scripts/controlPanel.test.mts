@@ -253,12 +253,12 @@ section('controlPanel · buildControlPanelView');
 
 section('controlPanel · copy contracts (screens / chrome)');
 assertEq(CONTROL_PANEL_COPY.tabs.home, 'PACE', 'tab PACE');
-assertEq(CONTROL_PANEL_COPY.tabs.activity, 'SPEND', 'tab SPEND');
+assertEq(CONTROL_PANEL_COPY.tabs.activity, 'TRANSACTION', 'tab TRANSACTION');
 assertEq(CONTROL_PANEL_COPY.tabs.status, 'PACE', 'tab PACE status');
 assertEq(CONTROL_PANEL_COPY.tabs.settings, 'CONFIG', 'tab CONFIG');
 assertEq(CONTROL_PANEL_COPY.home.pacingLabel, 'RECOMMENDED PACING', 'pacing label');
 assertEq(CONTROL_PANEL_COPY.home.modulesLabel, 'MODULES', 'modules label');
-assertEq(CONTROL_PANEL_COPY.home.drainLogLabel, 'SPEND', 'drain log');
+assertEq(CONTROL_PANEL_COPY.home.drainLogLabel, 'TRANSACTION', 'drain log');
 assertEq(CONTROL_PANEL_COPY.home.logExpense, '+ LOG EXPENSE', 'log expense CTA');
 assertEq(CONTROL_PANEL_COPY.home.burnCriticalTitle, 'BURN RATE CRITICAL', 'burn alert');
 assertEq(CONTROL_PANEL_COPY.home.modulesPlusTitle, 'MODULES · PLUS', 'plus upsell title');
@@ -268,10 +268,10 @@ assertEq(CONTROL_PANEL_COPY.status.sysTag, 'TELEMETRY // CYCLE HEALTH', 'status 
 assertEq(CONTROL_PANEL_COPY.status.poolLabel, 'RESOURCE POOL', 'pool label');
 assertEq(CONTROL_PANEL_COPY.status.trajectoryLabel, 'TRAJECTORY', 'trajectory label');
 assertEq(CONTROL_PANEL_COPY.status.timelineLabel, 'CHECKPOINT TIMELINE', 'timeline label');
-assertEq(CONTROL_PANEL_COPY.activity.title, 'SPEND', 'activity title');
-assertEq(CONTROL_PANEL_COPY.activity.sysTag, 'EXPENSES // THIS CYCLE', 'activity sys tag');
+assertEq(CONTROL_PANEL_COPY.activity.title, 'TRANSACTION', 'activity title');
+assertEq(CONTROL_PANEL_COPY.activity.sysTag, 'TRANSACTIONS // THIS CYCLE', 'activity sys tag');
 assertEq(CONTROL_PANEL_COPY.activity.totalLabel, 'TOTAL SPENT', 'total drain');
-assertEq(CONTROL_PANEL_COPY.activity.feedLabel, 'EXPENSE FEED', 'event feed');
+assertEq(CONTROL_PANEL_COPY.activity.feedLabel, 'TRANSACTION FEED', 'event feed');
 assertEq(CONTROL_PANEL_COPY.activity.empty, 'No expenses yet.', 'activity empty');
 assertEq(CONTROL_PANEL_COPY.onboarding.cta, 'INITIALIZE', 'onboarding CTA');
 assertEq(CONTROL_PANEL_COPY.onboarding.enter, 'ENTER CONTROL PANEL', 'enter CTA');

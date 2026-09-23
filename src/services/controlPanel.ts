@@ -193,7 +193,7 @@ export function buildControlPanelView(
 export const CONTROL_PANEL_COPY = {
   tabs: {
     home: 'PACE',
-    activity: 'SPEND',
+    activity: 'TRANSACTION',
     status: 'PACE',
     settings: 'CONFIG',
   },
@@ -203,7 +203,7 @@ export const CONTROL_PANEL_COPY = {
     pacingHint: 'Daily drain ceiling until next checkpoint',
     modulesLabel: 'MODULES',
     modulesPlusTitle: 'MODULES · PLUS',
-    drainLogLabel: 'SPEND',
+    drainLogLabel: 'TRANSACTION',
     drainEmpty: 'No expenses yet.',
     logExpense: '+ LOG EXPENSE',
     burnCriticalTitle: 'BURN RATE CRITICAL',
@@ -216,10 +216,10 @@ export const CONTROL_PANEL_COPY = {
     timelineLabel: 'CHECKPOINT TIMELINE',
   },
   activity: {
-    title: 'SPEND',
-    sysTag: 'EXPENSES // THIS CYCLE',
+    title: 'TRANSACTION',
+    sysTag: 'TRANSACTIONS // THIS CYCLE',
     totalLabel: 'TOTAL SPENT',
-    feedLabel: 'EXPENSE FEED',
+    feedLabel: 'TRANSACTION FEED',
     empty: 'No expenses yet.',
   },
   onboarding: {
