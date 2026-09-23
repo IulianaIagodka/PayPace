@@ -9,8 +9,11 @@ module.exports = ({ config }) => {
   const revenueCatIosKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY?.trim() || '';
   const revenueCatAndroidKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY?.trim() || '';
   const privacyPolicyUrl =
-    process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL?.trim() || 'https://paypace.app/privacy';
-  const supportUrl = process.env.EXPO_PUBLIC_SUPPORT_URL?.trim() || 'https://paypace.app/support';
+    process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL?.trim() ||
+    'https://iulianaiagodka.github.io/PayPace/privacy.html';
+  const supportUrl =
+    process.env.EXPO_PUBLIC_SUPPORT_URL?.trim() ||
+    'https://iulianaiagodka.github.io/PayPace/support.html';
   const plusProductId = process.env.EXPO_PUBLIC_PLUS_PRODUCT_ID?.trim() || 'app.paypace.plus';
   const plusEntitlementId = process.env.EXPO_PUBLIC_PLUS_ENTITLEMENT_ID?.trim() || 'plus';
 

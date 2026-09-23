@@ -28,9 +28,11 @@ export const PLUS_PRODUCT_ID = 'app.paypace.plus';
 export const PLUS_ENTITLEMENT_ID = 'plus';
 
 export const PRIVACY_POLICY_URL =
-  extra().privacyPolicyUrl?.trim() || 'https://paypace.app/privacy';
+  extra().privacyPolicyUrl?.trim() ||
+  'https://iulianaiagodka.github.io/PayPace/privacy.html';
 
-export const SUPPORT_URL = extra().supportUrl?.trim() || 'https://paypace.app/support';
+export const SUPPORT_URL =
+  extra().supportUrl?.trim() || 'https://iulianaiagodka.github.io/PayPace/support.html';
 
 /** Demo unlock is only for local/dev builds — never production store builds. */
 export function allowDemoPremiumUnlock(): boolean {

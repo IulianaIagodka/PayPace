@@ -51,8 +51,8 @@ Also set in `.env` / EAS when ready:
 
 ```bash
 EXPO_PUBLIC_REVENUECAT_IOS_KEY=appl_...
-EXPO_PUBLIC_PRIVACY_POLICY_URL=https://paypace.app/privacy
-EXPO_PUBLIC_SUPPORT_URL=https://paypace.app/support
+EXPO_PUBLIC_PRIVACY_POLICY_URL=https://iulianaiagodka.github.io/PayPace/privacy.html
+EXPO_PUBLIC_SUPPORT_URL=https://iulianaiagodka.github.io/PayPace/support.html
 ```
 
 ## Preview

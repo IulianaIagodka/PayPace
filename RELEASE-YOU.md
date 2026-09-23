@@ -32,10 +32,14 @@
 
 ## 3. Юридичка й стор-метадані
 
-1. Опублікуй **Privacy Policy** (камера, фото, AI-скан чеків, опційно Supabase).  
-   URL має відкриватись з Settings → PRIVACY POLICY.
-2. App Store Connect: опис, ключові слова, скріншоти, age rating, Privacy Nutrition Labels (камера, Photos, якщо є analytics — вказати).
-3. Support URL / email для Review.
+1. **Privacy / Support уже в репо:** папка `docs/` → GitHub Pages  
+   - Privacy: https://iulianaiagodka.github.io/PayPace/privacy.html  
+   - Support: https://iulianaiagodka.github.io/PayPace/support.html  
+2. Увімкни Pages один раз: GitHub → **Settings → Pages → Build and deployment**  
+   - Source: **Deploy from a branch**  
+   - Branch: **`main`** (після мерджу) → folder **`/docs`** → Save  
+3. App Store Connect: опис, ключові слова, скріншоти, age rating, Privacy Nutrition Labels (камера, Photos).  
+4. У ASC вкажи ті самі Privacy / Support URL.
 
 ## 4. Supabase для Shared Budget
 

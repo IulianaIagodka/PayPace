@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PayPace</title>
+    <meta name="description" content="PayPace — payday to payday budgeting." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="wrap">
+      <p class="brand">PAY<span>PACE</span></p>
+      <nav>
+        <a href="index.html" aria-current="page">Home</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="support.html">Support</a>
+      </nav>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <h1>Money is energy.</h1>
+        <p>
+          PayPace helps you pace spending from payday to payday — safe-to-spend,
+          bills, and optional Plus tools for receipts and shared budgets.
+        </p>
+        <a class="cta" href="privacy.html">Privacy Policy</a>
+        <a class="cta" href="support.html" style="margin-left: 0.5rem">Support</a>
+      </section>
+    </main>
+
+    <footer class="wrap foot">
+      <p>© <span id="y"></span> PayPace · App Store listing coming soon</p>
+    </footer>
+    <script>
+      document.getElementById('y').textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>

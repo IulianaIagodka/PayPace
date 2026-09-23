@@ -1,0 +1,141 @@
+:root {
+  color-scheme: dark;
+  --bg: #0a0806;
+  --ink: #e4dcd0;
+  --muted: #9a9080;
+  --accent: #6faf45;
+  --line: #5a5040;
+  --card: #14110d;
+  --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #1a1410 0%, transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, #12180e 0%, transparent 45%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: 1.55;
+}
+
+.wrap {
+  width: min(720px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+header.wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 0 0.5rem;
+}
+
+.brand {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  font-size: 1.05rem;
+}
+
+.brand span {
+  color: var(--accent);
+}
+
+nav {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+nav a[aria-current='page'],
+nav a:hover {
+  color: var(--accent);
+}
+
+.prose {
+  padding: 1.5rem 0 3rem;
+}
+
+.prose h1 {
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  letter-spacing: 0.04em;
+  margin: 0 0 0.35rem;
+}
+
+.prose h2 {
+  margin-top: 1.75rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 0;
+}
+
+.prose a {
+  color: var(--accent);
+}
+
+.prose ul {
+  padding-left: 1.2rem;
+}
+
+.hero {
+  margin: 2rem 0 1rem;
+  padding: 1.4rem 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+
+.hero h1 {
+  margin: 0 0 0.5rem;
+}
+
+.hero p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.cta {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.65rem 1rem;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.foot {
+  border-top: 1px solid var(--line);
+  padding: 1.25rem 0 2rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
