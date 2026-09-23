@@ -670,10 +670,13 @@ const styles = StyleSheet.create({
     letterSpacing: 2.6,
   },
   btnPlus: {
-    fontSize: 15,
-    lineHeight: 18,
+    fontSize: 24,
+    lineHeight: 24,
     letterSpacing: 0,
     marginRight: 8,
+    marginTop: -1,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   barTrack: {
     flexDirection: 'row',
