@@ -77,19 +77,7 @@ export function SettingsScreen({ navigation }: Props) {
               onPress={() => navigation.navigate('Allocate')}
               variant="secondary"
             />
-          ) : (
-            <>
-              <Text style={styles.subTight}>
-                Allocate resources is Plus — split the cycle across categories and track what’s left
-                in each.
-              </Text>
-              <HudButton
-                title="UNLOCK ALLOCATE · PLUS"
-                onPress={() => setPremium(true)}
-                variant="secondary"
-              />
-            </>
-          )}
+          ) : null}
           <HudButton
             title="EDIT CYCLE"
             onPress={() => navigation.navigate('PayCycle')}
@@ -100,11 +88,11 @@ export function SettingsScreen({ navigation }: Props) {
 
         <Panel>
           <Text style={styles.section}>SHARE</Text>
-          <Text style={styles.subTight}>
-            {household
-              ? `Linked · ${household.members.map((m) => m.displayName).join(' & ')}`
-              : 'Plus · share one budget with your partner.'}
-          </Text>
+          {household ? (
+            <Text style={styles.subTight}>
+              Linked · {household.members.map((m) => m.displayName).join(' & ')}
+            </Text>
+          ) : null}
           <HudButton
             title="SHARED BUDGET"
             onPress={() => navigation.navigate('SharedBudget')}
@@ -142,8 +130,9 @@ export function SettingsScreen({ navigation }: Props) {
           <View style={styles.divider} />
           <Text style={styles.label}>PLUS</Text>
           <Text style={styles.subTight}>
-            Free: balance, safe-to-spend, bills, expenses. Plus: categories, receipts, statements,
-            history, shared budget.
+            Free: balance, safe-to-spend, bills, expenses.{'\n'}
+            Plus: allocate by category, custom categories, receipts, statements, history, shared
+            budget.
           </Text>
           {s.isPremium ? (
             <HudButton
@@ -155,36 +144,29 @@ export function SettingsScreen({ navigation }: Props) {
             <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} variant="secondary" />
           )}
 
-          <View style={styles.divider} />
-          <Text style={styles.label}>CUSTOM CATEGORIES</Text>
-          <Text style={styles.subTight}>
-            Plus · add your own (Pets, Gym, Travel…). They show up when you log and allocate.
-          </Text>
           {s.isPremium ? (
             <>
-              {customs.length === 0 ? (
-                <Text style={styles.subTight}>No custom categories yet.</Text>
-              ) : (
-                customs.map((c) => (
-                  <View key={c.id} style={styles.customRow}>
-                    <Text style={styles.customName}>{c.title}</Text>
-                    <Pressable
-                      onPress={() =>
-                        Alert.alert('Remove category?', c.title, [
-                          { text: 'Cancel', style: 'cancel' },
-                          {
-                            text: 'Remove',
-                            style: 'destructive',
-                            onPress: () => removeCustomCategory(c.id),
-                          },
-                        ])
-                      }
-                    >
-                      <Text style={styles.remove}>Remove</Text>
-                    </Pressable>
-                  </View>
-                ))
-              )}
+              <View style={styles.divider} />
+              <Text style={styles.label}>CUSTOM CATEGORIES</Text>
+              {customs.map((c) => (
+                <View key={c.id} style={styles.customRow}>
+                  <Text style={styles.customName}>{c.title}</Text>
+                  <Pressable
+                    onPress={() =>
+                      Alert.alert('Remove category?', c.title, [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Remove',
+                          style: 'destructive',
+                          onPress: () => removeCustomCategory(c.id),
+                        },
+                      ])
+                    }
+                  >
+                    <Text style={styles.remove}>Remove</Text>
+                  </Pressable>
+                </View>
+              ))}
               <TextInput
                 value={newCategory}
                 onChangeText={setNewCategory}
@@ -206,9 +188,7 @@ export function SettingsScreen({ navigation }: Props) {
                 variant="secondary"
               />
             </>
-          ) : (
-            <Text style={styles.subTight}>Unlock Plus above to add custom categories.</Text>
-          )}
+          ) : null}
         </Panel>
       </FormScroll>
     </ScreenBackground>
