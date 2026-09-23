@@ -4,17 +4,23 @@ import {
   fetchProducts,
   finishTransaction,
   getAvailablePurchases,
+  hasActiveSubscriptions,
   initConnection,
   purchaseErrorListener,
   purchaseUpdatedListener,
   requestPurchase,
   restorePurchases,
   isUserCancelledError,
+  type ProductSubscription,
   type Purchase,
 } from 'expo-iap';
 
+export type PlusPlan = 'monthly' | 'yearly';
+
 type Extra = {
   plusProductId?: string;
+  plusMonthlyProductId?: string;
+  plusYearlyProductId?: string;
   privacyPolicyUrl?: string;
   supportUrl?: string;
 };
@@ -23,8 +29,12 @@ function extra(): Extra {
   return (Constants.expoConfig?.extra ?? {}) as Extra;
 }
 
-/** App Store Connect product id (Non-Consumable or subscription). */
-export const PLUS_PRODUCT_ID = 'app.paypace.plus';
+/** Auto-renewable subscription product ids (App Store Connect). */
+export const PLUS_MONTHLY_PRODUCT_ID = 'app.paypace.plus.monthly';
+export const PLUS_YEARLY_PRODUCT_ID = 'app.paypace.plus.yearly';
+
+/** Legacy one-time / single SKU — still accepted on restore if present. */
+export const PLUS_LEGACY_PRODUCT_ID = 'app.paypace.plus';
 
 export const PRIVACY_POLICY_URL =
   extra().privacyPolicyUrl?.trim() ||
@@ -38,8 +48,26 @@ export function allowDemoPremiumUnlock(): boolean {
   return typeof __DEV__ !== 'undefined' && __DEV__;
 }
 
-export function plusProductId(): string {
-  return extra().plusProductId?.trim() || PLUS_PRODUCT_ID;
+export function plusMonthlyProductId(): string {
+  return extra().plusMonthlyProductId?.trim() || PLUS_MONTHLY_PRODUCT_ID;
+}
+
+export function plusYearlyProductId(): string {
+  return extra().plusYearlyProductId?.trim() || PLUS_YEARLY_PRODUCT_ID;
+}
+
+export function plusProductIdForPlan(plan: PlusPlan): string {
+  return plan === 'yearly' ? plusYearlyProductId() : plusMonthlyProductId();
+}
+
+/** All Plus SKUs that unlock entitlement (subs + legacy). */
+export function plusEntitlementProductIds(): string[] {
+  const legacy = extra().plusProductId?.trim() || PLUS_LEGACY_PRODUCT_ID;
+  return [...new Set([plusMonthlyProductId(), plusYearlyProductId(), legacy])];
+}
+
+export function plusSubscriptionProductIds(): string[] {
+  return [plusMonthlyProductId(), plusYearlyProductId()];
 }
 
 /** StoreKit / Play Billing — available on native device builds (not Expo Go web). */
@@ -69,11 +97,16 @@ export type PlusPurchaseResult =
   | { status: 'unavailable'; message: string }
   | { status: 'error'; message: string };
 
-function ownsPlus(purchases: Purchase[], sku: string): boolean {
-  return purchases.some((p) => p.productId === sku);
+function ownsPlusSku(productId: string | null | undefined): boolean {
+  if (!productId) return false;
+  return plusEntitlementProductIds().includes(productId);
 }
 
-async function purchasePlusProduct(sku: string): Promise<Purchase> {
+function ownsPlusFromPurchases(purchases: Purchase[]): boolean {
+  return purchases.some((p) => ownsPlusSku(p.productId));
+}
+
+async function purchasePlusSubscription(sku: string, product: ProductSubscription): Promise<Purchase> {
   return new Promise((resolve, reject) => {
     let settled = false;
     const finish = (fn: () => void) => {
@@ -101,12 +134,29 @@ async function purchasePlusProduct(sku: string): Promise<Purchase> {
       finish(() => reject(error));
     });
 
+    const androidOffers =
+      Platform.OS === 'android'
+        ? (product.subscriptionOffers ?? [])
+            .map((offer) => {
+              const token =
+                'offerTokenAndroid' in offer
+                  ? (offer as { offerTokenAndroid?: string | null }).offerTokenAndroid
+                  : null;
+              if (!token) return null;
+              return { sku, offerToken: token };
+            })
+            .filter(Boolean)
+        : null;
+
     void requestPurchase({
       request: {
         apple: { sku },
-        google: { skus: [sku] },
+        google: {
+          skus: [sku],
+          ...(androidOffers?.length ? { subscriptionOffers: androidOffers as { sku: string; offerToken: string }[] } : {}),
+        },
       },
-      type: 'in-app',
+      type: 'subs',
     }).catch((error) => {
       finish(() => reject(error));
     });
@@ -116,36 +166,51 @@ async function purchasePlusProduct(sku: string): Promise<Purchase> {
 export async function refreshPlusEntitlement(): Promise<boolean> {
   if (!(await configurePlusBilling())) return false;
   try {
-    const sku = plusProductId();
+    const subIds = plusSubscriptionProductIds();
+    if (await hasActiveSubscriptions(subIds)) return true;
+
     const purchases = await getAvailablePurchases();
-    return ownsPlus(purchases, sku);
+    return ownsPlusFromPurchases(purchases);
   } catch {
     return false;
   }
 }
 
-export async function purchasePlus(): Promise<PlusPurchaseResult> {
+export async function fetchPlusSubscriptionProducts(): Promise<ProductSubscription[]> {
+  if (!(await configurePlusBilling())) return [];
+  try {
+    const products = await fetchProducts({
+      skus: plusSubscriptionProductIds(),
+      type: 'subs',
+    });
+    return (Array.isArray(products) ? products : []) as ProductSubscription[];
+  } catch {
+    return [];
+  }
+}
+
+export async function purchasePlus(plan: PlusPlan = 'monthly'): Promise<PlusPurchaseResult> {
   if (!(await configurePlusBilling())) {
     return {
       status: 'unavailable',
       message:
-        'In-app purchases need a native iOS/Android build (TestFlight / device). Create product app.paypace.plus in App Store Connect (see RELEASE-YOU.md).',
+        'In-app purchases need a native iOS/Android build (TestFlight / device). Create Plus subscriptions in App Store Connect (see RELEASE-YOU.md).',
     };
   }
 
-  const sku = plusProductId();
+  const sku = plusProductIdForPlan(plan);
   try {
-    const products = await fetchProducts({ skus: [sku], type: 'in-app' });
-    const list = Array.isArray(products) ? products : [];
-    if (!list.length) {
+    const products = await fetchPlusSubscriptionProducts();
+    const product = products.find((p) => p.id === sku);
+    if (!product) {
       return {
         status: 'unavailable',
-        message: `StoreKit found no product “${sku}”. Create it in App Store Connect and wait for it to become Available for Sale / Ready to Submit.`,
+        message: `StoreKit found no subscription “${sku}”. Create monthly + yearly Auto-Renewable Subscriptions in App Store Connect and wait until they are Ready to Submit.`,
       };
     }
 
-    const purchase = await purchasePlusProduct(sku);
-    if (purchase.productId === sku) return { status: 'purchased' };
+    const purchase = await purchasePlusSubscription(sku, product);
+    if (ownsPlusSku(purchase.productId)) return { status: 'purchased' };
     return {
       status: 'error',
       message: 'Purchase finished but Plus was not found on the receipt.',
@@ -167,9 +232,8 @@ export async function restorePlusPurchases(): Promise<PlusPurchaseResult> {
   }
   try {
     await restorePurchases();
-    const sku = plusProductId();
-    const purchases = await getAvailablePurchases();
-    return { status: 'restored', active: ownsPlus(purchases, sku) };
+    const active = await refreshPlusEntitlement();
+    return { status: 'restored', active };
   } catch (error: unknown) {
     if (isUserCancelledError(error)) return { status: 'cancelled' };
     const message =
@@ -182,25 +246,28 @@ export async function restorePlusPurchases(): Promise<PlusPurchaseResult> {
 export async function unlockPlus(opts: {
   setPremium: (enabled: boolean) => Promise<void>;
   preferRestore?: boolean;
+  plan?: PlusPlan;
 }): Promise<void> {
   if (allowDemoPremiumUnlock()) {
     await opts.setPremium(true);
     return;
   }
 
-  const result = opts.preferRestore ? await restorePlusPurchases() : await purchasePlus();
+  const result = opts.preferRestore
+    ? await restorePlusPurchases()
+    : await purchasePlus(opts.plan ?? 'monthly');
 
   if (result.status === 'purchased') {
     await opts.setPremium(true);
-    Alert.alert('Plus unlocked', 'Thanks — Plus features are on.');
+    Alert.alert('Plus unlocked', 'Thanks — your Plus subscription is active.');
     return;
   }
   if (result.status === 'restored') {
     if (result.active) {
       await opts.setPremium(true);
-      Alert.alert('Restored', 'Your Plus purchase is active on this device.');
+      Alert.alert('Restored', 'Your Plus subscription is active on this device.');
     } else {
-      Alert.alert('Nothing to restore', 'No active Plus purchase found for this Apple ID.');
+      Alert.alert('Nothing to restore', 'No active Plus subscription found for this Apple ID.');
     }
     return;
   }

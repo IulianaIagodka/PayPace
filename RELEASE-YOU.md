@@ -13,20 +13,25 @@
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Shared budget sync |
 | `EXPO_PUBLIC_PRIVACY_POLICY_URL` | Опційно (за замовч. GitHub Pages privacy) |
 | `EXPO_PUBLIC_SUPPORT_URL` | Опційно (за замовч. GitHub Pages support) |
-| `EXPO_PUBLIC_PLUS_PRODUCT_ID` | Опційно (за замовч. `app.paypace.plus`) |
+| `EXPO_PUBLIC_PLUS_MONTHLY_PRODUCT_ID` | Опційно (за замовч. `app.paypace.plus.monthly`) |
+| `EXPO_PUBLIC_PLUS_YEARLY_PRODUCT_ID` | Опційно (за замовч. `app.paypace.plus.yearly`) |
+| `EXPO_PUBLIC_PLUS_PRODUCT_ID` | Опційно, legacy restore (`app.paypace.plus`) |
 
 Локально на Mac — ті самі в `.env` (не комітити). Після зміни ключів — **новий білд**.
 
-Plus **не** потребує RevenueCat — лише StoreKit + продукт у App Store Connect.
+Plus **не** потребує RevenueCat — лише StoreKit + підписки у App Store Connect.
 
-## 2. Plus = покупка через StoreKit
+## 2. Plus = місячна + річна підписка (StoreKit)
 
-1. [App Store Connect](https://appstoreconnect.apple.com) → PayPace → **In-App Purchases**
-2. Створи **Non-Consumable** (або підписку, якщо хочеш recurring) з Product ID **`app.paypace.plus`**
-3. Заповни ціну, локалізації, review screenshot для IAP
-4. Додай продукт до версії додатку (Agreements / Paid Apps якщо ще не прийняті)
-5. Збери **TestFlight** (або production) і на **фізичному iPhone** з Sandbox Apple ID перевір:
-   - Settings → **GET PLUS**
+1. [App Store Connect](https://appstoreconnect.apple.com) → PayPace → **Subscriptions**
+2. Створи **Subscription Group** (наприклад `PayPace Plus`)
+3. У групі додай **два Auto-Renewable Subscriptions**:
+   - Product ID **`app.paypace.plus.monthly`** — 1 month
+   - Product ID **`app.paypace.plus.yearly`** — 1 year
+4. Заповни ціни, локалізації, review screenshot для підписок
+5. Додай обидва продукти до версії додатку (Agreements / Paid Apps якщо ще не прийняті)
+6. Збери **TestFlight** і на **фізичному iPhone** з Sandbox Apple ID перевір:
+   - Settings → **PLUS MONTHLY** / **PLUS YEARLY**
    - Settings → **RESTORE PURCHASES**
 
 > У `__DEV__` лишається **TRY PLUS (DEMO)**. У стор-білді демо вимкнене — лише StoreKit.
@@ -71,7 +76,7 @@ Actions: https://github.com/IulianaIagodka/PayPace/actions
 ## Готово до сабміту, коли
 
 - [ ] EAS secrets (OpenAI / Supabase) виставлені  
-- [ ] IAP продукт `app.paypace.plus` живий; покупка проходить у Sandbox на девайсі  
+- [ ] Підписки `app.paypace.plus.monthly` + `app.paypace.plus.yearly` живі; покупка проходить у Sandbox на девайсі  
 - [ ] Privacy policy URL відкривається (GitHub Pages увімкнено)  
 - [ ] ASC метадані + скріни готові  
 - [ ] Новий білд з `main` після мерджу цього PR  

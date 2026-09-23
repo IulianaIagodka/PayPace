@@ -162,7 +162,10 @@ export function SettingsScreen({ navigation }: Props) {
                 variant="secondary"
               />
             ) : (
-              <Text style={styles.subTight}>Plus is active on this device.</Text>
+              <Text style={styles.subTight}>
+                Plus subscription is active on this device. Manage or cancel in Apple ID
+                settings.
+              </Text>
             )
           ) : (
             <>

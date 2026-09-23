@@ -13,6 +13,10 @@ module.exports = ({ config }) => {
     process.env.EXPO_PUBLIC_SUPPORT_URL?.trim() ||
     'https://iulianaiagodka.github.io/PayPace/support.html';
   const plusProductId = process.env.EXPO_PUBLIC_PLUS_PRODUCT_ID?.trim() || 'app.paypace.plus';
+  const plusMonthlyProductId =
+    process.env.EXPO_PUBLIC_PLUS_MONTHLY_PRODUCT_ID?.trim() || 'app.paypace.plus.monthly';
+  const plusYearlyProductId =
+    process.env.EXPO_PUBLIC_PLUS_YEARLY_PRODUCT_ID?.trim() || 'app.paypace.plus.yearly';
 
   return {
     ...config,
@@ -24,6 +28,8 @@ module.exports = ({ config }) => {
       privacyPolicyUrl,
       supportUrl,
       plusProductId,
+      plusMonthlyProductId,
+      plusYearlyProductId,
       EXPO_PUBLIC_OPENAI_API_KEY: openaiApiKey,
       EXPO_PUBLIC_SUPABASE_URL: supabaseUrl,
       EXPO_PUBLIC_SUPABASE_ANON_KEY: supabaseAnonKey,
