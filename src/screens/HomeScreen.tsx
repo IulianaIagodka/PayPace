@@ -210,7 +210,7 @@ export function HomeScreen({ navigation }: Props) {
           <View style={styles.recentHead}>
             <Text style={hudType.label}>RECENT</Text>
             <Pressable onPress={() => navigation.navigate('Activity')}>
-              <Text style={styles.seeAll}>TRANS ›</Text>
+              <Text style={styles.seeAll}>SPEND ›</Text>
             </Pressable>
           </View>
           <HUDPanel variant="standard">

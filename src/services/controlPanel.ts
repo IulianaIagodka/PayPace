@@ -192,10 +192,10 @@ export function buildControlPanelView(
 /** Copy / chrome contracts for the control-panel redesign. */
 export const CONTROL_PANEL_COPY = {
   tabs: {
-    home: 'PACE',
-    activity: 'TRANS',
+    home: 'HOME',
+    activity: 'SPEND',
     status: 'PACE',
-    settings: 'CONFIG',
+    settings: 'SETTINGS',
   },
   home: {
     sysTag: 'RESOURCE CONTROL // PAYDAY CYCLE',
@@ -203,7 +203,7 @@ export const CONTROL_PANEL_COPY = {
     pacingHint: 'Daily drain ceiling until next checkpoint',
     modulesLabel: 'MODULES',
     modulesPlusTitle: 'MODULES · PLUS',
-    drainLogLabel: 'TRANS',
+    drainLogLabel: 'SPEND',
     drainEmpty: 'No expenses yet.',
     logExpense: '+ LOG EXPENSE',
     burnCriticalTitle: 'BURN RATE CRITICAL',
@@ -216,11 +216,11 @@ export const CONTROL_PANEL_COPY = {
     timelineLabel: 'CHECKPOINT TIMELINE',
   },
   activity: {
-    title: 'TRANS',
-    sysTag: 'TRANSACTIONS // THIS CYCLE',
+    title: 'SPEND',
+    sysTag: 'EXPENSE LOG // THIS CYCLE',
     totalLabel: 'TOTAL SPENT',
-    feedLabel: 'TRANSACTION FEED',
-    empty: 'No expenses yet.',
+    feedLabel: 'BY DAY',
+    empty: 'No expenses yet. Log one to start the ledger.',
   },
   onboarding: {
     title: 'Your money control panel.\nSurvive until payday.',
