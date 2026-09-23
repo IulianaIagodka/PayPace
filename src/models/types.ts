@@ -123,8 +123,8 @@ export interface AppSettings {
   displayName: string;
   /** Week start: 0=Sun … 6=Sat (date-fns). Default Monday = 1. */
   weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  /** Show remaining for the current calendar week or month (categories follow). */
-  paceHorizon: 'week' | 'month';
+  /** Show remaining for today, the current calendar week, or until payday. */
+  paceHorizon: 'day' | 'week' | 'month';
   /** User-defined categories (Plus). */
   customCategories: CustomCategory[];
 }

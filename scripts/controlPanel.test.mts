@@ -130,17 +130,24 @@ assertEq(statusToneFor('ON PACE'), 'ok', 'on pace tone');
 section('controlPanel · reserves / runway / horizon');
 assertEq(reservesLabelFor('week'), 'RESERVES · THIS WEEK', 'week reserves label');
 assertEq(reservesLabelFor('month'), 'RESERVES · UNTIL CHECKPOINT', 'month reserves label');
+assertEq(reservesLabelFor('day'), 'RESERVES · TODAY', 'day reserves label');
 assertEq(reservesAmountFor('week', snap()), 1000, 'week uses week safe');
 assertEq(reservesAmountFor('month', snap()), 4000, 'month uses remaining');
+assertEq(reservesAmountFor('day', snap()), 200, 'day uses safe today');
 assertEq(reservesAmountFor('month', snap({ remainingUntilPayday: -50 })), 0, 'floor at 0');
 assertEq(runwayMetaFor('week', snap()), '5 days left in week', 'week runway meta');
 assertEq(runwayMetaFor('month', snap()), '20 days to payday', 'month runway meta');
+assertEq(runwayMetaFor('day', snap()), 'today', 'day runway meta');
 assertEq(
   weekCycleHint('week', 4000, 20, (n) => `$${n}`),
   'Cycle left $4000 · 20 days to payday',
   'week hint text',
 );
 assertEq(weekCycleHint('month', 4000, 20, (n) => `$${n}`), null, 'month has no week hint');
+assert(
+  weekCycleHint('day', 4000, 20, (n) => `$${n}`)?.includes('Cycle left') === true,
+  'day still shows cycle hint',
+);
 
 section('controlPanel · module grid helpers');
 assert(CONTROL_GRID_KEYS.length === 5, 'five core modules');

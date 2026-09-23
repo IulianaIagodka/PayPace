@@ -62,7 +62,11 @@ export function AddExpenseScreen({ navigation }: Props) {
           </Pressable>
           <Pressable
             style={styles.importCard}
-            onPress={() => navigation.navigate('StatementImport', { horizon: store.settings.paceHorizon ?? 'week' })}
+            onPress={() =>
+              navigation.navigate('StatementImport', {
+                horizon: store.settings.paceHorizon === 'month' ? 'month' : 'week',
+              })
+            }
           >
             <Ionicons name="document-text-outline" size={22} color={colors.resource} />
             <Text style={styles.importTitle}>BANK FILE</Text>

@@ -33,7 +33,14 @@ export function StatementImportScreen({ navigation, route }: Props) {
   const currency = store.settings.currencyCode;
   const custom = store.settings.customCategories ?? [];
   const weekStartsOn = store.settings.weekStartsOn ?? 1;
-  const horizon = route.params?.horizon ?? store.settings.paceHorizon ?? 'week';
+  const horizon =
+    route.params?.horizon === 'month'
+      ? 'month'
+      : route.params?.horizon === 'week'
+        ? 'week'
+        : store.settings.paceHorizon === 'month'
+          ? 'month'
+          : 'week';
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [fileLabel, setFileLabel] = useState<string | null>(null);

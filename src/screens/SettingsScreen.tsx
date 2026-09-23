@@ -18,6 +18,7 @@ type Props = CompositeScreenProps<
 >;
 
 const HORIZON_OPTIONS: Array<{ value: PaceHorizon; label: string }> = [
+  { value: 'day', label: 'Day' },
   { value: 'week', label: 'Week' },
   { value: 'month', label: 'Until payday' },
 ];

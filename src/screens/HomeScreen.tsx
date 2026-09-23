@@ -22,6 +22,15 @@ import { hud, hudType } from '../theme/hud';
 import { formatMoney, formatDays } from '../services/formatting';
 import { envelopeStatuses } from '../services/envelopes';
 import { moneyStatusFromSnapshot, moneyStatusLabel } from '../services/moneyStatus';
+import {
+  AVAILABLE_RANGE_OPTIONS,
+  availableAmountFor,
+  availableHorizonLabel,
+  availableLabelFor,
+  availableMetaLeftFor,
+  availablePeriodShare,
+  availableRatioFor,
+} from '../services/availableRange';
 import type { PaceHorizon } from '../models/calculator';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
@@ -34,21 +43,22 @@ type Props = CompositeScreenProps<
 const POPULAR_KEYS = ['food', 'home', 'kids', 'fun', 'transport', 'other'] as const;
 
 export function HomeScreen({ navigation }: Props) {
-  const { activeCycle, snapshot, store, setPremium } = useBudget();
+  const { activeCycle, snapshot, store, setPremium, updateSettings } = useBudget();
   const currency = store.settings.currencyCode;
   const horizon: PaceHorizon = store.settings.paceHorizon ?? 'week';
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
-  const prevRatio = useRef(snapshot.resourcesRemainingRatio);
+  const availableRatioLive = availableRatioFor(horizon, snapshot);
+  const prevRatio = useRef(availableRatioLive);
 
   useEffect(() => {
-    if (prevRatio.current > snapshot.resourcesRemainingRatio) {
+    if (prevRatio.current > availableRatioLive) {
       setDrainFrom(prevRatio.current);
       const t = setTimeout(() => setDrainFrom(undefined), 220);
-      prevRatio.current = snapshot.resourcesRemainingRatio;
+      prevRatio.current = availableRatioLive;
       return () => clearTimeout(t);
     }
-    prevRatio.current = snapshot.resourcesRemainingRatio;
-  }, [snapshot.resourcesRemainingRatio]);
+    prevRatio.current = availableRatioLive;
+  }, [availableRatioLive]);
 
   const modules = useMemo(
     () => (activeCycle ? envelopeStatuses(activeCycle) : []),
@@ -85,17 +95,14 @@ export function HomeScreen({ navigation }: Props) {
     );
   }
 
-  const available = Math.max(snapshot.remainingUntilPayday, 0);
-  const pct = Math.round(snapshot.resourcesRemainingRatio * 100);
   const safe = Math.max(snapshot.safeToSpendToday, 0);
-  const isWeek = horizon === 'week';
-  const periodSafe = Math.max(
-    isWeek ? snapshot.safeToSpendThisWeek : snapshot.safeToSpendThisMonth,
-    0,
-  );
-  const periodShare = isWeek ? snapshot.weekShare : snapshot.monthShare;
-  const horizonLabel = isWeek ? 'WEEK' : 'CYCLE';
-  const availableLabel = isWeek ? 'AVAILABLE THIS WEEK' : 'AVAILABLE UNTIL PAYDAY';
+  const availableAmount = availableAmountFor(horizon, snapshot);
+  const availableRatio = availableRatioLive;
+  const pct = Math.round(availableRatio * 100);
+  const periodShare = availablePeriodShare(horizon, snapshot);
+  const horizonLabel = availableHorizonLabel(horizon);
+  const availableLabel = availableLabelFor(horizon);
+  const metaLeft = availableMetaLeftFor(horizon, snapshot, pct);
   const safeColor =
     snapshot.remainingUntilPayday < 0 ? colors.danger : colors.safeValue;
   const moneyStatus = moneyStatusFromSnapshot(snapshot);
@@ -117,15 +124,31 @@ export function HomeScreen({ navigation }: Props) {
         </HUDPanel>
 
         <HUDPanel variant="standard" label={availableLabel}>
-          <HudValue>{formatMoney(isWeek ? periodSafe : available, currency)}</HudValue>
+          <View style={styles.rangeRow}>
+            {AVAILABLE_RANGE_OPTIONS.map((opt) => {
+              const on = opt.value === horizon;
+              return (
+                <Pressable
+                  key={opt.value}
+                  onPress={() => updateSettings({ paceHorizon: opt.value })}
+                  style={[styles.rangeBtn, on && styles.rangeBtnOn]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                >
+                  <Text style={[styles.rangeText, on && styles.rangeTextOn]}>{opt.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <HudValue>{formatMoney(availableAmount, currency)}</HudValue>
           <SegmentedBar
-            ratio={snapshot.resourcesRemainingRatio}
+            ratio={availableRatio}
             animateFrom={drainFrom}
             tipAmber
             height={22}
           />
           <View style={styles.metaRow}>
-            <HudMeta>{pct}% REMAINING</HudMeta>
+            <HudMeta>{metaLeft}</HudMeta>
             <HudMeta style={styles.daysMeta}>
               {formatDays(snapshot.daysUntilPayday)} to payday
             </HudMeta>
@@ -239,6 +262,34 @@ const styles = StyleSheet.create({
   daysMeta: {
     textTransform: 'none',
     letterSpacing: 0.4,
+  },
+  rangeRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  rangeBtn: {
+    flex: 1,
+    minHeight: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: hud.stroke,
+    borderColor: colors.border,
+    backgroundColor: colors.panelDeep,
+    paddingHorizontal: 6,
+  },
+  rangeBtnOn: {
+    borderColor: colors.borderBright,
+    backgroundColor: colors.panelAlt,
+  },
+  rangeText: {
+    color: colors.textDim,
+    fontSize: 11,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.6,
+  },
+  rangeTextOn: {
+    color: colors.ammo,
   },
   railBlock: { gap: hud.gap },
   railScroll: { overflow: 'visible' },

@@ -82,19 +82,23 @@ export function statusToneFor(label: StatusLabel): TelemetryTone {
 }
 
 export function reservesLabelFor(horizon: PaceHorizon): string {
-  return horizon === 'week' ? 'RESERVES · THIS WEEK' : 'RESERVES · UNTIL CHECKPOINT';
+  if (horizon === 'day') return 'RESERVES · TODAY';
+  if (horizon === 'week') return 'RESERVES · THIS WEEK';
+  return 'RESERVES · UNTIL CHECKPOINT';
 }
 
 export function reservesAmountFor(
   horizon: PaceHorizon,
   snapshot: Pick<
     SafeSpendSnapshot,
-    'remainingUntilPayday' | 'safeToSpendThisWeek' | 'safeToSpendThisMonth'
+    | 'remainingUntilPayday'
+    | 'safeToSpendToday'
+    | 'safeToSpendThisWeek'
+    | 'safeToSpendThisMonth'
   >,
 ): number {
-  if (horizon === 'week') {
-    return Math.max(snapshot.safeToSpendThisWeek, 0);
-  }
+  if (horizon === 'day') return Math.max(snapshot.safeToSpendToday, 0);
+  if (horizon === 'week') return Math.max(snapshot.safeToSpendThisWeek, 0);
   return Math.max(snapshot.remainingUntilPayday, 0);
 }
 
@@ -102,6 +106,7 @@ export function runwayMetaFor(
   horizon: PaceHorizon,
   snapshot: Pick<SafeSpendSnapshot, 'daysLeftInWeek' | 'daysUntilPayday'>,
 ): string {
+  if (horizon === 'day') return 'today';
   if (horizon === 'week') {
     return `${daysLabel(snapshot.daysLeftInWeek)} left in week`;
   }
@@ -114,6 +119,9 @@ export function weekCycleHint(
   daysUntilPayday: number,
   formatMoney: (n: number) => string,
 ): string | null {
+  if (horizon === 'day') {
+    return `Cycle left ${formatMoney(Math.max(cycleReserve, 0))} · ${daysLabel(daysUntilPayday)} to payday`;
+  }
   if (horizon !== 'week') return null;
   return `Cycle left ${formatMoney(Math.max(cycleReserve, 0))} · ${daysLabel(daysUntilPayday)} to payday`;
 }
@@ -150,11 +158,17 @@ export function buildControlPanelView(
   formatMoney: (n: number) => string,
 ): ControlPanelView {
   const isWeek = horizon === 'week';
+  const isDay = horizon === 'day';
   const recommendedPacing = Math.max(snapshot.safeToSpendToday, 0);
   const burnDaily = burnRateDaily(snapshot.spentThisCycle, snapshot.daysElapsed);
   const burnHot = isBurnHot(burnDaily, recommendedPacing);
   const statusLabel = statusLabelFor(snapshot.trajectory, burnHot);
   const cycleReserve = Math.max(snapshot.remainingUntilPayday, 0);
+  const periodShare = isDay
+    ? 1 / Math.max(snapshot.daysUntilPayday, 1)
+    : isWeek
+      ? snapshot.weekShare
+      : snapshot.monthShare;
 
   return {
     reservesLabel: reservesLabelFor(horizon),
@@ -170,7 +184,7 @@ export function buildControlPanelView(
     statusTone: statusToneFor(statusLabel),
     chipLabel: systemChipLabel(snapshot.remainingUntilPayday, snapshot.isAtRisk),
     pacingTone: snapshot.remainingUntilPayday < 0 ? 'danger' : 'ok',
-    periodShare: isWeek ? snapshot.weekShare : snapshot.monthShare,
+    periodShare,
     isWeekHorizon: isWeek,
   };
 }

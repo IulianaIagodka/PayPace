@@ -14,7 +14,7 @@ import {
 
 export type { DayPaceLock };
 export type WeekStartsOn = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-export type PaceHorizon = 'week' | 'month';
+export type PaceHorizon = 'day' | 'week' | 'month';
 
 export const WEEK_START_OPTIONS: Array<{ value: WeekStartsOn; label: string; short: string }> = [
   { value: 1, label: 'Monday', short: 'MON' },
