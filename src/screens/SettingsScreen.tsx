@@ -86,19 +86,21 @@ export function SettingsScreen({ navigation }: Props) {
           <HudButton title="BILLS" onPress={() => navigation.navigate('Bills')} variant="secondary" />
         </Panel>
 
-        <Panel>
-          <Text style={styles.section}>SHARE</Text>
-          {household ? (
-            <Text style={styles.subTight}>
-              Linked · {household.members.map((m) => m.displayName).join(' & ')}
-            </Text>
-          ) : null}
-          <HudButton
-            title="SHARED BUDGET"
-            onPress={() => navigation.navigate('SharedBudget')}
-            variant="secondary"
-          />
-        </Panel>
+        {s.isPremium || household ? (
+          <Panel>
+            <Text style={styles.section}>SHARE</Text>
+            {household ? (
+              <Text style={styles.subTight}>
+                Linked · {household.members.map((m) => m.displayName).join(' & ')}
+              </Text>
+            ) : null}
+            <HudButton
+              title="SHARED BUDGET"
+              onPress={() => navigation.navigate('SharedBudget')}
+              variant="secondary"
+            />
+          </Panel>
+        ) : null}
 
         <Panel>
           <Text style={styles.section}>SYSTEM</Text>
