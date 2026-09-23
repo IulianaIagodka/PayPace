@@ -42,7 +42,6 @@
           "cameraPermission": "PayPace uses the camera to photograph receipts."
         }
       ],
-      "expo-notifications",
       "expo-iap"
     ],
     "extra": {
