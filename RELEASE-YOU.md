@@ -11,24 +11,27 @@
 | `EXPO_PUBLIC_OPENAI_API_KEY` | Скани чеків |
 | `EXPO_PUBLIC_SUPABASE_URL` | Shared budget sync |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Shared budget sync |
-| `EXPO_PUBLIC_REVENUECAT_IOS_KEY` | Покупки Plus (iOS public SDK key) |
-| `EXPO_PUBLIC_PRIVACY_POLICY_URL` | Посилання Privacy (якщо не `https://paypace.app/privacy`) |
-| `EXPO_PUBLIC_SUPPORT_URL` | Підтримка |
-| `EXPO_PUBLIC_PLUS_PRODUCT_ID` | ID продукту (за замовч. `app.paypace.plus`) |
-| `EXPO_PUBLIC_PLUS_ENTITLEMENT_ID` | Entitlement у RevenueCat (за замовч. `plus`) |
+| `EXPO_PUBLIC_PRIVACY_POLICY_URL` | Опційно (за замовч. GitHub Pages privacy) |
+| `EXPO_PUBLIC_SUPPORT_URL` | Опційно (за замовч. GitHub Pages support) |
+| `EXPO_PUBLIC_PLUS_PRODUCT_ID` | Опційно (за замовч. `app.paypace.plus`) |
 
 Локально на Mac — ті самі в `.env` (не комітити). Після зміни ключів — **новий білд**.
 
-## 2. Plus = реальна покупка (App Store + RevenueCat)
+Plus **не** потребує RevenueCat — лише StoreKit + продукт у App Store Connect.
 
-1. [App Store Connect](https://appstoreconnect.apple.com) → PayPace → In-App Purchases  
-   - Створи продукт (наприклад Non-Consumable або Auto-Renewable) з Product ID **`app.paypace.plus`** (або зміни `EXPO_PUBLIC_PLUS_PRODUCT_ID`).
-2. Зареєструйся / увійди в [RevenueCat](https://www.revenuecat.com), додай iOS app з bundle `app.paypace.PayPace`.
-3. У RevenueCat: Entitlement **`plus`** → прив’яжи App Store продукт; зроби **Current offering** з цим пакетом.
-4. Встав **iOS public API key** у `EXPO_PUBLIC_REVENUECAT_IOS_KEY`.
-5. Збери production / TestFlight і перевір **GET PLUS** + **RESTORE PURCHASES** (не Simulator для реальних покупок — Sandbox Apple ID на девайсі).
+## 2. Plus = покупка через StoreKit
 
-> У `__DEV__` лишається **TRY PLUS (DEMO)**. У стор-білді демо-розблокування вимкнене.
+1. [App Store Connect](https://appstoreconnect.apple.com) → PayPace → **In-App Purchases**
+2. Створи **Non-Consumable** (або підписку, якщо хочеш recurring) з Product ID **`app.paypace.plus`**
+3. Заповни ціну, локалізації, review screenshot для IAP
+4. Додай продукт до версії додатку (Agreements / Paid Apps якщо ще не прийняті)
+5. Збери **TestFlight** (або production) і на **фізичному iPhone** з Sandbox Apple ID перевір:
+   - Settings → **GET PLUS**
+   - Settings → **RESTORE PURCHASES**
+
+> У `__DEV__` лишається **TRY PLUS (DEMO)**. У стор-білді демо вимкнене — лише StoreKit.
+
+Симулятор / Expo Go для реальних покупок не підходять.
 
 ## 3. Юридичка й стор-метадані
 
@@ -61,14 +64,14 @@ Actions: https://github.com/IulianaIagodka/PayPace/actions
 - 3 безкоштовні скани чеків  
 - Shared Budget лише в Plus  
 - Statement більше не підставляє фейкові витрати  
-- Plus CTA → IAP / restore (RevenueCat), демо лише в dev  
+- Plus CTA → **StoreKit** purchase / restore (`expo-iap`), демо лише в dev  
 - Privacy / Support лінки в Settings  
 - Error boundary  
 
 ## Готово до сабміту, коли
 
-- [ ] EAS secrets виставлені  
-- [ ] RevenueCat + IAP продукт живі, покупка проходить у Sandbox  
-- [ ] Privacy policy URL відкривається  
+- [ ] EAS secrets (OpenAI / Supabase) виставлені  
+- [ ] IAP продукт `app.paypace.plus` живий; покупка проходить у Sandbox на девайсі  
+- [ ] Privacy policy URL відкривається (GitHub Pages увімкнено)  
 - [ ] ASC метадані + скріни готові  
 - [ ] Новий білд з `main` після мерджу цього PR  

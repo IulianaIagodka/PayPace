@@ -6,7 +6,7 @@ import {
 } from '../services/plusBilling';
 import { useBudget } from '../store/BudgetContext';
 
-/** Syncs Store / RevenueCat Plus entitlement into local settings after load. */
+/** Syncs App Store / StoreKit Plus ownership into local settings after load. */
 export function PlusEntitlementSync() {
   const { ready, store, setPremium } = useBudget();
 

@@ -44,13 +44,15 @@ Statement import throws if the file can’t be parsed (no invented expenses).
 | | Shared budget with a partner |
 
 - **Dev:** Settings → **TRY PLUS (DEMO)** (`__DEV__` only).  
-- **Store builds:** **GET PLUS** / **RESTORE PURCHASES** (RevenueCat + App Store IAP).  
+- **Store builds:** **GET PLUS** / **RESTORE PURCHASES** via Apple **StoreKit** (`expo-iap`).  
 - Your checklist: **[RELEASE-YOU.md](./RELEASE-YOU.md)**.
 
 Also set in `.env` / EAS when ready:
 
 ```bash
-EXPO_PUBLIC_REVENUECAT_IOS_KEY=appl_...
+EXPO_PUBLIC_OPENAI_API_KEY=sk-...
+EXPO_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 EXPO_PUBLIC_PRIVACY_POLICY_URL=https://iulianaiagodka.github.io/PayPace/privacy.html
 EXPO_PUBLIC_SUPPORT_URL=https://iulianaiagodka.github.io/PayPace/support.html
 ```

@@ -1,31 +1,30 @@
 import { Alert, Platform } from 'react-native';
 import Constants from 'expo-constants';
-import Purchases, {
-  LOG_LEVEL,
-  PURCHASES_ERROR_CODE,
-  type PurchasesPackage,
-} from 'react-native-purchases';
+import {
+  fetchProducts,
+  finishTransaction,
+  getAvailablePurchases,
+  initConnection,
+  purchaseErrorListener,
+  purchaseUpdatedListener,
+  requestPurchase,
+  restorePurchases,
+  isUserCancelledError,
+  type Purchase,
+} from 'expo-iap';
 
 type Extra = {
-  revenueCatIosKey?: string;
-  revenueCatAndroidKey?: string;
-  plusEntitlementId?: string;
   plusProductId?: string;
   privacyPolicyUrl?: string;
   supportUrl?: string;
-  EXPO_PUBLIC_REVENUECAT_IOS_KEY?: string;
-  EXPO_PUBLIC_REVENUECAT_ANDROID_KEY?: string;
 };
 
 function extra(): Extra {
   return (Constants.expoConfig?.extra ?? {}) as Extra;
 }
 
-/** App Store / Play product id (create in App Store Connect). */
+/** App Store Connect product id (Non-Consumable or subscription). */
 export const PLUS_PRODUCT_ID = 'app.paypace.plus';
-
-/** RevenueCat entitlement identifier. */
-export const PLUS_ENTITLEMENT_ID = 'plus';
 
 export const PRIVACY_POLICY_URL =
   extra().privacyPolicyUrl?.trim() ||
@@ -39,39 +38,26 @@ export function allowDemoPremiumUnlock(): boolean {
   return typeof __DEV__ !== 'undefined' && __DEV__;
 }
 
-function revenueCatKey(): string {
-  const e = extra();
-  if (Platform.OS === 'ios') {
-    return (
-      process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY?.trim() ||
-      e.EXPO_PUBLIC_REVENUECAT_IOS_KEY?.trim() ||
-      e.revenueCatIosKey?.trim() ||
-      ''
-    );
-  }
-  return (
-    process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY?.trim() ||
-    e.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY?.trim() ||
-    e.revenueCatAndroidKey?.trim() ||
-    ''
-  );
+export function plusProductId(): string {
+  return extra().plusProductId?.trim() || PLUS_PRODUCT_ID;
 }
 
-let configured = false;
-
+/** StoreKit / Play Billing — available on native device builds (not Expo Go web). */
 export function isPlusBillingConfigured(): boolean {
-  return Boolean(revenueCatKey());
+  return Platform.OS === 'ios' || Platform.OS === 'android';
 }
+
+let connectionReady = false;
 
 export async function configurePlusBilling(): Promise<boolean> {
-  const apiKey = revenueCatKey();
-  if (!apiKey || configured) return configured;
+  if (!isPlusBillingConfigured()) return false;
+  if (connectionReady) return true;
   try {
-    if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG);
-    Purchases.configure({ apiKey });
-    configured = true;
+    await initConnection();
+    connectionReady = true;
     return true;
   } catch {
+    connectionReady = false;
     return false;
   }
 }
@@ -83,32 +69,56 @@ export type PlusPurchaseResult =
   | { status: 'unavailable'; message: string }
   | { status: 'error'; message: string };
 
-async function findPlusPackage(): Promise<PurchasesPackage | null> {
-  const offerings = await Purchases.getOfferings();
-  const current = offerings.current;
-  if (!current) return null;
-  const productId = extra().plusProductId?.trim() || PLUS_PRODUCT_ID;
-  return (
-    current.availablePackages.find((p) => p.product.identifier === productId) ??
-    current.availablePackages.find(
-      (p) =>
-        p.identifier.toLowerCase().includes('plus') ||
-        p.product.identifier.toLowerCase().includes('plus'),
-    ) ??
-    current.lifetime ??
-    current.annual ??
-    current.monthly ??
-    current.availablePackages[0] ??
-    null
-  );
+function ownsPlus(purchases: Purchase[], sku: string): boolean {
+  return purchases.some((p) => p.productId === sku);
+}
+
+async function purchasePlusProduct(sku: string): Promise<Purchase> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      updateSub.remove();
+      errorSub.remove();
+      fn();
+    };
+
+    const updateSub = purchaseUpdatedListener((purchase) => {
+      finish(() => {
+        void (async () => {
+          try {
+            await finishTransaction({ purchase, isConsumable: false });
+            resolve(purchase);
+          } catch (error) {
+            reject(error);
+          }
+        })();
+      });
+    });
+
+    const errorSub = purchaseErrorListener((error) => {
+      finish(() => reject(error));
+    });
+
+    void requestPurchase({
+      request: {
+        apple: { sku },
+        google: { skus: [sku] },
+      },
+      type: 'in-app',
+    }).catch((error) => {
+      finish(() => reject(error));
+    });
+  });
 }
 
 export async function refreshPlusEntitlement(): Promise<boolean> {
   if (!(await configurePlusBilling())) return false;
   try {
-    const info = await Purchases.getCustomerInfo();
-    const entitlementId = extra().plusEntitlementId?.trim() || PLUS_ENTITLEMENT_ID;
-    return Boolean(info.entitlements.active[entitlementId]);
+    const sku = plusProductId();
+    const purchases = await getAvailablePurchases();
+    return ownsPlus(purchases, sku);
   } catch {
     return false;
   }
@@ -119,32 +129,29 @@ export async function purchasePlus(): Promise<PlusPurchaseResult> {
     return {
       status: 'unavailable',
       message:
-        'Plus purchases are not configured in this build. Add RevenueCat + App Store product (see RELEASE-YOU.md).',
+        'In-app purchases need a native iOS/Android build (TestFlight / device). Create product app.paypace.plus in App Store Connect (see RELEASE-YOU.md).',
     };
   }
+
+  const sku = plusProductId();
   try {
-    const pkg = await findPlusPackage();
-    if (!pkg) {
+    const products = await fetchProducts({ skus: [sku], type: 'in-app' });
+    const list = Array.isArray(products) ? products : [];
+    if (!list.length) {
       return {
         status: 'unavailable',
-        message:
-          'No Plus product found in RevenueCat offerings. Attach your App Store product to the current offering.',
+        message: `StoreKit found no product “${sku}”. Create it in App Store Connect and wait for it to become Available for Sale / Ready to Submit.`,
       };
     }
-    const { customerInfo } = await Purchases.purchasePackage(pkg);
-    const entitlementId = extra().plusEntitlementId?.trim() || PLUS_ENTITLEMENT_ID;
-    if (customerInfo.entitlements.active[entitlementId]) {
-      return { status: 'purchased' };
-    }
+
+    const purchase = await purchasePlusProduct(sku);
+    if (purchase.productId === sku) return { status: 'purchased' };
     return {
       status: 'error',
-      message: 'Purchase finished but the Plus entitlement is not active yet.',
+      message: 'Purchase finished but Plus was not found on the receipt.',
     };
   } catch (error: unknown) {
-    const code = (error as { code?: string })?.code;
-    if (code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
-      return { status: 'cancelled' };
-    }
+    if (isUserCancelledError(error)) return { status: 'cancelled' };
     const message =
       error instanceof Error ? error.message : 'Could not complete the Plus purchase.';
     return { status: 'error', message };
@@ -155,15 +162,16 @@ export async function restorePlusPurchases(): Promise<PlusPurchaseResult> {
   if (!(await configurePlusBilling())) {
     return {
       status: 'unavailable',
-      message: 'Purchases are not configured in this build.',
+      message: 'Restore needs a native App Store build on a device.',
     };
   }
   try {
-    const info = await Purchases.restorePurchases();
-    const entitlementId = extra().plusEntitlementId?.trim() || PLUS_ENTITLEMENT_ID;
-    const active = Boolean(info.entitlements.active[entitlementId]);
-    return { status: 'restored', active };
+    await restorePurchases();
+    const sku = plusProductId();
+    const purchases = await getAvailablePurchases();
+    return { status: 'restored', active: ownsPlus(purchases, sku) };
   } catch (error: unknown) {
+    if (isUserCancelledError(error)) return { status: 'cancelled' };
     const message =
       error instanceof Error ? error.message : 'Could not restore purchases.';
     return { status: 'error', message };
