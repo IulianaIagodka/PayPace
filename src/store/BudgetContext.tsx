@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { newId } from '../services/id';
-import { calculateSafeSpend, buildDayPaceLock } from '../models/calculator';
+import { buildDayPaceLock, calculateSafeSpend } from '../models/calculator';
 import {
   emptyStore,
   type AppSettings,
@@ -38,8 +38,31 @@ import {
   subscribeHouseholdChanges,
 } from '../services/householdCloud';
 import { HOUSEHOLD_POLL_MS } from '../services/householdSyncPolicy';
+import type { PaceMetrics } from '../services/partnerMetricsNotify';
+import { notifyPaceMetricsChanged } from '../services/partnerNotify';
 
 /** Background reconcile while the app is open. Live partner edits use Realtime. */
+
+function paceMetricsFromStore(data: AppStoreData): PaceMetrics {
+  const cycle = data.cycles.find((c) => c.isActive) ?? data.cycles[0] ?? null;
+  if (!cycle) {
+    return {
+      remainingUntilPayday: 0,
+      safeToSpendToday: 0,
+      spentThisCycle: 0,
+      unpaidBillsTotal: 0,
+      currentBalance: 0,
+    };
+  }
+  const snap = calculateSafeSpend(cycle, new Date(), data.settings.weekStartsOn ?? 1);
+  return {
+    remainingUntilPayday: snap.remainingUntilPayday,
+    safeToSpendToday: snap.safeToSpendToday,
+    spentThisCycle: snap.spentThisCycle,
+    unpaidBillsTotal: snap.unpaidBillsTotal,
+    currentBalance: asMoney(cycle.currentBalance),
+  };
+}
 
 type BudgetContextValue = {
   ready: boolean;
@@ -154,6 +177,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     async (remote: SharedHouseholdPayload, localMemberId: string | null) => {
       const current = storeRef.current;
       if (!current.household) return;
+      const beforeMetrics = paceMetricsFromStore(current);
       const localPayload = toSharedPayload({
         household: current.household,
         currencyCode: current.settings.currencyCode,
@@ -186,6 +210,16 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         next.localMemberId = next.household.members[0]?.id ?? null;
       }
       await persist(next);
+
+      // Partner (or remote) edits that move headline numbers → local notification.
+      if (remote.revision > (current.household.revision ?? 0)) {
+        void notifyPaceMetricsChanged({
+          before: beforeMetrics,
+          after: paceMetricsFromStore(next),
+          currencyCode: next.settings.currencyCode,
+          enabled: true,
+        });
+      }
     },
     [persist],
   );
