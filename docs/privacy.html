@@ -35,7 +35,8 @@
         <li>Budget data on your device stays on your device by default.</li>
         <li>
           Optional features may send limited data to third-party services you
-          enable (receipt scan, shared budget, in-app purchases).
+          choose to use (receipt photo scan, shared budget sync, in-app
+          purchases).
         </li>
         <li>We do not sell your personal information.</li>
         <li>We do not use your content for advertising.</li>
@@ -44,9 +45,9 @@
       <h2>2. Data stored on your device</h2>
       <p>
         PayPace stores your budget settings, pay cycles, bills, expenses,
-        category allocations, and related preferences locally on your phone
-        (for example via on-device storage). This data is used only to run the
-        budgeting features you see in the app.
+        category allocations, free-tier receipt scan count, and related
+        preferences locally on your phone (for example via on-device storage).
+        This data is used only to run the budgeting features you see in the app.
       </p>
 
       <h2>3. Camera and photos (receipt scan)</h2>
@@ -57,30 +58,30 @@
         taken or selected.
       </p>
       <p>
-        When AI receipt scanning is enabled for your build, the selected image
-        (or a derived representation) is sent to
-        <strong>OpenAI</strong> to parse the receipt. Do not photograph
-        sensitive documents you do not want processed by that service. See
+        The free plan includes a limited number of receipt scans. Unlimited
+        scans are part of Plus. When a scan runs, the selected image (or a
+        derived representation) is sent to <strong>OpenAI</strong> to parse the
+        receipt. Do not photograph sensitive documents you do not want processed
+        by that service. See
         <a href="https://openai.com/policies/privacy-policy" rel="noopener"
           >OpenAI’s privacy policy</a
         >.
       </p>
 
-      <h2>4. Bank statement import</h2>
+      <h2>4. Bank statement import (Plus)</h2>
       <p>
         If you import a bank export (for example CSV), the file is read on your
         device to create expense entries. We do not upload statement files to
         our own servers. Parsing happens in the app; unsupported formats are
-        rejected rather than replaced with fake data.
+        rejected rather than replaced with invented data.
       </p>
 
-      <h2>5. Shared budget (optional, Plus)</h2>
+      <h2>5. Shared budget (Plus only)</h2>
       <p>
-        If you create or join a shared household budget, sync may use
-        <strong>Supabase</strong> (or equivalent backend configured for your
-        build) to store household membership, invite codes, and shared cycle /
-        expense data so a partner device can stay in sync. Only participants you
-        invite should have access to that shared budget.
+        If you create or join a shared household budget with Plus, sync may use
+        <strong>Supabase</strong> to store household membership, invite codes,
+        and shared cycle / expense data so a partner device can stay in sync.
+        Only participants you invite should have access to that shared budget.
       </p>
       <p>
         See <a href="https://supabase.com/privacy" rel="noopener">Supabase privacy</a>
@@ -98,15 +99,15 @@
       <h2>7. Notifications</h2>
       <p>
         If you allow notifications, PayPace may show local alerts (for example
-        when shared-budget metrics change). Notification permission is optional
-        and can be changed in system Settings.
+        when shared-budget metrics change on a linked household). Notification
+        permission is optional and can be changed in system Settings.
       </p>
 
       <h2>8. Analytics and tracking</h2>
       <p>
-        The current PayPace builds described by this policy do not include a
-        separate advertising or cross-app tracking SDK. If that changes, this
-        page will be updated before those features ship.
+        PayPace does not include a separate advertising or cross-app tracking
+        SDK. If that changes, this page will be updated before those features
+        ship.
       </p>
 
       <h2>9. Children</h2>
@@ -118,10 +119,14 @@
       <h2>10. Your choices</h2>
       <ul>
         <li>Deny camera/photos permissions — receipt scan will not work.</li>
-        <li>Stay on Free — shared sync and Plus cloud features stay off.</li>
+        <li>
+          Stay on Free — you can still use core budgeting and a limited number
+          of receipt scans; Shared Budget, statement import, unlimited scans,
+          and other Plus tools stay locked.
+        </li>
         <li>Leave a shared household to stop partner sync for that budget.</li>
         <li>Delete the app to remove on-device PayPace storage on that device.</li>
-        <li>Manage App Store subscriptions / purchases in Apple ID settings.</li>
+        <li>Manage App Store purchases in Apple ID settings.</li>
       </ul>
 
       <h2>11. Data retention</h2>
@@ -137,8 +142,7 @@
         Questions about privacy:
         <a href="support.html">Support</a>
         or email
-        <a href="mailto:iuliana.iagodka@gmail.com">iuliana.iagodka@gmail.com</a>
-        (update this address if you prefer another contact).
+        <a href="mailto:iuliana.iagodka@gmail.com">iuliana.iagodka@gmail.com</a>.
       </p>
 
       <h2>13. Changes</h2>
