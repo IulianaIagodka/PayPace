@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { ExpenseRow, Panel, ScreenBackground } from '../components/ui';
+import { ExpenseRow, Panel, ScreenBackground, useTabBarClearance } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -14,10 +14,11 @@ export function ActivityScreen({}: Props) {
   const { activeCycle, store, deleteExpense, snapshot } = useBudget();
   const currency = store.settings.currencyCode;
   const expenses = activeCycle?.expenses ?? [];
+  const tabClearance = useTabBarClearance(32);
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.pad}>
+      <ScrollView contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}>
         <View style={styles.head}>
           <Text style={styles.title}>TRANS</Text>
           <Text style={styles.total}>{formatMoney(snapshot.spentThisCycle, currency)}</Text>
@@ -54,7 +55,7 @@ export function ActivityScreen({}: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 32, gap: 8 },
+  pad: { paddingHorizontal: 16, paddingTop: 12, gap: 8 },
   head: {
     flexDirection: 'row',
     alignItems: 'baseline',

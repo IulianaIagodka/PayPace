@@ -3,7 +3,7 @@ import { Alert, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'r
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HudButton, Panel, ScreenBackground } from '../components/ui';
+import { HudButton, Panel, ScreenBackground, useTabBarClearance } from '../components/ui';
 import { FormScroll } from '../components/FormScroll';
 import { HudSelect } from '../components/HudSelect';
 import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../models/calculator';
@@ -28,6 +28,7 @@ const HORIZON_OPTIONS: Array<{ value: PaceHorizon; label: string }> = [
 export function SettingsScreen({ navigation }: Props) {
   const { store, updateSettings, setPremium, addCustomCategory, removeCustomCategory } =
     useBudget();
+  const tabClearance = useTabBarClearance(40);
   const s = store.settings;
   const household = store.household;
   const weekStartsOn = (s.weekStartsOn ?? 1) as WeekStartsOn;
@@ -63,7 +64,7 @@ export function SettingsScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <FormScroll contentContainerStyle={styles.pad}>
+      <FormScroll contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}>
         <Text style={styles.brand}>
           PAY<Text style={{ color: colors.resource }}>PACE</Text>
         </Text>
@@ -198,7 +199,7 @@ export function SettingsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 12, paddingBottom: 40 },
+  pad: { padding: 20, gap: 12 },
   brand: {
     color: colors.text,
     fontSize: 22,

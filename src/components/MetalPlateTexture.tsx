@@ -56,28 +56,29 @@ function buildSpecks(seed: string, count: number): Speck[] {
 export function MetalPlateTexture({
   seed,
   compact = false,
+  intensity = 'panel',
 }: {
   seed: string;
   compact?: boolean;
+  /** `screen` = fuller grit for full-bleed backdrops */
+  intensity?: 'panel' | 'screen';
 }) {
-  const specks = useMemo(
-    () => buildSpecks(seed, compact ? 28 : 64),
-    [seed, compact],
-  );
+  const isScreen = intensity === 'screen';
+  const speckCount = isScreen ? 200 : compact ? 28 : 64;
+  const specks = useMemo(() => buildSpecks(seed, speckCount), [seed, speckCount]);
   const drift = useMemo(() => {
     const rand = mulberry32(hashSeed(`drift:${seed}`));
     return {
-      tx: Math.round((rand() - 0.5) * 48),
-      ty: Math.round((rand() - 0.5) * 36),
-      scale: 1.25 + rand() * 0.35,
-      opacity: compact ? 0.28 : 0.42,
+      tx: Math.round((rand() - 0.5) * (isScreen ? 80 : 48)),
+      ty: Math.round((rand() - 0.5) * (isScreen ? 64 : 36)),
+      scale: (isScreen ? 1.45 : 1.25) + rand() * 0.4,
+      opacity: isScreen ? 0.52 : compact ? 0.28 : 0.42,
       shear: (rand() - 0.5) * 0.04,
     };
-  }, [seed, compact]);
+  }, [seed, compact, isScreen]);
 
   return (
     <View pointerEvents="none" style={styles.wrap}>
-      {/* Asymmetric wash — different per seed via opacity/orientation proxies */}
       <LinearGradient
         colors={[
           'rgba(210,198,160,0.05)',
@@ -90,7 +91,7 @@ export function MetalPlateTexture({
         end={{ x: 1, y: drift.shear > 0 ? 0.55 : 0.2 }}
         style={StyleSheet.absoluteFill}
       />
-      {!compact ? (
+      {!compact || isScreen ? (
         <Image
           source={METAL_GRAIN}
           resizeMode="cover"
@@ -116,7 +117,7 @@ export function MetalPlateTexture({
             top: s.top,
             width: s.size,
             height: s.size,
-            opacity: s.opacity,
+            opacity: s.opacity * (isScreen ? 1.05 : 1),
             backgroundColor: s.light ? 'rgba(220,208,170,0.95)' : 'rgba(28,24,18,0.95)',
           }}
         />

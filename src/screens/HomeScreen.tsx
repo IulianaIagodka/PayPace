@@ -13,6 +13,7 @@ import {
   HudValue,
   ScreenBackground,
   SegmentedBar,
+  useTabBarClearance,
 } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
@@ -47,6 +48,7 @@ export function HomeScreen({ navigation }: Props) {
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
   const availableRatioLive = availableRatioFor(horizon, snapshot);
   const prevRatio = useRef(availableRatioLive);
+  const tabClearance = useTabBarClearance(28);
 
   useEffect(() => {
     if (prevRatio.current > availableRatioLive) {
@@ -106,7 +108,10 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.brand}>
           PAY<Text style={styles.brandAccent}>PACE</Text>
         </Text>
@@ -229,7 +234,6 @@ const styles = StyleSheet.create({
   pad: {
     paddingHorizontal: hud.screenPad,
     paddingTop: 10,
-    paddingBottom: 28,
     gap: hud.stackGap,
   },
   brand: {

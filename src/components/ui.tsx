@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   colors,
   colorForTone,
@@ -36,9 +36,19 @@ import {
   HudValue,
   type HUDPanelVariant,
 } from './HUDPanel';
+import { MetalPlateTexture } from './MetalPlateTexture';
 
 export { HUDPanel, HudBody, HudLabel, HudMeta, HudValue };
 export type { HUDPanelVariant };
+
+/** Matches App.tsx tab bar content row (excludes safe-area inset). */
+export const TAB_BAR_ROW_HEIGHT = 50;
+
+/** Bottom padding so tab-scene content clears the absolute translucent tab bar. */
+export function useTabBarClearance(extra = 24) {
+  const insets = useSafeAreaInsets();
+  return TAB_BAR_ROW_HEIGHT + Math.max(insets.bottom, 10) + extra;
+}
 
 export function ScreenBackground({
   children,
@@ -49,18 +59,20 @@ export function ScreenBackground({
 }) {
   return (
     <View style={styles.root}>
-      <LinearGradient
-        colors={['#1A1410', '#0C0A08', '#060504']}
-        locations={[0, 0.45, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      {/* Scanline grit — Doom CRT feel */}
-      <View pointerEvents="none" style={styles.scanlines}>
-        {Array.from({ length: 48 }).map((_, i) => (
-          <View key={i} style={styles.scanline} />
-        ))}
+      <View pointerEvents="none" style={styles.backdrop}>
+        <LinearGradient
+          colors={['#1A1410', '#0C0A08', '#060504']}
+          locations={[0, 0.45, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+        <MetalPlateTexture seed="paypace-screen-grain" intensity="screen" />
+        <View style={styles.scanlines}>
+          {Array.from({ length: 64 }).map((_, i) => (
+            <View key={i} style={styles.scanline} />
+          ))}
+        </View>
+        <View style={styles.vignette} />
       </View>
-      <View pointerEvents="none" style={styles.vignette} />
       <SafeAreaView style={styles.flex} edges={edges}>
         {children}
       </SafeAreaView>
@@ -593,7 +605,13 @@ export function HeaderIconButton({ label, onPress }: { label: string; onPress: (
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: {
+    flex: 1,
+    backgroundColor: colors.bg,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFill,
+  },
   scanlines: {
     position: 'absolute',
     top: 0,
@@ -613,8 +631,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    borderWidth: 18,
-    borderColor: 'rgba(0,0,0,0.45)',
+    borderWidth: 22,
+    borderColor: 'rgba(0,0,0,0.5)',
   },
   chip: {
     flexDirection: 'row',

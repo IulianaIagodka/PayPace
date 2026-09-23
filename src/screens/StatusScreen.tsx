@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { Panel, ScreenBackground, SegmentedBar } from '../components/ui';
+import { Panel, ScreenBackground, SegmentedBar, useTabBarClearance } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors, colorForTone } from '../theme/colors';
 import { formatMoney } from '../services/formatting';
@@ -12,6 +12,7 @@ type Props = BottomTabScreenProps<MainTabParamList, 'Status'>;
 export function StatusScreen({}: Props) {
   const { activeCycle, snapshot, store } = useBudget();
   const currency = store.settings.currencyCode;
+  const tabClearance = useTabBarClearance(40);
 
   const timeline = useMemo(() => {
     if (!activeCycle) return [];
@@ -46,7 +47,7 @@ export function StatusScreen({}: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.pad}>
+      <ScrollView contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}>
         <Text style={styles.title}>PACE</Text>
 
         <Panel>
@@ -116,7 +117,7 @@ function Row({
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 14, paddingBottom: 40 },
+  pad: { padding: 20, gap: 14 },
   title: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 2 },
   label: {
     color: colors.textSecondary,

@@ -32,7 +32,7 @@ import { ReceiptScanScreen } from './src/screens/ReceiptScanScreen';
 import { StatementImportScreen } from './src/screens/StatementImportScreen';
 import { CategoryBalancesScreen } from './src/screens/CategoryBalancesScreen';
 import { SharedBudgetScreen } from './src/screens/SharedBudgetScreen';
-import { AmountDoneAccessory } from './src/components/ui';
+import { AmountDoneAccessory, TAB_BAR_ROW_HEIGHT } from './src/components/ui';
 import { colors } from './src/theme/colors';
 import { fonts } from './src/theme/fonts';
 
@@ -88,13 +88,19 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: 'transparent' },
         tabBarStyle: {
-          backgroundColor: '#100E0B',
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(8,6,4,0.55)',
           borderTopColor: colors.borderBright,
           borderTopWidth: 2,
-          height: 50 + bottomPad,
+          height: TAB_BAR_ROW_HEIGHT + bottomPad,
           paddingBottom: bottomPad,
           paddingTop: 6,
+          elevation: 0,
         },
         tabBarActiveTintColor: colors.resource,
         tabBarInactiveTintColor: colors.textDim,
