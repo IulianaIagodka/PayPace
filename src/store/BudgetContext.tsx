@@ -40,6 +40,7 @@ import {
 import { HOUSEHOLD_POLL_MS } from '../services/householdSyncPolicy';
 import type { PaceMetrics } from '../services/partnerMetricsNotify';
 import { notifyPaceMetricsChanged } from '../services/partnerNotify';
+import { freeReceiptScansUsed } from '../services/receiptScanQuota';
 
 /** Background reconcile while the app is open. Live partner edits use Realtime. */
 
@@ -91,6 +92,8 @@ type BudgetContextValue = {
   replaceActiveCycle: (cycle: PayCycle) => Promise<void>;
   resetAll: () => Promise<void>;
   setPremium: (enabled: boolean) => Promise<void>;
+  /** Count one free-tier receipt scan after a successful photo analyze. No-op for Plus. */
+  recordReceiptScan: () => Promise<void>;
   setEnvelopes: (envelopes: PayCycle['envelopes']) => Promise<void>;
   addCustomCategory: (title: string) => Promise<void>;
   removeCustomCategory: (id: string) => Promise<void>;
@@ -559,6 +562,16 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     resetAll: async () => commit(emptyStore, { skipPush: true }),
     setPremium: async (enabled) => {
       await commit({ ...store, settings: { ...store.settings, isPremium: enabled } });
+    },
+    recordReceiptScan: async () => {
+      if (store.settings.isPremium) return;
+      await commit({
+        ...store,
+        settings: {
+          ...store.settings,
+          freeReceiptScansUsed: freeReceiptScansUsed(store.settings) + 1,
+        },
+      });
     },
     setEnvelopes: async (envelopes) => {
       if (!activeCycle) return;

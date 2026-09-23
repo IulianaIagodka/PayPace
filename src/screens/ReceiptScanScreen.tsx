@@ -20,6 +20,11 @@ import {
   type ReceiptLineItem,
   type ReceiptScanResult,
 } from '../services/receiptAnalyzer';
+import {
+  FREE_RECEIPT_SCAN_LIMIT,
+  canScanReceipt,
+  freeReceiptScansRemaining,
+} from '../services/receiptScanQuota';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
@@ -28,12 +33,15 @@ import type { ExpenseCategory } from '../models/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'ReceiptScan'>;
 
 export function ReceiptScanScreen({ navigation }: Props) {
-  const { store, activeCycle, addExpenses, setPremium } = useBudget();
+  const { store, activeCycle, addExpenses, setPremium, recordReceiptScan } = useBudget();
   const currency = store.settings.currencyCode;
   const custom = store.settings.customCategories ?? [];
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ReceiptScanResult | null>(null);
+
+  const remaining = freeReceiptScansRemaining(store.settings);
+  const allowed = canScanReceipt(store.settings);
 
   const cycleItemCategory = (itemId: string) => {
     setResult((prev) => {
@@ -70,13 +78,14 @@ export function ReceiptScanScreen({ navigation }: Props) {
 
   const cycleCategoryBalances = categoryBalancesForDisplay(activeCycle, custom);
 
-  if (!store.settings.isPremium) {
+  if (!allowed) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>Scan receipt</Text>
           <Text style={styles.sub}>
-            Plus reads the receipt, sorts line items by category, and shows what’s left in each.
+            You’ve used your {FREE_RECEIPT_SCAN_LIMIT} free receipt scans. Plus unlocks unlimited
+            scans, plus statements and category tools.
           </Text>
           <PrimaryButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
           <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
@@ -86,6 +95,11 @@ export function ReceiptScanScreen({ navigation }: Props) {
   }
 
   const pick = async (fromCamera: boolean) => {
+    if (!canScanReceipt(store.settings)) {
+      Alert.alert('Free scans used', `Upgrade to Plus for unlimited receipt scans.`);
+      return;
+    }
+
     const permission = fromCamera
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -113,6 +127,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
     try {
       const scanned = await analyzeReceiptPhoto(asset.uri, asset.base64);
       setResult(scanned);
+      await recordReceiptScan();
     } catch (error) {
       Alert.alert('Scan failed', error instanceof Error ? error.message : 'Try another photo.');
     } finally {
@@ -144,13 +159,16 @@ export function ReceiptScanScreen({ navigation }: Props) {
         (grouped.find((g) => g.category === category)?.total ?? 0),
     );
 
+  const freeHint =
+    remaining == null
+      ? 'Snap a photo. We’ll group the items by category so you can see each balance.'
+      : `Free plan: ${remaining} of ${FREE_RECEIPT_SCAN_LIMIT} receipt scans left. Snap a photo — we’ll group items by category.`;
+
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Scan receipt</Text>
-        <Text style={styles.sub}>
-          Snap a photo. We’ll group the items by category so you can see each balance.
-        </Text>
+        <Text style={styles.sub}>{freeHint}</Text>
 
         <PrimaryButton title="Take photo" onPress={() => pick(true)} />
         <SecondaryButton title="Choose from gallery" onPress={() => pick(false)} />

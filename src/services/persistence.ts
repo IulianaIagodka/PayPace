@@ -33,6 +33,10 @@ function migrate(raw: unknown): AppStoreData {
     customCategories: Array.isArray(data.settings?.customCategories)
       ? data.settings!.customCategories
       : [],
+    freeReceiptScansUsed: Math.max(
+      0,
+      Math.floor(Number(data.settings?.freeReceiptScansUsed) || 0),
+    ),
   };
   if (!isSupportedCurrency(settings.currencyCode)) {
     settings.currencyCode = detectDefaultCurrency();

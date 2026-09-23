@@ -127,6 +127,8 @@ export interface AppSettings {
   paceHorizon: 'day' | 'week' | 'month';
   /** User-defined categories (Plus). */
   customCategories: CustomCategory[];
+  /** Successful free-tier receipt photo scans (capped by FREE_RECEIPT_SCAN_LIMIT). */
+  freeReceiptScansUsed: number;
 }
 
 export interface AppStoreData {
@@ -195,6 +197,7 @@ export const defaultSettings: AppSettings = {
   weekStartsOn: 1,
   paceHorizon: 'week',
   customCategories: [],
+  freeReceiptScansUsed: 0,
 };
 
 export const emptyStore: AppStoreData = {

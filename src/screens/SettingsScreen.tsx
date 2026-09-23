@@ -8,6 +8,7 @@ import { FormScroll } from '../components/FormScroll';
 import { HudSelect } from '../components/HudSelect';
 import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../models/calculator';
 import { CURRENCIES } from '../services/currencies';
+import { FREE_RECEIPT_SCAN_LIMIT } from '../services/receiptScanQuota';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -133,9 +134,10 @@ export function SettingsScreen({ navigation }: Props) {
           <View style={styles.divider} />
           <Text style={styles.label}>PLUS</Text>
           <Text style={styles.subTight}>
-            Free: balance, safe-to-spend, bills, expenses.{'\n'}
-            Plus: allocate by category, custom categories, receipts, statements, history, shared
-            budget.
+            Free: balance, safe-to-spend, bills, expenses, {FREE_RECEIPT_SCAN_LIMIT} receipt
+            scans.{'\n'}
+            Plus: allocate by category, custom categories, unlimited receipt scans, statements,
+            history, shared budget.
           </Text>
           {s.isPremium ? (
             <HudButton

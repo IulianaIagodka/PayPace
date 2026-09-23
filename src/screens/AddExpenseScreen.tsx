@@ -5,6 +5,10 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AmountField, HudButton, Panel, ScreenBackground } from '../components/ui';
 import { FormScroll } from '../components/FormScroll';
 import { currencySymbol, parsePositiveAmount, toDateKey } from '../services/formatting';
+import {
+  FREE_RECEIPT_SCAN_LIMIT,
+  freeReceiptScansRemaining,
+} from '../services/receiptScanQuota';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -22,6 +26,7 @@ export function AddExpenseScreen({ navigation }: Props) {
   const [note, setNote] = useState('');
   const [envelopeKey, setEnvelopeKey] = useState<EnvelopeKey>(envelopes[0]?.key ?? 'other');
   const [busy, setBusy] = useState(false);
+  const scansLeft = freeReceiptScansRemaining(store.settings);
 
   const selected = envelopes.find((e) => e.key === envelopeKey) ?? envelopes[0];
 
@@ -43,12 +48,20 @@ export function AddExpenseScreen({ navigation }: Props) {
     }
   };
 
+  const receiptHint =
+    scansLeft == null
+      ? 'Plus · camera or gallery'
+      : scansLeft > 0
+        ? `${scansLeft} free · camera or gallery`
+        : 'Free used · Plus for more';
+
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.title}>ADD EXPENSE</Text>
         <Text style={styles.sub}>
-          Log it yourself anytime. Photos and bank statements are Plus.
+          Log it yourself anytime. Free includes {FREE_RECEIPT_SCAN_LIMIT} receipt scans; bank
+          statements are Plus.
         </Text>
 
         <View style={styles.importRow}>
@@ -58,7 +71,7 @@ export function AddExpenseScreen({ navigation }: Props) {
           >
             <Ionicons name="camera-outline" size={22} color={colors.resource} />
             <Text style={styles.importTitle}>PHOTO RECEIPT</Text>
-            <Text style={styles.importHint}>Plus · camera or gallery</Text>
+            <Text style={styles.importHint}>{receiptHint}</Text>
           </Pressable>
           <Pressable
             style={styles.importCard}
