@@ -10,6 +10,8 @@ import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../mode
 import { CURRENCIES } from '../services/currencies';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
+import { hud } from '../theme/hud';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
 type Props = CompositeScreenProps<
@@ -24,7 +26,7 @@ const HORIZON_OPTIONS: Array<{ value: PaceHorizon; label: string }> = [
 ];
 
 export function SettingsScreen({ navigation }: Props) {
-  const { store, updateSettings, setPremium, resetAll, addCustomCategory, removeCustomCategory } =
+  const { store, updateSettings, setPremium, addCustomCategory, removeCustomCategory } =
     useBudget();
   const s = store.settings;
   const household = store.household;
@@ -69,70 +71,86 @@ export function SettingsScreen({ navigation }: Props) {
 
         <Panel>
           <Text style={styles.section}>BUDGET</Text>
-          <HudButton title="ALLOCATE RESOURCES" onPress={() => navigation.navigate('Allocate')} />
-          <Text style={styles.sub}>Plus · set how much each category gets.</Text>
-          <HudButton title="EDIT CYCLE" onPress={() => navigation.navigate('PayCycle')} variant="secondary" />
+          <HudButton
+            title="ALLOCATE RESOURCES"
+            onPress={() => navigation.navigate('Allocate')}
+            variant="secondary"
+          />
+          <Text style={styles.subTight}>Plus · set how much each category gets.</Text>
+          <HudButton
+            title="EDIT CYCLE"
+            onPress={() => navigation.navigate('PayCycle')}
+            variant="secondary"
+          />
           <HudButton title="BILLS" onPress={() => navigation.navigate('Bills')} variant="secondary" />
         </Panel>
 
         <Panel>
           <Text style={styles.section}>SHARE</Text>
-          <Text style={styles.sub}>
+          <Text style={styles.subTight}>
             {household
               ? `Linked · ${household.members.map((m) => m.displayName).join(' & ')}`
               : 'Plus · share one budget with your partner.'}
           </Text>
-          <HudButton title="SHARED BUDGET" onPress={() => navigation.navigate('SharedBudget')} />
+          <HudButton
+            title="SHARED BUDGET"
+            onPress={() => navigation.navigate('SharedBudget')}
+            variant="secondary"
+          />
         </Panel>
 
         <Panel>
           <Text style={styles.section}>SYSTEM</Text>
 
-          <HudSelect
-            label="CURRENCY"
-            value={s.currencyCode}
-            options={currencyOptions}
-            onChange={(code) => updateSettings({ currencyCode: code })}
-          />
-
-          <View style={styles.divider} />
-          <HudSelect
-            label="REMAINING HORIZON"
-            value={paceHorizon}
-            options={HORIZON_OPTIONS}
-            hint="Week follows the calendar week. Until payday counts the days left before payday."
-            onChange={(value) => updateSettings({ paceHorizon: value })}
-          />
-
-          <View style={styles.divider} />
-          <HudSelect
-            label="WEEK STARTS ON"
-            value={weekStartsOn}
-            options={weekOptions}
-            hint="Which day starts your calendar week."
-            onChange={(value) => updateSettings({ weekStartsOn: value })}
-          />
+          <View style={styles.selectStack}>
+            <HudSelect
+              label="CURRENCY"
+              value={s.currencyCode}
+              options={currencyOptions}
+              onChange={(code) => updateSettings({ currencyCode: code })}
+              compact
+            />
+            <HudSelect
+              label="REMAINING HORIZON"
+              value={paceHorizon}
+              options={HORIZON_OPTIONS}
+              onChange={(value) => updateSettings({ paceHorizon: value })}
+              compact
+            />
+            <HudSelect
+              label="WEEK STARTS ON"
+              value={weekStartsOn}
+              options={weekOptions}
+              onChange={(value) => updateSettings({ weekStartsOn: value })}
+              compact
+            />
+          </View>
 
           <View style={styles.divider} />
           <Text style={styles.label}>PLUS</Text>
-          <Text style={styles.sub}>
-            Free: available balance, safe-to-spend, bills, and manual expenses.{'\n'}
-            Plus: leftover by category (including Eating out), custom categories, receipt scan, bank
-            statements, history, and shared budget.
+          <Text style={styles.subTight}>
+            Free: balance, safe-to-spend, bills, expenses. Plus: categories, receipts, statements,
+            history, shared budget.
           </Text>
           {s.isPremium ? (
-            <HudButton title="BACK TO FREE (DEMO)" onPress={() => setPremium(false)} variant="secondary" />
+            <HudButton
+              title="BACK TO FREE (DEMO)"
+              onPress={() => setPremium(false)}
+              variant="secondary"
+            />
           ) : (
-            <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
+            <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} variant="secondary" />
           )}
 
           <View style={styles.divider} />
           <Text style={styles.label}>CUSTOM CATEGORIES</Text>
-          <Text style={styles.sub}>Plus · add your own (Pets, Gym, Travel…). They show up when you log and allocate.</Text>
+          <Text style={styles.subTight}>
+            Plus · add your own (Pets, Gym, Travel…). They show up when you log and allocate.
+          </Text>
           {s.isPremium ? (
             <>
               {customs.length === 0 ? (
-                <Text style={styles.sub}>No custom categories yet.</Text>
+                <Text style={styles.subTight}>No custom categories yet.</Text>
               ) : (
                 customs.map((c) => (
                   <View key={c.id} style={styles.customRow}>
@@ -176,20 +194,8 @@ export function SettingsScreen({ navigation }: Props) {
               />
             </>
           ) : (
-            <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} variant="secondary" />
+            <Text style={styles.subTight}>Unlock Plus above to add custom categories.</Text>
           )}
-
-          <View style={styles.divider} />
-          <HudButton
-            title="START OVER"
-            variant="danger"
-            onPress={() =>
-              Alert.alert('Start over?', 'This clears the budget on this phone.', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Reset', style: 'destructive', onPress: () => resetAll() },
-              ])
-            }
-          />
         </Panel>
       </FormScroll>
     </ScreenBackground>
@@ -197,39 +203,49 @@ export function SettingsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 14, paddingBottom: 40 },
-  brand: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 3 },
+  pad: { padding: 20, gap: 12, paddingBottom: 40 },
+  brand: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: 3,
+    fontFamily: fonts.display,
+  },
   sub: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
+  subTight: { color: colors.textSecondary, fontSize: 12, lineHeight: 16 },
   section: {
     color: colors.text,
     fontWeight: '800',
     fontSize: 12,
     letterSpacing: 1.6,
     marginBottom: 4,
+    fontFamily: fonts.label,
   },
   label: {
     color: colors.textSecondary,
     fontWeight: '700',
     fontSize: 11,
     letterSpacing: 1.4,
+    fontFamily: fonts.label,
   },
-  divider: { height: 1, backgroundColor: colors.border, marginVertical: 12 },
+  selectStack: { gap: 10 },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: 10 },
   customRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 6,
     gap: 12,
   },
   customName: { color: colors.text, fontSize: 15, fontWeight: '600', flex: 1 },
   remove: { color: colors.danger, fontWeight: '700', fontSize: 13 },
   input: {
     backgroundColor: colors.panelDeep,
-    borderWidth: 1,
+    borderWidth: hud.stroke,
     borderColor: colors.border,
     color: colors.text,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 10,
     fontSize: 15,
     fontWeight: '600',
   },

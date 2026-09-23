@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
+import { hud } from '../theme/hud';
 
 export type HudSelectOption<T extends string | number> = {
   value: T;
@@ -15,33 +16,40 @@ export function HudSelect<T extends string | number>({
   options,
   onChange,
   hint,
+  compact = false,
 }: {
   label: string;
   value: T;
   options: Array<HudSelectOption<T>>;
   onChange: (value: T) => void;
   hint?: string;
+  /** Tighter padding / no long hint — for Settings stacks. */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const selected = options.find((o) => o.value === value) ?? options[0];
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, compact && styles.wrapCompact]}>
       <Text style={styles.label}>{label}</Text>
-      {hint ? <Text style={styles.hint}>{hint}</Text> : null}
+      {!compact && hint ? <Text style={styles.hint}>{hint}</Text> : null}
       <Pressable
         onPress={() => setOpen((v) => !v)}
-        style={[styles.trigger, open && styles.triggerOpen]}
+        style={[
+          styles.trigger,
+          compact && styles.triggerCompact,
+          open && styles.triggerOpen,
+        ]}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
       >
-        <Text style={styles.triggerText} numberOfLines={1}>
+        <Text style={[styles.triggerText, compact && styles.triggerTextCompact]} numberOfLines={1}>
           {selected?.label ?? '—'}
         </Text>
         <Ionicons
           name={open ? 'chevron-up' : 'chevron-down'}
-          size={16}
-          color={colors.resource}
+          size={compact ? 14 : 16}
+          color={colors.borderBright}
         />
       </Pressable>
       {open ? (
@@ -55,7 +63,7 @@ export function HudSelect<T extends string | number>({
                   onChange(opt.value);
                   setOpen(false);
                 }}
-                style={[styles.option, on && styles.optionOn]}
+                style={[styles.option, compact && styles.optionCompact, on && styles.optionOn]}
               >
                 <Text style={[styles.optionText, on && styles.optionTextOn]}>{opt.label}</Text>
                 {on ? <Text style={styles.check}>●</Text> : null}
@@ -70,6 +78,7 @@ export function HudSelect<T extends string | number>({
 
 const styles = StyleSheet.create({
   wrap: { gap: 8 },
+  wrapCompact: { gap: 4 },
   label: {
     color: colors.textSecondary,
     fontWeight: '700',
@@ -83,16 +92,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
-    borderWidth: 2,
+    borderWidth: hud.stroke,
     borderColor: colors.border,
     backgroundColor: colors.panelDeep,
     borderRadius: 0,
     paddingHorizontal: 14,
     paddingVertical: 14,
   },
+  triggerCompact: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
   triggerOpen: {
-    borderColor: colors.resource,
-    backgroundColor: colors.resourceSoft,
+    borderColor: colors.borderBright,
+    backgroundColor: colors.panelAlt,
   },
   triggerText: {
     flex: 1,
@@ -100,8 +113,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  triggerTextCompact: {
+    fontSize: 14,
+  },
   menu: {
-    borderWidth: 2,
+    borderWidth: hud.stroke,
     borderColor: colors.border,
     backgroundColor: colors.panelAlt,
     borderRadius: 0,
@@ -116,8 +132,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  optionOn: { backgroundColor: colors.resourceSoft },
+  optionCompact: {
+    paddingVertical: 9,
+  },
+  optionOn: { backgroundColor: 'rgba(154, 138, 106, 0.12)' },
   optionText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600', flex: 1 },
-  optionTextOn: { color: colors.resource },
-  check: { color: colors.resource, fontSize: 12 },
+  optionTextOn: { color: colors.ammo },
+  check: { color: colors.ammo, fontSize: 12 },
 });
