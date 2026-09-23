@@ -44,7 +44,7 @@ Statement import throws if the file can’t be parsed (no invented expenses).
 | | Shared budget with a partner |
 
 - **Dev:** Settings → **TRY PLUS (DEMO)** (`__DEV__` only).  
-- **Store builds:** **GET PLUS** / **RESTORE PURCHASES** via Apple **StoreKit** (`expo-iap`).  
+- **Store builds:** **PLUS MONTHLY** / **PLUS YEARLY** / **RESTORE PURCHASES** via Apple **StoreKit** (`expo-iap`). Product IDs: `app.paypace.plus.monthly`, `app.paypace.plus.yearly`.  
 - Your checklist: **[RELEASE-YOU.md](./RELEASE-YOU.md)**.
 
 Also set in `.env` / EAS when ready:
