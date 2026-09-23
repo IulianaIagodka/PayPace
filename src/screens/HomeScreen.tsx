@@ -13,7 +13,6 @@ import {
   HudValue,
   ScreenBackground,
   SegmentedBar,
-  StatusChip,
 } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
@@ -21,7 +20,6 @@ import { fonts } from '../theme/fonts';
 import { hud, hudType } from '../theme/hud';
 import { formatMoney, formatDays } from '../services/formatting';
 import { envelopeStatuses } from '../services/envelopes';
-import { moneyStatusFromSnapshot, moneyStatusLabel } from '../services/moneyStatus';
 import {
   AVAILABLE_RANGE_OPTIONS,
   availableAmountFor,
@@ -105,17 +103,13 @@ export function HomeScreen({ navigation }: Props) {
   const metaLeft = availableMetaLeftFor(horizon, snapshot, pct);
   const safeColor =
     snapshot.remainingUntilPayday < 0 ? colors.danger : colors.safeValue;
-  const moneyStatus = moneyStatusFromSnapshot(snapshot);
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
-        <View style={styles.brandRow}>
-          <Text style={styles.brand}>
-            PAY<Text style={styles.brandAccent}>PACE</Text>
-          </Text>
-          <StatusChip label={moneyStatusLabel(moneyStatus)} tone={moneyStatus} />
-        </View>
+        <Text style={styles.brand}>
+          PAY<Text style={styles.brandAccent}>PACE</Text>
+        </Text>
 
         <HUDPanel variant="standard" label="SAFE TO SPEND TODAY">
           <HudValue size="hero" style={{ color: safeColor }}>
@@ -238,18 +232,13 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
     gap: hud.stackGap,
   },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 2,
-  },
   brand: {
     color: colors.text,
     fontSize: 26,
     fontFamily: fonts.display,
     fontWeight: '700',
     letterSpacing: 4.5,
+    marginBottom: 2,
   },
   brandAccent: {
     color: colors.resource,
