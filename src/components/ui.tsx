@@ -493,23 +493,33 @@ export function ExpenseRow({
   expense,
   currencyCode,
   onDelete,
+  compact = false,
 }: {
   expense: DailyExpense;
   currencyCode: string;
   onDelete?: () => void;
+  compact?: boolean;
 }) {
   return (
-    <View style={styles.row}>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text style={styles.rowTitle}>{expense.name}</Text>
-        <Text style={styles.meta}>
+    <View style={[styles.row, compact && styles.rowCompact]}>
+      <View style={{ flex: 1, gap: compact ? 0 : 2 }}>
+        <Text style={[styles.rowTitle, compact && styles.rowTitleCompact]} numberOfLines={1}>
+          {expense.name}
+        </Text>
+        <Text style={[styles.meta, compact && styles.metaCompact]}>
           {formatShortDate(expense.date)}
           {expense.memberName ? ` · ${expense.memberName}` : ''}
         </Text>
       </View>
-      <Text style={styles.rowAmount}>{formatMoney(expense.amount, currencyCode)}</Text>
+      <Text style={[styles.rowAmount, compact && styles.rowAmountCompact]}>
+        {formatMoney(expense.amount, currencyCode)}
+      </Text>
       {onDelete ? (
-        <Pressable onPress={onDelete} hitSlop={10} style={styles.deleteBtn}>
+        <Pressable
+          onPress={onDelete}
+          hitSlop={10}
+          style={[styles.deleteBtn, compact && styles.deleteBtnCompact]}
+        >
           <Text style={styles.deleteText}>DEL</Text>
         </Pressable>
       ) : null}
@@ -768,10 +778,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
+  rowCompact: {
+    paddingVertical: 5,
+    gap: 8,
+  },
   rowTitle: { color: colors.text, fontSize: 15, fontWeight: '600', fontFamily: fonts.body },
+  rowTitleCompact: { fontSize: 13 },
   rowAmount: { color: colors.ammo, fontSize: 15, fontWeight: '700', fontFamily: fonts.display },
+  rowAmountCompact: { fontSize: 13 },
   meta: { color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body },
+  metaCompact: { fontSize: 10 },
   deleteBtn: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 4 },
+  deleteBtnCompact: { minHeight: 28 },
   deleteText: { color: colors.danger, fontWeight: '700', fontSize: 12, letterSpacing: 1 },
   headerBtn: {
     minHeight: 40,
