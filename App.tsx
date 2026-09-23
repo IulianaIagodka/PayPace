@@ -119,7 +119,7 @@ function MainTabs() {
         name="Activity"
         component={ActivityScreen}
         options={{
-          title: 'ACTIVITY',
+          title: 'SPEND',
           tabBarIcon: ({ focused }) => <TabIcon name="list" focused={focused} />,
         }}
       />

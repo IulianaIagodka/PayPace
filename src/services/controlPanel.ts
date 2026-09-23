@@ -193,7 +193,7 @@ export function buildControlPanelView(
 export const CONTROL_PANEL_COPY = {
   tabs: {
     home: 'PACE',
-    activity: 'LOG',
+    activity: 'SPEND',
     status: 'PACE',
     settings: 'CONFIG',
   },
@@ -203,8 +203,8 @@ export const CONTROL_PANEL_COPY = {
     pacingHint: 'Daily drain ceiling until next checkpoint',
     modulesLabel: 'MODULES',
     modulesPlusTitle: 'MODULES · PLUS',
-    drainLogLabel: 'DRAIN LOG',
-    drainEmpty: 'No drain events logged.',
+    drainLogLabel: 'SPEND',
+    drainEmpty: 'No expenses yet.',
     logExpense: '+ LOG EXPENSE',
     burnCriticalTitle: 'BURN RATE CRITICAL',
   },
@@ -216,11 +216,11 @@ export const CONTROL_PANEL_COPY = {
     timelineLabel: 'CHECKPOINT TIMELINE',
   },
   activity: {
-    title: 'DRAIN LOG',
-    sysTag: 'EXPENSE EVENTS // THIS CYCLE',
-    totalLabel: 'TOTAL DRAIN',
-    feedLabel: 'EVENT FEED',
-    empty: 'No drain events yet.',
+    title: 'SPEND',
+    sysTag: 'EXPENSES // THIS CYCLE',
+    totalLabel: 'TOTAL SPENT',
+    feedLabel: 'EXPENSE FEED',
+    empty: 'No expenses yet.',
   },
   onboarding: {
     title: 'Your money control panel.\nSurvive until payday.',

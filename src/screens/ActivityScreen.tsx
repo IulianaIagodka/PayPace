@@ -17,7 +17,7 @@ export function ActivityScreen({}: Props) {
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>ACTIVITY</Text>
+        <Text style={styles.title}>SPEND</Text>
         <Text style={styles.sub}>Spent this pay cycle</Text>
         <Text style={styles.total}>{formatMoney(snapshot.spentThisCycle, currency)}</Text>
 
