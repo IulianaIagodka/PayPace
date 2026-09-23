@@ -102,7 +102,7 @@ export function HomeScreen({ navigation }: Props) {
   const availableLabel = availableLabelFor(horizon);
   const metaLeft = availableMetaLeftFor(horizon, snapshot, pct);
   const safeColor =
-    snapshot.remainingUntilPayday < 0 ? colors.danger : colors.safeValue;
+    snapshot.remainingUntilPayday < 0 ? colors.danger : colors.resource;
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
@@ -111,7 +111,7 @@ export function HomeScreen({ navigation }: Props) {
           PAY<Text style={styles.brandAccent}>PACE</Text>
         </Text>
 
-        <HUDPanel variant="standard" label="SAFE TO SPEND TODAY">
+        <HUDPanel variant="standard" label="SAFE TO SPEND TODAY" labelTone="primary">
           <HudValue size="hero" style={{ color: safeColor }}>
             {formatMoney(safe, currency)}
           </HudValue>
