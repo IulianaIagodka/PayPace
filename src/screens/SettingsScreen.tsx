@@ -141,7 +141,7 @@ export function SettingsScreen({ navigation }: Props) {
               variant="secondary"
             />
           ) : (
-            <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} variant="secondary" />
+            <HudButton title="TRY PLUS (DEMO)" onPress={() => setPremium(true)} />
           )}
 
           {s.isPremium ? (

@@ -66,7 +66,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
             Plus lets you and a partner share one payday budget. Each expense is tagged with who
             logged it.
           </Text>
-          <HudButton title="Try Plus (demo)" onPress={() => setPremium(true)} variant="secondary" />
+          <HudButton title="Try Plus (demo)" onPress={() => setPremium(true)} />
           <HudButton title="Back" onPress={() => navigation.goBack()} variant="secondary" />
         </FormScroll>
       </ScreenBackground>

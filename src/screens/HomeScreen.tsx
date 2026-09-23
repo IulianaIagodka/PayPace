@@ -203,7 +203,6 @@ export function HomeScreen({ navigation }: Props) {
             <HudButton
               title="TRY PLUS (DEMO)"
               onPress={() => setPremium(true)}
-              variant="secondary"
             />
           </HUDPanel>
         )}
