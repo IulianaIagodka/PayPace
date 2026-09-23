@@ -4,6 +4,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { ExpenseRow, Panel, ScreenBackground } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { fonts } from '../theme/fonts';
 import { formatMoney } from '../services/formatting';
 import type { MainTabParamList } from '../navigation/types';
 
@@ -17,9 +18,11 @@ export function ActivityScreen({}: Props) {
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>TRANSACTION</Text>
-        <Text style={styles.sub}>Spent this pay cycle</Text>
-        <Text style={styles.total}>{formatMoney(snapshot.spentThisCycle, currency)}</Text>
+        <View style={styles.head}>
+          <Text style={styles.title}>TRANS</Text>
+          <Text style={styles.total}>{formatMoney(snapshot.spentThisCycle, currency)}</Text>
+        </View>
+        <Text style={styles.sub}>This pay cycle</Text>
 
         <Panel>
           {expenses.length === 0 ? (
@@ -30,6 +33,7 @@ export function ActivityScreen({}: Props) {
                 key={e.id}
                 expense={e}
                 currencyCode={currency}
+                compact
                 onDelete={() =>
                   Alert.alert('Delete this expense?', e.name, [
                     { text: 'Cancel', style: 'cancel' },
@@ -50,8 +54,31 @@ export function ActivityScreen({}: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 12, paddingBottom: 40 },
-  title: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 2 },
-  sub: { color: colors.textSecondary, fontSize: 12, letterSpacing: 1.2, fontWeight: '600' },
-  total: { color: colors.text, fontSize: 32, fontWeight: '800' },
+  pad: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 32, gap: 8 },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  title: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 2,
+    fontFamily: fonts.display,
+  },
+  sub: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    letterSpacing: 1,
+    fontWeight: '600',
+    fontFamily: fonts.label,
+  },
+  total: {
+    color: colors.ammo,
+    fontSize: 22,
+    fontWeight: '800',
+    fontFamily: fonts.display,
+  },
 });

@@ -119,7 +119,7 @@ function MainTabs() {
         name="Activity"
         component={ActivityScreen}
         options={{
-          title: 'TRANSACTION',
+          title: 'TRANS',
           tabBarIcon: ({ focused }) => <TabIcon name="receipt-outline" focused={focused} />,
         }}
       />
