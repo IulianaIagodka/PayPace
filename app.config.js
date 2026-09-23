@@ -1,7 +1,21 @@
 /**
  * Dynamic Expo config so EXPO_PUBLIC_* secrets from `.env` / EAS
  * are baked into `extra` at build time (TestFlight-safe).
+ *
+ * Also strips iOS `aps-environment`: PayPace only schedules local
+ * partner-metric alerts. The expo-notifications package is still
+ * auto-applied by prebuild and would otherwise force Push on the
+ * App Store provisioning profile.
  */
+const { withEntitlementsPlist } = require('expo/config-plugins');
+
+function withLocalNotificationsOnly(config) {
+  return withEntitlementsPlist(config, (cfg) => {
+    delete cfg.modResults['aps-environment'];
+    return cfg;
+  });
+}
+
 module.exports = ({ config }) => {
   const openaiApiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY?.trim() || '';
   const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim() || '';
@@ -20,6 +34,7 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
+    plugins: [...(config.plugins ?? []), withLocalNotificationsOnly],
     extra: {
       ...(config.extra ?? {}),
       openaiApiKey,
