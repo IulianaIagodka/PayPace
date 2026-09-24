@@ -11,6 +11,7 @@ import {
   View,
   Button,
   type TextInputProps,
+  type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -77,11 +78,13 @@ export function ScreenBackground({
 export function Panel({
   children,
   style,
+  contentStyle,
   glow,
   innerGlow,
 }: {
   children?: React.ReactNode;
   style?: ViewStyle;
+  contentStyle?: StyleProp<ViewStyle>;
   /** @deprecated ignored — use HUDPanel variants */
   alt?: boolean;
   glow?: boolean;
@@ -89,7 +92,7 @@ export function Panel({
 }) {
   const variant: HUDPanelVariant = glow || innerGlow ? 'primary' : 'standard';
   return (
-    <HUDPanel variant={variant} style={style}>
+    <HUDPanel variant={variant} style={style} contentStyle={contentStyle}>
       {children}
     </HUDPanel>
   );
@@ -125,11 +128,14 @@ export function HudButton({
   onPress,
   disabled,
   variant = 'primary',
+  compact = false,
 }: {
   title: string;
   onPress: () => void;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'danger';
+  /** Tighter padding — Settings lists and dense stacks. */
+  compact?: boolean;
 }) {
   return (
     <Pressable
@@ -137,6 +143,7 @@ export function HudButton({
       disabled={disabled}
       style={({ pressed }) => [
         styles.btn,
+        compact && styles.btnCompact,
         variant === 'primary' && styles.btnPrimary,
         variant === 'secondary' && styles.btnSecondary,
         variant === 'danger' && styles.btnDanger,
@@ -159,6 +166,8 @@ export function HudButton({
               style={[
                 styles.btnText,
                 styles.btnPlus,
+                compact && styles.btnTextCompact,
+                compact && styles.btnPlusCompact,
                 variant === 'secondary' && { color: colors.text },
                 variant === 'danger' && { color: colors.danger },
               ]}
@@ -168,6 +177,7 @@ export function HudButton({
             <Text
               style={[
                 styles.btnText,
+                compact && styles.btnTextCompact,
                 variant === 'secondary' && { color: colors.text },
                 variant === 'danger' && { color: colors.danger },
               ]}
@@ -179,6 +189,7 @@ export function HudButton({
           <Text
             style={[
               styles.btnText,
+              compact && styles.btnTextCompact,
               variant === 'secondary' && { color: colors.text },
               variant === 'danger' && { color: colors.danger },
             ]}
@@ -662,6 +673,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     minHeight: 54,
   },
+  btnCompact: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    minHeight: 40,
+  },
   btnPrimary: {
     backgroundColor: '#10180E',
     borderColor: colors.resource,
@@ -690,6 +706,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 2.6,
   },
+  btnTextCompact: {
+    fontSize: 12,
+    letterSpacing: 1.8,
+  },
   btnPlus: {
     fontSize: 24,
     lineHeight: 24,
@@ -698,6 +718,11 @@ const styles = StyleSheet.create({
     marginTop: -1,
     includeFontPadding: false,
     textAlignVertical: 'center',
+  },
+  btnPlusCompact: {
+    fontSize: 18,
+    lineHeight: 18,
+    marginRight: 6,
   },
   barTrack: {
     flexDirection: 'row',

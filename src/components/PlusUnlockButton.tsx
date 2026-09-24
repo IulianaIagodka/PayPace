@@ -26,6 +26,8 @@ type Props = {
    * Default `row` for the dual-plan picker.
    */
   layout?: 'row' | 'stack';
+  /** Tighter chips / buttons for Settings. */
+  compact?: boolean;
 };
 
 /**
@@ -38,6 +40,7 @@ export function PlusUnlockButton({
   preferRestore = false,
   plan,
   layout = 'row',
+  compact = false,
 }: Props) {
   const { setPremium } = useBudget();
   const [busy, setBusy] = useState<PlusPlan | 'restore' | 'demo' | null>(null);
@@ -78,6 +81,7 @@ export function PlusUnlockButton({
   if (preferRestore) {
     return (
       <HudButton
+        compact={compact}
         title={busy ? '…' : title ?? 'RESTORE PURCHASES'}
         variant={variant}
         disabled={busy != null}
@@ -89,6 +93,7 @@ export function PlusUnlockButton({
   if (demo) {
     return (
       <HudButton
+        compact={compact}
         title={busy ? '…' : title ?? 'TRY PLUS (DEMO)'}
         variant={variant}
         disabled={busy != null}
@@ -109,6 +114,7 @@ export function PlusUnlockButton({
           : 'PLUS MONTHLY';
     return (
       <HudButton
+        compact={compact}
         title={busy ? '…' : title ?? defaultTitle}
         variant={variant}
         disabled={busy != null}
@@ -124,12 +130,14 @@ export function PlusUnlockButton({
     return (
       <View style={styles.stack}>
         <HudButton
+          compact={compact}
           title={busy === 'monthly' ? '…' : monthlyPrice ? `MONTHLY · ${monthlyPrice}` : 'MONTHLY'}
           variant="secondary"
           disabled={busy != null}
           onPress={() => run('monthly', 'monthly')}
         />
         <HudButton
+          compact={compact}
           title={busy === 'yearly' ? '…' : yearlyPrice ? `YEARLY · ${yearlyPrice}` : 'YEARLY'}
           variant="primary"
           disabled={busy != null}
@@ -140,13 +148,14 @@ export function PlusUnlockButton({
   }
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, compact && styles.rowCompact]}>
       <PlanChip
         label="Monthly"
         price={monthlyPrice}
         emphasized={false}
         busy={busy === 'monthly'}
         disabled={busy != null}
+        compact={compact}
         onPress={() => run('monthly', 'monthly')}
       />
       <PlanChip
@@ -156,6 +165,7 @@ export function PlusUnlockButton({
         emphasized
         busy={busy === 'yearly'}
         disabled={busy != null}
+        compact={compact}
         onPress={() => run('yearly', 'yearly')}
       />
     </View>
@@ -169,6 +179,7 @@ function PlanChip({
   emphasized,
   busy,
   disabled,
+  compact,
   onPress,
 }: {
   label: string;
@@ -177,6 +188,7 @@ function PlanChip({
   emphasized: boolean;
   busy: boolean;
   disabled: boolean;
+  compact?: boolean;
   onPress: () => void;
 }) {
   return (
@@ -185,14 +197,33 @@ function PlanChip({
       disabled={disabled}
       style={({ pressed }) => [
         styles.chip,
+        compact && styles.chipCompact,
         emphasized ? styles.chipYearly : styles.chipMonthly,
         disabled && { opacity: 0.4 },
         pressed && { opacity: 0.88 },
       ]}
     >
-      {badge ? <Text style={styles.badge}>{badge}</Text> : <View style={styles.badgeSpacer} />}
-      <Text style={[styles.chipLabel, emphasized && styles.chipLabelOn]}>{busy ? '…' : label}</Text>
-      <Text style={[styles.chipPrice, emphasized && styles.chipPriceOn]}>
+      {badge ? (
+        <Text style={[styles.badge, compact && styles.badgeCompact]}>{badge}</Text>
+      ) : (
+        <View style={[styles.badgeSpacer, compact && styles.badgeSpacerCompact]} />
+      )}
+      <Text
+        style={[
+          styles.chipLabel,
+          compact && styles.chipLabelCompact,
+          emphasized && styles.chipLabelOn,
+        ]}
+      >
+        {busy ? '…' : label}
+      </Text>
+      <Text
+        style={[
+          styles.chipPrice,
+          compact && styles.chipPriceCompact,
+          emphasized && styles.chipPriceOn,
+        ]}
+      >
         {price ?? '—'}
       </Text>
     </Pressable>
@@ -200,8 +231,9 @@ function PlanChip({
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: 8 },
+  stack: { gap: 6 },
   row: { flexDirection: 'row', gap: 10 },
+  rowCompact: { gap: 8 },
   chip: {
     flex: 1,
     borderWidth: hud.stroke,
@@ -211,6 +243,12 @@ const styles = StyleSheet.create({
     gap: 4,
     minHeight: 88,
     justifyContent: 'center',
+  },
+  chipCompact: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    gap: 2,
+    minHeight: 64,
   },
   chipMonthly: {
     borderColor: colors.border,
@@ -228,7 +266,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     textTransform: 'uppercase',
   },
+  badgeCompact: { fontSize: 8, letterSpacing: 1 },
   badgeSpacer: { height: 11 },
+  badgeSpacerCompact: { height: 9 },
   chipLabel: {
     color: colors.textSecondary,
     fontSize: 13,
@@ -237,6 +277,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
     textTransform: 'uppercase',
   },
+  chipLabelCompact: { fontSize: 11, letterSpacing: 1.1 },
   chipLabelOn: { color: colors.resource },
   chipPrice: {
     color: colors.text,
@@ -244,5 +285,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: fonts.display,
   },
+  chipPriceCompact: { fontSize: 13 },
   chipPriceOn: { color: colors.text },
 });

@@ -13,7 +13,8 @@ import {
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HudButton, Panel, ScreenBackground, useTabBarClearance } from '../components/ui';
+import { HudButton, ScreenBackground, useTabBarClearance } from '../components/ui';
+import { HUDPanel } from '../components/HUDPanel';
 import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { HudSelect } from '../components/HudSelect';
 import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../models/calculator';
@@ -43,7 +44,7 @@ const HORIZON_OPTIONS: Array<{ value: PaceHorizon; label: string }> = [
 export function SettingsScreen({ navigation }: Props) {
   const { store, updateSettings, setPremium, addCustomCategory, removeCustomCategory } =
     useBudget();
-  const tabClearance = useTabBarClearance(72);
+  const tabClearance = useTabBarClearance(48);
   const s = store.settings;
   const household = store.household;
   const weekStartsOn = (s.weekStartsOn ?? 1) as WeekStartsOn;
@@ -90,25 +91,32 @@ export function SettingsScreen({ navigation }: Props) {
         </Text>
         <Text style={styles.sub}>Money is energy. Tune your payday budget here.</Text>
 
-        <Panel>
+        <HUDPanel variant="compact" contentStyle={styles.panelInner}>
           <Text style={styles.section}>BUDGET</Text>
           {s.isPremium ? (
             <HudButton
+              compact
               title="ALLOCATE RESOURCES"
               onPress={() => navigation.navigate('Allocate')}
               variant="secondary"
             />
           ) : null}
           <HudButton
+            compact
             title="EDIT CYCLE"
             onPress={() => navigation.navigate('PayCycle')}
             variant="secondary"
           />
-          <HudButton title="BILLS" onPress={() => navigation.navigate('Bills')} variant="secondary" />
-        </Panel>
+          <HudButton
+            compact
+            title="BILLS"
+            onPress={() => navigation.navigate('Bills')}
+            variant="secondary"
+          />
+        </HUDPanel>
 
         {s.isPremium ? (
-          <Panel>
+          <HUDPanel variant="compact" contentStyle={styles.panelInner}>
             <Text style={styles.section}>SHARE</Text>
             {household ? (
               <Text style={styles.subTight}>
@@ -116,14 +124,15 @@ export function SettingsScreen({ navigation }: Props) {
               </Text>
             ) : null}
             <HudButton
+              compact
               title="SHARED BUDGET"
               onPress={() => navigation.navigate('SharedBudget')}
               variant="secondary"
             />
-          </Panel>
+          </HUDPanel>
         ) : null}
 
-        <Panel>
+        <HUDPanel variant="compact" contentStyle={styles.panelInner}>
           <Text style={styles.section}>SYSTEM</Text>
           <View style={styles.selectStack}>
             <HudSelect
@@ -148,9 +157,9 @@ export function SettingsScreen({ navigation }: Props) {
               compact
             />
           </View>
-        </Panel>
+        </HUDPanel>
 
-        <Panel>
+        <HUDPanel variant="compact" contentStyle={styles.panelInner}>
           <Text style={styles.section}>PLUS</Text>
           {s.isPremium ? (
             allowDemoPremiumUnlock() ? (
@@ -160,6 +169,7 @@ export function SettingsScreen({ navigation }: Props) {
                   budget with a partner.
                 </Text>
                 <HudButton
+                  compact
                   title="BACK TO FREE (DEMO)"
                   onPress={() => setPremium(false)}
                   variant="secondary"
@@ -177,30 +187,32 @@ export function SettingsScreen({ navigation }: Props) {
                 Category budgets, unlimited receipt scans, statement import, history, and a shared
                 budget with a partner.
               </Text>
-              <PlusUnlockButton />
+              <PlusUnlockButton compact />
               {!allowDemoPremiumUnlock() ? (
-                <PlusUnlockButton preferRestore variant="secondary" />
+                <PlusUnlockButton compact preferRestore variant="secondary" />
               ) : null}
             </View>
           )}
-        </Panel>
+        </HUDPanel>
 
-        <Panel>
+        <HUDPanel variant="compact" contentStyle={styles.panelInner}>
           <Text style={styles.section}>LEGAL</Text>
           <HudButton
+            compact
             title="PRIVACY POLICY"
             variant="secondary"
             onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
           />
           <HudButton
+            compact
             title="SUPPORT"
             variant="secondary"
             onPress={() => Linking.openURL(SUPPORT_URL)}
           />
-        </Panel>
+        </HUDPanel>
 
         {s.isPremium ? (
-          <Panel>
+          <HUDPanel variant="compact" contentStyle={styles.panelInner}>
             <Text style={styles.section}>CUSTOM CATEGORIES</Text>
             {customs.map((c) => (
               <View key={c.id} style={styles.customRow}>
@@ -236,12 +248,13 @@ export function SettingsScreen({ navigation }: Props) {
               }}
             />
             <HudButton
+              compact
               title={adding ? 'ADDING…' : 'ADD CATEGORY'}
               onPress={onAddCategory}
               disabled={!newCategory.trim() || adding}
               variant="secondary"
             />
-          </Panel>
+          </HUDPanel>
         ) : null}
       </ScrollView>
     </ScreenBackground>
@@ -249,58 +262,59 @@ export function SettingsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { paddingHorizontal: 20, paddingTop: 20, gap: 12 },
+  pad: { paddingHorizontal: 16, paddingTop: 12, gap: 8 },
+  panelInner: { gap: 6 },
   brand: {
     color: colors.text,
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
-    letterSpacing: 3,
+    letterSpacing: 2.5,
     fontFamily: fonts.display,
   },
-  sub: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
-  subTight: { color: colors.textSecondary, fontSize: 12, lineHeight: 16 },
+  sub: { color: colors.textSecondary, fontSize: 12, lineHeight: 16, marginBottom: 2 },
+  subTight: { color: colors.textSecondary, fontSize: 11, lineHeight: 15 },
   section: {
     color: colors.text,
     fontWeight: '800',
-    fontSize: 12,
-    letterSpacing: 1.6,
-    marginBottom: 4,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    marginBottom: 2,
     fontFamily: fonts.label,
   },
-  selectStack: { gap: 10 },
+  selectStack: { gap: 6 },
   plusCard: {
-    gap: 10,
-    marginTop: 4,
+    gap: 8,
   },
   plusTitle: {
     color: colors.text,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     fontFamily: fonts.body,
   },
   plusBody: {
     color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontFamily: fonts.body,
   },
   customRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: 4,
     gap: 12,
   },
-  customName: { color: colors.text, fontSize: 15, fontWeight: '600', flex: 1 },
-  remove: { color: colors.danger, fontWeight: '700', fontSize: 13 },
+  customName: { color: colors.text, fontSize: 14, fontWeight: '600', flex: 1 },
+  remove: { color: colors.danger, fontWeight: '700', fontSize: 12 },
   input: {
     backgroundColor: colors.panelDeep,
     borderWidth: hud.stroke,
     borderColor: colors.border,
     color: colors.text,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 14,
     fontWeight: '600',
+    minHeight: 40,
   },
 });
