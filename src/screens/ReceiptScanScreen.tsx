@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -39,7 +39,9 @@ export function ReceiptScanScreen({ navigation }: Props) {
   const custom = store.settings.customCategories ?? [];
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<ReceiptScanResult | null>(null);
+  const saveLock = useRef(false);
 
   const remaining = freeReceiptScansRemaining(store.settings);
   const allowed = canScanReceipt(store.settings);
@@ -137,17 +139,31 @@ export function ReceiptScanScreen({ navigation }: Props) {
   };
 
   const saveAll = async () => {
-    if (!result?.items.length) return;
-    await addExpenses(
-      result.items.map((item) => ({
-        name: item.name,
-        amount: item.amount,
-        category: item.category,
-      })),
-    );
-    Alert.alert('Saved', 'Those items are now in this pay cycle.', [
-      { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
-    ]);
+    if (!result?.items.length || saving || saveLock.current) return;
+    saveLock.current = true;
+    setSaving(true);
+    try {
+      await addExpenses(
+        result.items.map((item) => ({
+          name: item.name,
+          amount: item.amount,
+          category: item.category,
+        })),
+      );
+      setResult(null);
+      setPhotoUri(null);
+      Alert.alert('Saved', 'Those items are now in this pay cycle.', [
+        { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
+      ]);
+    } catch (error) {
+      Alert.alert(
+        'Could not save',
+        error instanceof Error ? error.message : 'Try again.',
+      );
+    } finally {
+      saveLock.current = false;
+      setSaving(false);
+    }
   };
 
   const money = (amount: number) => formatMoney(amount, currency, { decimals: 2 });
@@ -223,7 +239,11 @@ export function ReceiptScanScreen({ navigation }: Props) {
               </SoftCard>
             ))}
 
-            <PrimaryButton title="Add everything" onPress={saveAll} />
+            <PrimaryButton
+              title={saving ? 'Adding…' : 'Add everything'}
+              onPress={saveAll}
+              disabled={saving}
+            />
           </>
         ) : null}
 
