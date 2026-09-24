@@ -66,6 +66,12 @@ const locked = resolveDayPaceLock({ date: '2026-09-22', allowance: 100 }, '2026-
 assertEq(locked.allowance, 100, 'existing same-day lock is stable');
 assertEq(locked.date, '2026-09-22', 'lock date preserved');
 
+const zeroRefresh = resolveDayPaceLock({ date: '2026-09-22', allowance: 0 }, '2026-09-22', 2000, 4);
+assertEq(zeroRefresh.allowance, 500, 'zero lock refreshes once pool is positive');
+
+const zeroStays = resolveDayPaceLock({ date: '2026-09-22', allowance: 0 }, '2026-09-22', 0, 4);
+assertEq(zeroStays.allowance, 0, 'zero lock stays when pool still empty');
+
 const rollover = resolveDayPaceLock({ date: '2026-09-21', allowance: 100 }, '2026-09-22', 900, 9);
 assertEq(rollover.date, '2026-09-22', 'new day rolls lock');
 assertEq(rollover.allowance, 100, 'new day allowance from morning pool');

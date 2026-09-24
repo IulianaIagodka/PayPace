@@ -332,14 +332,19 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
   );
 
   // Persist day lock so today's allowance stays stable across reloads / partners.
+  // Also rewrite a stuck 0-lock once the spend pool becomes positive (balance set later).
   useEffect(() => {
     if (!ready || !activeCycle) return;
     const today = toDateKey(new Date());
-    if (activeCycle.dayPaceLock?.date === today) return;
     const lock = buildDayPaceLock(activeCycle, new Date());
     const current = storeRef.current;
     const cycle = current.cycles.find((c) => c.id === activeCycle.id);
-    if (!cycle || cycle.dayPaceLock?.date === today) return;
+    if (!cycle) return;
+    const existing = cycle.dayPaceLock;
+    const unchanged =
+      existing?.date === lock.date &&
+      existing.allowance === lock.allowance;
+    if (unchanged) return;
     void commit({
       ...current,
       cycles: current.cycles.map((c) =>
