@@ -229,9 +229,9 @@ export function ReceiptScanScreen({ navigation }: Props) {
 
         <Text style={styles.section}>Spending by category</Text>
         <SoftCard>
-          {cycleCategoryBalances.every((c) => c.spent === 0) ? (
+          {cycleCategoryBalances.length === 0 ? (
             <Text style={styles.sub}>
-              Nothing categorized yet — scan a receipt or log an expense.
+              Nothing to show yet — scan a receipt, log an expense, or allocate a category.
             </Text>
           ) : (
             cycleCategoryBalances.map((row) => (

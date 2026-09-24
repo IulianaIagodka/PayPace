@@ -136,7 +136,7 @@ function demoRecognize(): ReceiptScanResult {
 
 async function recognizeWithOpenAI(base64: string, apiKey: string): Promise<ReceiptScanResult> {
   const prompt = `Extract this receipt into JSON only:
-{"merchant":"string","total":number,"items":[{"name":"string","amount":number,"category":"groceries|food|transport|subscriptions|utilities|childcare|rent|loan|other"}]}
+{"merchant":"string","total":number,"category":"home|groceries|food|transport|shopping|kids|health|fun|travel|subscriptions|other","items":[{"name":"string","amount":number}]}
 
 Rules:
 - Use the FINAL amount paid for each product AFTER discounts (OPUST, RABAT, zniżka, promo).
@@ -198,11 +198,15 @@ Rules:
   const parsed = JSON.parse(content) as {
     merchant?: string;
     total?: number;
+    category?: string;
     items?: Array<{ name?: string; amount?: number; category?: string }>;
   };
 
+  const receiptCategory = isCategory(parsed.category) ? parsed.category : undefined;
   const rawItems = (parsed.items ?? [])
-    .map((row, index) => normalizeItem(row.name, row.amount, row.category, `ai-${index}`))
+    .map((row, index) =>
+      normalizeItem(row.name, row.amount, receiptCategory ?? row.category, `ai-${index}`),
+    )
     .filter(Boolean) as ReceiptLineItem[];
 
   if (!rawItems.length) throw new Error('No line items found — try a sharper photo of the receipt.');

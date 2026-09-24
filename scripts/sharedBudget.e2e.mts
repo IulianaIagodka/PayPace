@@ -57,7 +57,7 @@ function emptyCycle(id: string): PayCycle {
         name: 'Rent',
         amount: 8000,
         dueDate: '2026-09-28',
-        category: 'rent',
+        category: 'home',
         isRecurring: true,
         isPaid: false,
         updatedAt: nowIso(),

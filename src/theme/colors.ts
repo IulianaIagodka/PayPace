@@ -86,10 +86,15 @@ export function segmentColor(index: number, lit: number, tone: ResourceTone): st
 export const paceGradient = [colors.resource, colors.healthy, colors.warning, colors.danger] as const;
 
 export const ENVELOPE_ICON_NAMES: Record<string, string> = {
-  food: 'cart-outline',
-  transport: 'bus-outline',
-  kids: 'people-outline',
-  fun: 'restaurant-outline',
   home: 'home-outline',
+  groceries: 'cart-outline',
+  food: 'restaurant-outline',
+  transport: 'bus-outline',
+  shopping: 'bag-handle-outline',
+  kids: 'people-outline',
+  health: 'medkit-outline',
+  fun: 'game-controller-outline',
+  travel: 'airplane-outline',
+  subscriptions: 'card-outline',
   other: 'grid-outline',
 };
