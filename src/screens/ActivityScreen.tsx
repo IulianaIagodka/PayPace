@@ -14,8 +14,7 @@ import {
   useTabBarClearance,
 } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
-import { colors } from '../theme/colors';
-import { hud, hudType } from '../theme/hud';
+import { hudType, tabScreen } from '../theme/hud';
 import { formatMoney, formatShortDate } from '../services/formatting';
 import { CONTROL_PANEL_COPY } from '../services/controlPanel';
 import type { DailyExpense } from '../models/types';
@@ -63,8 +62,8 @@ export function ActivityScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}>
-        <Text style={styles.brand}>{copy.title}</Text>
+      <ScrollView contentContainerStyle={[tabScreen.pad, { paddingBottom: tabClearance }]}>
+        <Text style={hudType.brand}>{copy.title}</Text>
         <Text style={hudType.meta}>{copy.sysTag}</Text>
 
         <HUDPanel variant="standard" label={copy.totalLabel}>
@@ -122,14 +121,6 @@ export function ActivityScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: {
-    paddingHorizontal: hud.screenPad,
-    paddingTop: 10,
-    gap: hud.stackGap,
-  },
-  brand: {
-    ...hudType.brand,
-  },
   feedHead: {
     marginTop: 2,
   },

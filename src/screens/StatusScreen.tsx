@@ -4,7 +4,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { Panel, ScreenBackground, SegmentedBar, useTabBarClearance } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors, colorForTone } from '../theme/colors';
-import { hudType } from '../theme/hud';
+import { hudType, tabScreen } from '../theme/hud';
 import { formatMoney } from '../services/formatting';
 import type { MainTabParamList } from '../navigation/types';
 
@@ -28,9 +28,9 @@ export function StatusScreen({}: Props) {
   if (!activeCycle) {
     return (
       <ScreenBackground>
-        <View style={styles.pad}>
-          <Text style={styles.title}>PACE</Text>
-          <Text style={styles.sub}>No active cycle.</Text>
+        <View style={tabScreen.pad}>
+          <Text style={hudType.brand}>PACE</Text>
+          <Text style={hudType.body}>No active cycle.</Text>
         </View>
       </ScreenBackground>
     );
@@ -48,8 +48,8 @@ export function StatusScreen({}: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}>
-        <Text style={styles.title}>PACE</Text>
+      <ScrollView contentContainerStyle={[tabScreen.pad, { paddingBottom: tabClearance }]}>
+        <Text style={hudType.brand}>PACE</Text>
 
         <Panel>
           <Row label="INCOME" value={formatMoney(income, currency)} />
@@ -68,15 +68,15 @@ export function StatusScreen({}: Props) {
         </Panel>
 
         <Panel>
-          <Text style={styles.label}>PACE</Text>
-          <Text style={[styles.traj, { color: colorForTone(trajTone as any) }]}>
+          <Text style={hudType.label}>PACE</Text>
+          <Text style={[hudType.value, { color: colorForTone(trajTone as any) }]}>
             {snapshot.trajectory}
           </Text>
           <SegmentedBar ratio={snapshot.resourcesRemainingRatio} segments={12} height={14} />
         </Panel>
 
         <Panel>
-          <Text style={styles.label}>CYCLE TIMELINE</Text>
+          <Text style={hudType.label}>CYCLE TIMELINE</Text>
           <View style={styles.timeline}>
             {timeline.map((d) => (
               <View
@@ -89,7 +89,7 @@ export function StatusScreen({}: Props) {
               />
             ))}
           </View>
-          <Text style={styles.sub}>
+          <Text style={hudType.body}>
             Day {Math.min(snapshot.daysElapsed + 1, snapshot.totalDaysInCycle)} of{' '}
             {snapshot.totalDaysInCycle} · today marked
           </Text>
@@ -110,18 +110,13 @@ function Row({
 }) {
   return (
     <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={hudType.label}>{label}</Text>
       <Text style={[styles.rowValue, strong && styles.rowValueStrong]}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 14 },
-  title: { ...hudType.screenTitle },
-  label: { ...hudType.label },
-  sub: { ...hudType.body },
-  traj: { ...hudType.value },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -130,9 +125,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  rowLabel: { ...hudType.label },
   rowValue: { ...hudType.valueMid, color: colors.text },
-  rowValueStrong: { color: colors.resource, fontSize: 18 },
+  rowValueStrong: { color: colors.resource },
   timeline: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   tick: {
     width: 10,

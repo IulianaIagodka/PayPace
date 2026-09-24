@@ -26,7 +26,8 @@ import {
 } from '../services/plusBilling';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { hud, hudType } from '../theme/hud';
+import { fonts } from '../theme/fonts';
+import { hud, hudType, tabScreen } from '../theme/hud';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
 type Props = CompositeScreenProps<
@@ -80,15 +81,15 @@ export function SettingsScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView
-        contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}
+        contentContainerStyle={[tabScreen.pad, { paddingBottom: tabClearance }]}
         scrollIndicatorInsets={{ bottom: tabClearance }}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-        <Text style={styles.brand}>
+        <Text style={hudType.brand}>
           PAY<Text style={hudType.brandAccent}>PACE</Text>
         </Text>
-        <Text style={styles.sub}>Money is energy. Tune your payday budget here.</Text>
+        <Text style={hudType.body}>Money is energy. Tune your payday budget here.</Text>
 
         <HUDPanel variant="compact" contentStyle={styles.panelInner}>
           <Text style={styles.section}>BUDGET</Text>
@@ -118,7 +119,7 @@ export function SettingsScreen({ navigation }: Props) {
           <HUDPanel variant="compact" contentStyle={styles.panelInner}>
             <Text style={styles.section}>SHARE</Text>
             {household ? (
-              <Text style={styles.subTight}>
+              <Text style={hudType.body}>
                 Linked · {household.members.map((m) => m.displayName).join(' & ')}
               </Text>
             ) : null}
@@ -163,7 +164,7 @@ export function SettingsScreen({ navigation }: Props) {
           {s.isPremium ? (
             allowDemoPremiumUnlock() ? (
               <>
-                <Text style={styles.subTight}>
+                <Text style={hudType.body}>
                   Category budgets, unlimited receipt scans, statement import, history, and a shared
                   budget with a partner.
                 </Text>
@@ -175,14 +176,14 @@ export function SettingsScreen({ navigation }: Props) {
                 />
               </>
             ) : (
-              <Text style={styles.subTight}>
+              <Text style={hudType.body}>
                 Plus is on. Manage or cancel anytime in your Apple ID subscriptions.
               </Text>
             )
           ) : (
             <View style={styles.plusCard}>
-              <Text style={styles.plusTitle}>Get more from your payday budget</Text>
-              <Text style={styles.plusBody}>
+              <Text style={hudType.bodyStrong}>Get more from your payday budget</Text>
+              <Text style={hudType.body}>
                 Category budgets, unlimited receipt scans, statement import, history, and a shared
                 budget with a partner.
               </Text>
@@ -194,28 +195,12 @@ export function SettingsScreen({ navigation }: Props) {
           )}
         </HUDPanel>
 
-        <HUDPanel variant="compact" contentStyle={styles.panelInner}>
-          <Text style={styles.section}>LEGAL</Text>
-          <HudButton
-            compact
-            title="PRIVACY POLICY"
-            variant="secondary"
-            onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
-          />
-          <HudButton
-            compact
-            title="SUPPORT"
-            variant="secondary"
-            onPress={() => Linking.openURL(SUPPORT_URL)}
-          />
-        </HUDPanel>
-
         {s.isPremium ? (
           <HUDPanel variant="compact" contentStyle={styles.panelInner}>
             <Text style={styles.section}>CUSTOM CATEGORIES</Text>
             {customs.map((c) => (
               <View key={c.id} style={styles.customRow}>
-                <Text style={styles.customName}>{c.title}</Text>
+                <Text style={[hudType.bodyStrong, styles.customName]}>{c.title}</Text>
                 <Pressable
                   onPress={() =>
                     Alert.alert('Remove category?', c.title, [
@@ -255,24 +240,36 @@ export function SettingsScreen({ navigation }: Props) {
             />
           </HUDPanel>
         ) : null}
+
+        <View style={styles.legalBlock}>
+          <Text style={styles.section}>LEGAL</Text>
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+            hitSlop={8}
+          >
+            <Text style={styles.legalLink}>Privacy Policy</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => Linking.openURL(SUPPORT_URL)}
+            hitSlop={8}
+          >
+            <Text style={styles.legalLink}>Support</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  pad: { paddingHorizontal: 16, paddingTop: 12, gap: 8 },
   panelInner: { gap: 6 },
-  brand: { ...hudType.brand, fontSize: 20, letterSpacing: 2.5 },
-  sub: { ...hudType.body, fontSize: 12, lineHeight: 16, marginBottom: 2 },
-  subTight: { ...hudType.body, fontSize: 11, lineHeight: 15 },
   section: { ...hudType.label, color: colors.text, marginBottom: 2 },
   selectStack: { gap: 6 },
   plusCard: {
     gap: 8,
   },
-  plusTitle: { ...hudType.bodyStrong, fontSize: 14 },
-  plusBody: { ...hudType.body, fontSize: 12, lineHeight: 16 },
   customRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -280,8 +277,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     gap: 12,
   },
-  customName: { ...hudType.bodyStrong, fontSize: 14, flex: 1 },
-  remove: { ...hudType.link, color: colors.danger, fontSize: 12 },
+  customName: { flex: 1 },
+  remove: { ...hudType.link, color: colors.danger },
   input: {
     backgroundColor: colors.panelDeep,
     borderWidth: hud.stroke,
@@ -290,6 +287,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     minHeight: 40,
     ...hudType.field,
-    fontSize: 14,
+  },
+  legalBlock: {
+    gap: 10,
+    paddingTop: 4,
+    paddingBottom: 4,
+  },
+  legalLink: {
+    color: colors.resource,
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: fonts.body,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });
