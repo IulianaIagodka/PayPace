@@ -1,6 +1,9 @@
 import Constants from 'expo-constants';
 import type { ExpenseCategory } from '../models/types';
 import { guessCategory, isBuiltinCategory } from './categories';
+import { dominantReceiptCategory, withReceiptCategory } from './receiptCategory';
+
+export { dominantReceiptCategory, withReceiptCategory } from './receiptCategory';
 
 export type ReceiptLineItem = {
   id: string;
@@ -109,6 +112,15 @@ export function reconcileItemsToTotal(
   return { items: scaled, total };
 }
 
+function unifyReceipt(result: ReceiptScanResult): ReceiptScanResult {
+  if (!result.items.length) return result;
+  let category = dominantReceiptCategory(result.items);
+  if (category === 'other' && result.merchant) {
+    category = guessCategory(result.merchant);
+  }
+  return withReceiptCategory(result, category);
+}
+
 /** Offline demo recognizer — only when explicitly requested (dev / missing key tests). */
 function demoRecognize(): ReceiptScanResult {
   const samples = [
@@ -126,19 +138,21 @@ function demoRecognize(): ReceiptScanResult {
     amount: s.amount,
     category: guessCategory(s.name),
   }));
-  return {
+  return unifyReceipt({
     merchant: 'Demo Market',
     total: items.reduce((sum, item) => sum + item.amount, 0),
     items,
     source: 'demo',
-  };
+  });
 }
 
 async function recognizeWithOpenAI(base64: string, apiKey: string): Promise<ReceiptScanResult> {
   const prompt = `Extract this receipt into JSON only:
-{"merchant":"string","total":number,"items":[{"name":"string","amount":number,"category":"groceries|food|transport|subscriptions|utilities|childcare|rent|loan|other"}]}
+{"merchant":"string","total":number,"category":"groceries|food|transport|subscriptions|utilities|childcare|rent|loan|other","items":[{"name":"string","amount":number}]}
 
 Rules:
+- One receipt = one category. Put the best overall category on "category" (store type / majority of spend).
+- Do NOT assign different categories per line item.
 - Use the FINAL amount paid for each product AFTER discounts (OPUST, RABAT, zniżka, promo).
 - Do NOT list discount / OPUST / RABAT lines as separate items.
 - For qty × price lines, amount = quantity × unit price − that line's discount.
@@ -198,23 +212,35 @@ Rules:
   const parsed = JSON.parse(content) as {
     merchant?: string;
     total?: number;
+    category?: string;
     items?: Array<{ name?: string; amount?: number; category?: string }>;
   };
 
+  const receiptCategory = isCategory(parsed.category) ? parsed.category : undefined;
   const rawItems = (parsed.items ?? [])
-    .map((row, index) => normalizeItem(row.name, row.amount, row.category, `ai-${index}`))
+    .map((row, index) =>
+      normalizeItem(
+        row.name,
+        row.amount,
+        receiptCategory ?? row.category,
+        `ai-${index}`,
+      ),
+    )
     .filter(Boolean) as ReceiptLineItem[];
 
   if (!rawItems.length) throw new Error('No line items found — try a sharper photo of the receipt.');
 
   const { items, total } = reconcileItemsToTotal(rawItems, parsed.total);
-
-  return {
+  const unified = unifyReceipt({
     merchant: parsed.merchant,
     total,
     items,
     source: 'ai',
-  };
+  });
+  if (receiptCategory && receiptCategory !== 'other') {
+    return withReceiptCategory(unified, receiptCategory);
+  }
+  return unified;
 }
 
 /**

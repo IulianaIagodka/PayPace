@@ -13,14 +13,11 @@ import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PrimaryButton, ScreenBackground, SecondaryButton, SegmentedBar, SoftCard } from '../components/ui';
 import { PlusUnlockButton } from '../components/PlusUnlockButton';
-import { categoryTitle, allCategoryIds, nextCategoryInCycle } from '../services/categories';
+import { categoryTitle, nextCategoryInCycle } from '../services/categories';
 import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import { formatMoney } from '../services/formatting';
-import {
-  analyzeReceiptPhoto,
-  type ReceiptLineItem,
-  type ReceiptScanResult,
-} from '../services/receiptAnalyzer';
+import { analyzeReceiptPhoto, type ReceiptScanResult } from '../services/receiptAnalyzer';
+import { withReceiptCategory } from '../services/receiptCategory';
 import {
   FREE_RECEIPT_SCAN_LIMIT,
   canScanReceipt,
@@ -34,48 +31,31 @@ import type { ExpenseCategory } from '../models/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'ReceiptScan'>;
 
 export function ReceiptScanScreen({ navigation }: Props) {
-  const { store, activeCycle, addExpenses, recordReceiptScan } = useBudget();
+  const { store, activeCycle, addExpense, recordReceiptScan } = useBudget();
   const currency = store.settings.currencyCode;
   const custom = store.settings.customCategories ?? [];
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ReceiptScanResult | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const remaining = freeReceiptScansRemaining(store.settings);
   const allowed = canScanReceipt(store.settings);
 
-  const cycleItemCategory = (itemId: string) => {
+  const receiptCategory: ExpenseCategory = result?.items[0]?.category ?? 'other';
+  const receiptTotal = useMemo(() => {
+    if (!result) return 0;
+    if (result.total && result.total > 0) return result.total;
+    return result.items.reduce((sum, item) => sum + item.amount, 0);
+  }, [result]);
+
+  const cycleReceiptCategory = () => {
     setResult((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        items: prev.items.map((item) => {
-          if (item.id !== itemId) return item;
-          return { ...item, category: nextCategoryInCycle(item.category, custom) };
-        }),
-      };
+      if (!prev?.items.length) return prev;
+      const current = prev.items[0]?.category ?? 'other';
+      return withReceiptCategory(prev, nextCategoryInCycle(current, custom));
     });
   };
-
-  const grouped = useMemo(() => {
-    if (!result) return [] as Array<{ category: ExpenseCategory; items: ReceiptLineItem[]; total: number }>;
-    const map = new Map<ExpenseCategory, ReceiptLineItem[]>();
-    for (const item of result.items) {
-      const list = map.get(item.category) ?? [];
-      list.push(item);
-      map.set(item.category, list);
-    }
-    return allCategoryIds(custom)
-      .map((category) => {
-        const items = map.get(category) ?? [];
-        return {
-          category,
-          items,
-          total: items.reduce((sum, item) => sum + item.amount, 0),
-        };
-      })
-      .filter((g) => g.items.length > 0);
-  }, [result, custom]);
 
   const cycleCategoryBalances = categoryBalancesForDisplay(activeCycle, custom);
 
@@ -136,34 +116,37 @@ export function ReceiptScanScreen({ navigation }: Props) {
     }
   };
 
-  const saveAll = async () => {
-    if (!result?.items.length) return;
-    await addExpenses(
-      result.items.map((item) => ({
-        name: item.name,
-        amount: item.amount,
-        category: item.category,
-      })),
-    );
-    Alert.alert('Saved', 'Those items are now in this pay cycle.', [
-      { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
-    ]);
+  const saveReceipt = async () => {
+    if (!result?.items.length || saving) return;
+    setSaving(true);
+    try {
+      await addExpense({
+        name: result.merchant?.trim() || 'Receipt',
+        amount: receiptTotal,
+        category: receiptCategory,
+      });
+      Alert.alert('Saved', 'This receipt is now in this pay cycle.', [
+        { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
+      ]);
+    } catch (error) {
+      Alert.alert('Could not save', error instanceof Error ? error.message : 'Try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const money = (amount: number) => formatMoney(amount, currency, { decimals: 2 });
 
-  const cycleCategory = (category: ExpenseCategory) =>
-    money(
-      (activeCycle?.expenses ?? [])
-        .filter((e) => (e.category ?? 'other') === category)
-        .reduce((sum, e) => sum + e.amount, 0) +
-        (grouped.find((g) => g.category === category)?.total ?? 0),
-    );
+  const categorySoFar = money(
+    (activeCycle?.expenses ?? [])
+      .filter((e) => (e.category ?? 'other') === receiptCategory)
+      .reduce((sum, e) => sum + e.amount, 0) + receiptTotal,
+  );
 
   const freeHint =
     remaining == null
-      ? 'Snap a photo. We’ll group the items by category so you can see each balance.'
-      : `Free plan: ${remaining} of ${FREE_RECEIPT_SCAN_LIMIT} receipt scans left. Snap a photo — we’ll group items by category.`;
+      ? 'Snap a photo. One receipt goes into one category — tap to change it.'
+      : `Free plan: ${remaining} of ${FREE_RECEIPT_SCAN_LIMIT} receipt scans left. One receipt → one category.`;
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
@@ -191,39 +174,38 @@ export function ReceiptScanScreen({ navigation }: Props) {
               <Text style={styles.section}>
                 {result.merchant ?? 'Receipt'} · {result.source === 'ai' ? 'AI' : 'Demo scan'}
               </Text>
-              <Text style={styles.sub}>
-                Total recognized: {money(result.total ?? 0)}
-              </Text>
+              <Text style={styles.sub}>Total recognized: {money(receiptTotal)}</Text>
             </SoftCard>
 
-            {grouped.map((group) => (
-              <SoftCard key={group.category}>
-                <View style={styles.groupHead}>
-                  <Text style={styles.section}>{categoryTitle(group.category, { custom })}</Text>
-                  <Text style={styles.amount}>{money(group.total)}</Text>
+            <SoftCard>
+              <Pressable
+                onPress={cycleReceiptCategory}
+                style={styles.groupHead}
+                accessibilityRole="button"
+                accessibilityLabel={`Change category, currently ${categoryTitle(receiptCategory, { custom })}`}
+              >
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text style={styles.section}>{categoryTitle(receiptCategory, { custom })}</Text>
+                  <Text style={styles.tapHint}>Tap to change category</Text>
                 </View>
-                <Text style={styles.balanceHint}>
-                  This category so far (including this receipt): {cycleCategory(group.category)}
-                </Text>
-                {group.items.map((item) => (
-                  <Pressable
-                    key={item.id}
-                    onPress={() => cycleItemCategory(item.id)}
-                    style={styles.line}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Change category for ${item.name}`}
-                  >
-                    <View style={{ flex: 1, paddingRight: 8 }}>
-                      <Text style={styles.lineName}>{item.name}</Text>
-                      <Text style={styles.tapHint}>Tap to change category</Text>
-                    </View>
-                    <Text style={styles.lineAmount}>{money(item.amount)}</Text>
-                  </Pressable>
-                ))}
-              </SoftCard>
-            ))}
+                <Text style={styles.amount}>{money(receiptTotal)}</Text>
+              </Pressable>
+              <Text style={styles.balanceHint}>
+                This category so far (including this receipt): {categorySoFar}
+              </Text>
+              {result.items.map((item) => (
+                <View key={item.id} style={styles.line}>
+                  <Text style={[styles.lineName, { flex: 1, paddingRight: 8 }]}>{item.name}</Text>
+                  <Text style={styles.lineAmount}>{money(item.amount)}</Text>
+                </View>
+              ))}
+            </SoftCard>
 
-            <PrimaryButton title="Add everything" onPress={saveAll} />
+            <PrimaryButton
+              title={saving ? 'Saving…' : 'Add receipt'}
+              onPress={saveReceipt}
+              disabled={saving}
+            />
           </>
         ) : null}
 
