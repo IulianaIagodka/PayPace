@@ -17,7 +17,7 @@ import {
 } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { hud, hudType } from '../theme/hud';
+import { hud, hudType, tabScreen } from '../theme/hud';
 import { formatMoney, formatDays } from '../services/formatting';
 import { envelopesForDisplay } from '../services/envelopes';
 import {
@@ -100,8 +100,10 @@ export function HomeScreen({ navigation }: Props) {
   if (!activeCycle) {
     return (
       <ScreenBackground>
-        <View style={styles.pad}>
-          <Text style={styles.brand}>PAYPACE</Text>
+        <View style={tabScreen.pad}>
+          <Text style={hudType.brand}>
+            PAY<Text style={hudType.brandAccent}>PACE</Text>
+          </Text>
           <Text style={hudType.body}>No active budget yet. Set one up in Settings.</Text>
           <HudButton title="SETTINGS" onPress={() => navigation.navigate('Settings')} />
         </View>
@@ -123,11 +125,11 @@ export function HomeScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView
-        contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}
+        contentContainerStyle={[tabScreen.pad, { paddingBottom: tabClearance }]}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.brand}>
-          PAY<Text style={styles.brandAccent}>PACE</Text>
+        <Text style={hudType.brand}>
+          PAY<Text style={hudType.brandAccent}>PACE</Text>
         </Text>
 
         <HUDPanel variant="standard" label="SAFE TO SPEND TODAY" labelTone="primary">
@@ -237,7 +239,7 @@ export function HomeScreen({ navigation }: Props) {
           <View style={styles.recentHead}>
             <Text style={hudType.label}>RECENT</Text>
             <Pressable onPress={() => navigation.navigate('Activity')}>
-              <Text style={styles.seeAll}>SPEND ›</Text>
+              <Text style={hudType.link}>SPEND ›</Text>
             </Pressable>
           </View>
           <HUDPanel variant="standard">
@@ -258,20 +260,6 @@ export function HomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: {
-    paddingHorizontal: hud.screenPad,
-    paddingTop: 10,
-    gap: hud.stackGap,
-  },
-  brand: {
-    ...hudType.brand,
-    fontSize: 26,
-    letterSpacing: 4.5,
-    marginBottom: 2,
-  },
-  brandAccent: {
-    ...hudType.brandAccent,
-  },
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -301,7 +289,6 @@ const styles = StyleSheet.create({
   rangeText: {
     ...hudType.label,
     color: colors.textDim,
-    letterSpacing: 1.6,
   },
   rangeTextOn: {
     color: colors.ammo,
@@ -311,8 +298,4 @@ const styles = StyleSheet.create({
   rail: { gap: 10, paddingRight: 8, paddingVertical: 2, flexGrow: 0 },
   recentBlock: { gap: hud.gap },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  seeAll: {
-    ...hudType.link,
-    fontSize: 11,
-  },
 });

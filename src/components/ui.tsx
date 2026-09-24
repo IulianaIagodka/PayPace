@@ -541,17 +541,15 @@ export function ExpenseRow({
   return (
     <View style={[styles.row, compact && styles.rowCompact]}>
       <View style={{ flex: 1, gap: compact ? 0 : 2 }}>
-        <Text style={[styles.rowTitle, compact && styles.rowTitleCompact]} numberOfLines={1}>
+        <Text style={[styles.rowTitle]} numberOfLines={1}>
           {expense.name}
         </Text>
-        <Text style={[styles.meta, compact && styles.metaCompact]}>
+        <Text style={styles.meta}>
           {formatShortDate(expense.date)}
           {expense.memberName ? ` · ${expense.memberName}` : ''}
         </Text>
       </View>
-      <Text style={[styles.rowAmount, compact && styles.rowAmountCompact]}>
-        {formatMoney(expense.amount, currencyCode)}
-      </Text>
+      <Text style={styles.rowAmount}>{formatMoney(expense.amount, currencyCode)}</Text>
       {onDelete ? (
         <Pressable
           onPress={onDelete}
@@ -808,14 +806,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   rowTitle: { ...hudType.bodyStrong },
-  rowTitleCompact: { fontSize: 13 },
   rowAmount: { ...hudType.valueMid },
-  rowAmountCompact: { fontSize: 13 },
-  meta: { ...hudType.body, fontSize: 12, lineHeight: 16 },
-  metaCompact: { fontSize: 10 },
+  meta: { ...hudType.body },
   deleteBtn: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 4 },
   deleteBtnCompact: { minHeight: 28 },
-  deleteText: { ...hudType.link, color: colors.danger, fontSize: 12 },
+  deleteText: { ...hudType.link, color: colors.danger },
   headerBtn: {
     minHeight: 40,
     paddingHorizontal: 10,

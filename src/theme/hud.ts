@@ -48,22 +48,26 @@ export const hudType = StyleSheet.create({
     letterSpacing: 2.2,
     textTransform: 'uppercase',
   },
-  /** Screen / stack title — Orbitron display */
+  /**
+   * Tab + stack screen titles — one size/weight everywhere
+   * (Home PAYPACE, Spend, Pace, Settings, Allocate, …).
+   */
   screenTitle: {
     color: colors.text,
     fontSize: 22,
     fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: 2.5,
+    fontWeight: '800',
+    letterSpacing: 3,
     textTransform: 'uppercase',
   },
-  /** PAYPACE wordmark on Home / Settings / Activity */
+  /** Alias of screenTitle — PAYPACE wordmark / tab headers */
   brand: {
     color: colors.text,
     fontSize: 22,
     fontFamily: fonts.display,
     fontWeight: '800',
     letterSpacing: 3,
+    textTransform: 'uppercase',
   },
   brandAccent: {
     color: colors.resource,
@@ -141,5 +145,14 @@ export const hudType = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.body,
     fontWeight: '600',
+  },
+});
+
+/** Shared outer padding for the four main tabs — keep Home/Spend/Pace/Settings aligned. */
+export const tabScreen = StyleSheet.create({
+  pad: {
+    paddingHorizontal: hud.screenPad,
+    paddingTop: 10,
+    gap: hud.stackGap,
   },
 });
