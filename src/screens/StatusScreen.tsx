@@ -18,7 +18,7 @@ export function StatusScreen({}: Props) {
     if (!activeCycle) return [];
     const total = snapshot.totalDaysInCycle;
     return Array.from({ length: Math.min(total, 31) }).map((_, i) => {
-      const isToday = i === snapshot.daysElapsed;
+      const isToday = i === Math.min(snapshot.daysElapsed, Math.max(total - 1, 0));
       const passed = i < snapshot.daysElapsed;
       return { i, isToday, passed };
     });
