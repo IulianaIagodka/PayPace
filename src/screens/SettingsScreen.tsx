@@ -43,7 +43,7 @@ const HORIZON_OPTIONS: Array<{ value: PaceHorizon; label: string }> = [
 export function SettingsScreen({ navigation }: Props) {
   const { store, updateSettings, setPremium, addCustomCategory, removeCustomCategory } =
     useBudget();
-  const tabClearance = useTabBarClearance(40);
+  const tabClearance = useTabBarClearance(56);
   const s = store.settings;
   const household = store.household;
   const weekStartsOn = (s.weekStartsOn ?? 1) as WeekStartsOn;
@@ -79,7 +79,10 @@ export function SettingsScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <FormScroll contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}>
+      <FormScroll
+        contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}
+        scrollIndicatorInsets={{ bottom: tabClearance }}
+      >
         <Text style={styles.brand}>
           PAY<Text style={{ color: colors.resource }}>PACE</Text>
         </Text>
@@ -244,7 +247,7 @@ export function SettingsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 12 },
+  pad: { paddingHorizontal: 20, paddingTop: 20, gap: 12 },
   brand: {
     color: colors.text,
     fontSize: 22,
@@ -270,7 +273,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.label,
   },
   selectStack: { gap: 10 },
-  divider: { height: 1, backgroundColor: colors.border, marginVertical: 10 },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(90, 80, 64, 0.35)',
+    marginVertical: 12,
+  },
   plusCard: {
     gap: 10,
     padding: 12,
