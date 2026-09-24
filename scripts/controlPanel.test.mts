@@ -268,7 +268,7 @@ assertEq(CONTROL_PANEL_COPY.home.drainEmpty, 'No expenses yet.', 'drain empty');
 assertEq(CONTROL_PANEL_COPY.status.title, 'PACE', 'status title');
 assertEq(CONTROL_PANEL_COPY.status.sysTag, 'TELEMETRY // CYCLE HEALTH', 'status sys tag');
 assertEq(CONTROL_PANEL_COPY.status.poolLabel, 'RESOURCE POOL', 'pool label');
-assertEq(CONTROL_PANEL_COPY.status.trajectoryLabel, 'TRAJECTORY', 'trajectory label');
+assertEq(CONTROL_PANEL_COPY.status.trajectoryLabel, 'PACE', 'trajectory label');
 assertEq(CONTROL_PANEL_COPY.status.timelineLabel, 'CHECKPOINT TIMELINE', 'timeline label');
 assertEq(CONTROL_PANEL_COPY.activity.title, 'SPEND', 'activity title');
 assertEq(CONTROL_PANEL_COPY.activity.sysTag, 'EXPENSE LOG // THIS CYCLE', 'activity sys tag');

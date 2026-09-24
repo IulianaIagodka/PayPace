@@ -277,17 +277,27 @@ export function EnvelopeModule({
 }) {
   const remaining = Math.max(allocated - spent, 0);
   const planned = Math.max(allocated, 0);
-  const remainingRatio = planned > 0 ? remaining / planned : 0;
+  const hasBudget = planned > 0;
+  const remainingRatio = hasBudget ? remaining / planned : 0;
   return (
     <HUDPanel variant="compact" label={title}>
       <View style={styles.amountRow}>
-        <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
-          {formatMoney(remaining, currencyCode)}
-        </Text>
-        <Text style={styles.amountSep}> / </Text>
-        <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
+        {hasBudget ? (
+          <>
+            <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
+              {formatMoney(remaining, currencyCode)}
+            </Text>
+            <Text style={styles.amountSep}> / </Text>
+            <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
+          </>
+        ) : (
+          <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
+            {formatMoney(Math.max(spent, 0), currencyCode)}
+          </Text>
+        )}
       </View>
-      <SegmentedBar ratio={remainingRatio} tipAmber />
+      {hasBudget ? <SegmentedBar ratio={remainingRatio} tipAmber /> : null}
+      {!hasBudget && spent > 0 ? <HudLabel>SPENT</HudLabel> : null}
       {depleted ? <HudLabel tone="warn">DEPLETED</HudLabel> : null}
       {warning && !depleted ? (
         <HudLabel tone="warn">
@@ -329,9 +339,11 @@ export function CategoryCell({
 }) {
   const cycleRemaining = Math.max(allocated - spent, 0);
   const planned = Math.max(allocated, 0);
-  const remainingRatio = planned > 0 ? cycleRemaining / planned : 0;
+  const hasBudget = planned > 0;
+  const remainingRatio = hasBudget ? cycleRemaining / planned : 0;
   const enter = useRef(new Animated.Value(0)).current;
-  const muted = depleted || remainingRatio <= 0;
+  // No budget yet: still highlight when there is spend (don't look "empty").
+  const muted = hasBudget ? depleted || remainingRatio <= 0 : spent <= 0;
   const tipAmber = tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
   const isRail = layout === 'rail';
 
@@ -350,13 +362,19 @@ export function CategoryCell({
   const iconName = (ENVELOPE_ICON_NAMES[iconKey] ??
     ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
 
-  const amountLine = (
+  const amountLine = hasBudget ? (
     <View style={styles.amountRow}>
       <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
         {formatMoney(cycleRemaining, currencyCode)}
       </Text>
       <Text style={styles.amountSep}> / </Text>
       <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
+    </View>
+  ) : (
+    <View style={styles.amountRow}>
+      <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
+        {formatMoney(Math.max(spent, 0), currencyCode)}
+      </Text>
     </View>
   );
 
@@ -377,9 +395,11 @@ export function CategoryCell({
             />
           </View>
           {amountLine}
-          <View style={{ alignSelf: 'stretch' }}>
-            <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
-          </View>
+          {hasBudget ? (
+            <View style={{ alignSelf: 'stretch' }}>
+              <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
+            </View>
+          ) : null}
         </>
       ) : (
         <>
@@ -389,10 +409,12 @@ export function CategoryCell({
               size={15}
               color={muted ? colors.textDim : colors.textSecondary}
             />
-            <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
+            <HudMeta style={{ flex: 1 }}>
+              {hasBudget ? (muted ? 'EMPTY' : horizonLabel) : spent > 0 ? 'SPENT' : 'EMPTY'}
+            </HudMeta>
           </View>
           {amountLine}
-          <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
+          {hasBudget ? <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} /> : null}
         </>
       )}
     </HUDPanel>
