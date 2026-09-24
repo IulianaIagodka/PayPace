@@ -22,14 +22,14 @@ export function FormScroll({
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
     >
       <ScrollView
         style={[styles.flex, style]}
-        contentContainerStyle={contentContainerStyle}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         {...rest}
+        contentContainerStyle={contentContainerStyle}
       >
         {children}
       </ScrollView>

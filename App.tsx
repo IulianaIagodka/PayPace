@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -96,9 +96,9 @@ function MainTabs() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(8,6,4,0.55)',
-          borderTopColor: colors.borderBright,
-          borderTopWidth: 2,
+          backgroundColor: 'rgba(8,6,4,0.72)',
+          borderTopColor: 'rgba(90, 80, 64, 0.45)',
+          borderTopWidth: StyleSheet.hairlineWidth,
           height: TAB_BAR_ROW_HEIGHT + bottomPad,
           paddingBottom: bottomPad,
           paddingTop: 6,
