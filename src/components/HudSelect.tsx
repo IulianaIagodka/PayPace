@@ -100,8 +100,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   triggerCompact: {
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    minHeight: 36,
   },
   triggerOpen: {
     borderColor: colors.borderBright,
@@ -114,7 +115,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   triggerTextCompact: {
-    fontSize: 14,
+    fontSize: 13,
   },
   menu: {
     borderWidth: hud.stroke,
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   optionCompact: {
-    paddingVertical: 9,
+    paddingVertical: 7,
   },
   optionOn: { backgroundColor: 'rgba(154, 138, 106, 0.12)' },
   optionText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600', flex: 1 },
