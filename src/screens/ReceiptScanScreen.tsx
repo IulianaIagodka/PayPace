@@ -31,7 +31,7 @@ import type { ExpenseCategory } from '../models/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'ReceiptScan'>;
 
 export function ReceiptScanScreen({ navigation }: Props) {
-  const { store, activeCycle, addExpense, recordReceiptScan } = useBudget();
+  const { store, activeCycle, addExpenses, recordReceiptScan } = useBudget();
   const currency = store.settings.currencyCode;
   const custom = store.settings.customCategories ?? [];
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -120,12 +120,15 @@ export function ReceiptScanScreen({ navigation }: Props) {
     if (!result?.items.length || saving) return;
     setSaving(true);
     try {
-      await addExpense({
-        name: result.merchant?.trim() || 'Receipt',
-        amount: receiptTotal,
-        category: receiptCategory,
-      });
-      Alert.alert('Saved', 'This receipt is now in this pay cycle.', [
+      // One receipt → one category: keep line items, never split categories.
+      await addExpenses(
+        result.items.map((item) => ({
+          name: item.name,
+          amount: item.amount,
+          category: receiptCategory,
+        })),
+      );
+      Alert.alert('Saved', 'Those items are now in this pay cycle.', [
         { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
       ]);
     } catch (error) {
@@ -145,8 +148,8 @@ export function ReceiptScanScreen({ navigation }: Props) {
 
   const freeHint =
     remaining == null
-      ? 'Snap a photo. One receipt goes into one category — tap to change it.'
-      : `Free plan: ${remaining} of ${FREE_RECEIPT_SCAN_LIMIT} receipt scans left. One receipt → one category.`;
+      ? 'Snap a photo. Items from one receipt stay in one category — tap to change it.'
+      : `Free plan: ${remaining} of ${FREE_RECEIPT_SCAN_LIMIT} receipt scans left. One receipt stays in one category.`;
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
@@ -202,7 +205,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
             </SoftCard>
 
             <PrimaryButton
-              title={saving ? 'Saving…' : 'Add receipt'}
+              title={saving ? 'Saving…' : 'Add everything'}
               onPress={saveReceipt}
               disabled={saving}
             />
