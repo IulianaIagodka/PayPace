@@ -17,6 +17,7 @@ import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { FormScroll } from '../components/FormScroll';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { hudType } from '../theme/hud';
 import type { RootStackParamList } from '../navigation/types';
 import { formatMoney } from '../services/formatting';
 
@@ -61,9 +62,9 @@ export function SharedBudgetScreen({ navigation }: Props) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
         <FormScroll contentContainerStyle={styles.pad}>
-          <Text style={styles.title}>Shared budget</Text>
+          <Text style={styles.title}>SHARED BUDGET</Text>
           <Text style={styles.sub}>
-            Shared budget is Plus only. Share one payday budget with a partner — each expense is
+            SHARED BUDGET is Plus only. Share one payday budget with a partner — each expense is
             tagged with who logged it.
           </Text>
           <PlusUnlockButton />
@@ -78,7 +79,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
     try {
       await fn();
     } catch (error) {
-      Alert.alert('Shared budget', error instanceof Error ? error.message : 'Something went wrong');
+      Alert.alert('SHARED BUDGET', error instanceof Error ? error.message : 'Something went wrong');
     } finally {
       setBusy(false);
     }
@@ -101,7 +102,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
         <FormScroll contentContainerStyle={styles.pad}>
-          <Text style={styles.title}>Shared budget</Text>
+          <Text style={styles.title}>SHARED BUDGET</Text>
           <Text style={styles.sub}>
             One budget for two. You both see the same balance, payday, bills, and spending.
           </Text>
@@ -156,7 +157,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
               value={name}
               onChangeText={setName}
               placeholder="e.g. Ira"
-              placeholderTextColor={colors.inkSecondary}
+              placeholderTextColor={colors.textDim}
               style={styles.field}
               returnKeyType="done"
               blurOnSubmit
@@ -202,7 +203,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
               )
             }
           />
-          {busy ? <ActivityIndicator color={colors.accent} /> : null}
+          {busy ? <ActivityIndicator color={colors.resource} /> : null}
         </FormScroll>
       </ScreenBackground>
     );
@@ -211,7 +212,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <FormScroll contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>Shared budget</Text>
+        <Text style={styles.title}>SHARED BUDGET</Text>
         <Text style={styles.sub}>
           Share one payday budget with your partner. Same balance, same safe-to-spend — expenses
           tagged by name.
@@ -223,7 +224,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
             value={name}
             onChangeText={setName}
             placeholder="e.g. Ira"
-            placeholderTextColor={colors.inkSecondary}
+            placeholderTextColor={colors.textDim}
             style={styles.field}
             autoCapitalize="words"
             returnKeyType="done"
@@ -249,7 +250,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
             value={code}
             onChangeText={setCode}
             placeholder="Invite code"
-            placeholderTextColor={colors.inkSecondary}
+            placeholderTextColor={colors.textDim}
             style={styles.field}
             autoCapitalize="characters"
             autoCorrect={false}
@@ -271,34 +272,28 @@ export function SharedBudgetScreen({ navigation }: Props) {
           ) : null}
         </SoftCard>
 
-        {busy ? <ActivityIndicator color={colors.accent} /> : null}
+        {busy ? <ActivityIndicator color={colors.resource} /> : null}
       </FormScroll>
     </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 24, gap: 14, paddingBottom: 40 },
-  title: { fontSize: 32, fontWeight: '700', color: colors.ink },
-  sub: { color: colors.inkSecondary, fontSize: 15, lineHeight: 21 },
-  section: { color: colors.ink, fontSize: 17, fontWeight: '700' },
-  codeLabel: { color: colors.inkSecondary, fontSize: 13, marginTop: 4 },
-  code: {
-    color: colors.accent,
-    fontSize: 34,
-    fontWeight: '700',
-    letterSpacing: 4,
-    marginVertical: 6,
-  },
-  hint: { color: colors.inkSecondary, fontSize: 13, lineHeight: 18 },
+  pad: { padding: 20, gap: 12, paddingBottom: 40 },
+  title: { ...hudType.screenTitle },
+  sub: { ...hudType.body },
+  section: { ...hudType.label, color: colors.text },
+  codeLabel: { ...hudType.meta, marginTop: 4 },
+  code: { ...hudType.valueHero, color: colors.resource, letterSpacing: 4, marginVertical: 6 },
+  hint: { ...hudType.body },
   field: {
-    backgroundColor: colors.whiteSoft,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.ink,
+    backgroundColor: colors.panelDeep,
+    borderRadius: 0,
+    borderWidth: 2,
+    borderColor: colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    ...hudType.field,
   },
   memberRow: {
     flexDirection: 'row',
@@ -307,7 +302,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 12,
   },
-  memberName: { color: colors.ink, fontSize: 16, fontWeight: '600' },
-  amount: { color: colors.ink, fontSize: 16, fontWeight: '700' },
+  memberName: { ...hudType.bodyStrong },
+  amount: { ...hudType.valueMid },
   rowGap: { gap: 10 },
 });

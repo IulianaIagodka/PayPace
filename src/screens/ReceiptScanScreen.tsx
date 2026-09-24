@@ -25,6 +25,7 @@ import {
 } from '../services/receiptScanQuota';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { hudType } from '../theme/hud';
 import type { RootStackParamList } from '../navigation/types';
 import type { ExpenseCategory } from '../models/types';
 
@@ -64,7 +65,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.pad}>
-          <Text style={styles.title}>Scan receipt</Text>
+          <Text style={styles.title}>SCAN RECEIPT</Text>
           <Text style={styles.sub}>
             You’ve used your {FREE_RECEIPT_SCAN_LIMIT} free receipt scans. Plus unlocks unlimited
             scans, plus statements and category tools.
@@ -159,7 +160,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Scan receipt</Text>
+        <Text style={styles.title}>SCAN RECEIPT</Text>
         <Text style={styles.sub}>{freeHint}</Text>
 
         <PrimaryButton title="Take photo" onPress={() => pick(true)} />
@@ -171,7 +172,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
 
         {scanning ? (
           <SoftCard>
-            <ActivityIndicator color={colors.accent} />
+            <ActivityIndicator color={colors.resource} />
             <Text style={styles.sub}>Reading the receipt…</Text>
           </SoftCard>
         ) : null}
@@ -239,7 +240,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
         </SoftCard>
 
         <Pressable onPress={() => navigation.navigate('CategoryBalances')}>
-          <Text style={styles.link}>See all categories</Text>
+          <Text style={styles.link}>SEE ALL CATEGORIES</Text>
         </Pressable>
       </ScrollView>
     </ScreenBackground>
@@ -247,26 +248,31 @@ export function ReceiptScanScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 24, gap: 14, paddingBottom: 40 },
-  title: { fontSize: 32, fontWeight: '700', color: colors.ink },
-  sub: { color: colors.inkSecondary, fontSize: 15, lineHeight: 21 },
-  section: { color: colors.ink, fontSize: 17, fontWeight: '700' },
-  preview: { width: '100%', height: 200, borderRadius: 16, backgroundColor: colors.whiteSoft },
+  pad: { padding: 20, gap: 12, paddingBottom: 40 },
+  title: { ...hudType.screenTitle },
+  sub: { ...hudType.body },
+  section: { ...hudType.label, color: colors.text },
+  preview: { width: '100%', height: 200, borderRadius: 0, backgroundColor: colors.panelDeep },
   groupHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  amount: { color: colors.ink, fontWeight: '700', fontSize: 16 },
-  balanceHint: { color: colors.inkSecondary, fontSize: 13, marginBottom: 6 },
-  line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
-  lineName: { color: colors.ink, fontSize: 15 },
-  tapHint: { color: colors.inkSecondary, fontSize: 12, marginTop: 2 },
-  lineAmount: { color: colors.ink, fontWeight: '600' },
+  amount: { ...hudType.valueMid },
+  balanceHint: { ...hudType.body, marginBottom: 6 },
+  line: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  lineName: { ...hudType.bodyStrong },
+  tapHint: { ...hudType.meta, marginTop: 2, textTransform: 'none', letterSpacing: 0.4 },
+  lineAmount: { ...hudType.valueMid },
   balanceRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   barTrack: {
     height: 8,
-    borderRadius: 99,
-    backgroundColor: 'rgba(24, 42, 34, 0.08)',
+    borderRadius: 0,
+    backgroundColor: colors.panelDeep,
     overflow: 'hidden',
     marginTop: 6,
   },
-  barFill: { height: '100%', borderRadius: 99 },
-  link: { color: colors.accent, fontWeight: '700', fontSize: 15 },
+  barFill: { height: '100%', borderRadius: 0 },
+  link: { ...hudType.link },
 });

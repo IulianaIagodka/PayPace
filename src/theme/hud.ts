@@ -48,6 +48,26 @@ export const hudType = StyleSheet.create({
     letterSpacing: 2.2,
     textTransform: 'uppercase',
   },
+  /** Screen / stack title — Orbitron display */
+  screenTitle: {
+    color: colors.text,
+    fontSize: 22,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+  },
+  /** PAYPACE wordmark on Home / Settings / Activity */
+  brand: {
+    color: colors.text,
+    fontSize: 22,
+    fontFamily: fonts.display,
+    fontWeight: '800',
+    letterSpacing: 3,
+  },
+  brandAccent: {
+    color: colors.resource,
+  },
   /** Sci-fi display — important numbers only */
   value: {
     color: colors.ammo,
@@ -70,12 +90,27 @@ export const hudType = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.2,
   },
+  /** Mid readout — expense rows / section totals */
+  valueMid: {
+    color: colors.ammo,
+    fontSize: 15,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
   /** Condensed sans — regular readable text */
   body: {
     color: colors.textSecondary,
     fontSize: 13,
     lineHeight: 18,
     fontFamily: fonts.body,
+  },
+  bodyStrong: {
+    color: colors.text,
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: fonts.body,
+    fontWeight: '600',
   },
   meta: {
     color: colors.metal,
@@ -92,5 +127,19 @@ export const hudType = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1.6,
     textTransform: 'uppercase',
+  },
+  link: {
+    color: colors.resource,
+    fontSize: 13,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  field: {
+    color: colors.text,
+    fontSize: 16,
+    fontFamily: fonts.body,
+    fontWeight: '600',
   },
 });

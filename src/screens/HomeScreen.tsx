@@ -17,7 +17,6 @@ import {
 } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { fonts } from '../theme/fonts';
 import { hud, hudType } from '../theme/hud';
 import { formatMoney, formatDays } from '../services/formatting';
 import { envelopesForDisplay } from '../services/envelopes';
@@ -265,15 +264,13 @@ const styles = StyleSheet.create({
     gap: hud.stackGap,
   },
   brand: {
-    color: colors.text,
+    ...hudType.brand,
     fontSize: 26,
-    fontFamily: fonts.display,
-    fontWeight: '700',
     letterSpacing: 4.5,
     marginBottom: 2,
   },
   brandAccent: {
-    color: colors.resource,
+    ...hudType.brandAccent,
   },
   metaRow: {
     flexDirection: 'row',
@@ -302,10 +299,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.panelAlt,
   },
   rangeText: {
+    ...hudType.label,
     color: colors.textDim,
-    fontSize: 11,
-    fontFamily: fonts.label,
-    fontWeight: '700',
     letterSpacing: 1.6,
   },
   rangeTextOn: {
@@ -317,11 +312,7 @@ const styles = StyleSheet.create({
   recentBlock: { gap: hud.gap },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   seeAll: {
-    color: colors.resource,
+    ...hudType.link,
     fontSize: 11,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
   },
 });

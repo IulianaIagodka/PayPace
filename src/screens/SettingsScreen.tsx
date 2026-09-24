@@ -26,8 +26,7 @@ import {
 } from '../services/plusBilling';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { fonts } from '../theme/fonts';
-import { hud } from '../theme/hud';
+import { hud, hudType } from '../theme/hud';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
 type Props = CompositeScreenProps<
@@ -87,7 +86,7 @@ export function SettingsScreen({ navigation }: Props) {
         keyboardDismissMode="on-drag"
       >
         <Text style={styles.brand}>
-          PAY<Text style={{ color: colors.resource }}>PACE</Text>
+          PAY<Text style={hudType.brandAccent}>PACE</Text>
         </Text>
         <Text style={styles.sub}>Money is energy. Tune your payday budget here.</Text>
 
@@ -264,39 +263,16 @@ export function SettingsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: 16, paddingTop: 12, gap: 8 },
   panelInner: { gap: 6 },
-  brand: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: 2.5,
-    fontFamily: fonts.display,
-  },
-  sub: { color: colors.textSecondary, fontSize: 12, lineHeight: 16, marginBottom: 2 },
-  subTight: { color: colors.textSecondary, fontSize: 11, lineHeight: 15 },
-  section: {
-    color: colors.text,
-    fontWeight: '800',
-    fontSize: 11,
-    letterSpacing: 1.4,
-    marginBottom: 2,
-    fontFamily: fonts.label,
-  },
+  brand: { ...hudType.brand, fontSize: 20, letterSpacing: 2.5 },
+  sub: { ...hudType.body, fontSize: 12, lineHeight: 16, marginBottom: 2 },
+  subTight: { ...hudType.body, fontSize: 11, lineHeight: 15 },
+  section: { ...hudType.label, color: colors.text, marginBottom: 2 },
   selectStack: { gap: 6 },
   plusCard: {
     gap: 8,
   },
-  plusTitle: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '700',
-    fontFamily: fonts.body,
-  },
-  plusBody: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    lineHeight: 16,
-    fontFamily: fonts.body,
-  },
+  plusTitle: { ...hudType.bodyStrong, fontSize: 14 },
+  plusBody: { ...hudType.body, fontSize: 12, lineHeight: 16 },
   customRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -304,17 +280,16 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     gap: 12,
   },
-  customName: { color: colors.text, fontSize: 14, fontWeight: '600', flex: 1 },
-  remove: { color: colors.danger, fontWeight: '700', fontSize: 12 },
+  customName: { ...hudType.bodyStrong, fontSize: 14, flex: 1 },
+  remove: { ...hudType.link, color: colors.danger, fontSize: 12 },
   input: {
     backgroundColor: colors.panelDeep,
     borderWidth: hud.stroke,
     borderColor: colors.border,
-    color: colors.text,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    fontSize: 14,
-    fontWeight: '600',
     minHeight: 40,
+    ...hudType.field,
+    fontSize: 14,
   },
 });

@@ -7,6 +7,7 @@ import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import { formatMoney } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { hudType } from '../theme/hud';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CategoryBalances'>;
@@ -61,9 +62,9 @@ export function CategoryBalancesScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   pad: { padding: 20, gap: 14 },
-  title: { fontSize: 22, fontWeight: '800', color: colors.text, letterSpacing: 1.5 },
-  sub: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
+  title: { ...hudType.screenTitle },
+  sub: { ...hudType.body },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
-  name: { color: colors.text, fontWeight: '600', fontSize: 14 },
-  amount: { color: colors.text, fontWeight: '700', fontSize: 15 },
+  name: { ...hudType.bodyStrong },
+  amount: { ...hudType.valueMid },
 });

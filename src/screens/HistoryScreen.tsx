@@ -5,6 +5,7 @@ import { ExpenseRow, PrimaryButton, ScreenBackground, SoftCard } from '../compon
 import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { hudType } from '../theme/hud';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'History'>;
@@ -17,7 +18,7 @@ export function HistoryScreen({ navigation }: Props) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.pad}>
-          <Text style={styles.title}>History is Plus</Text>
+          <Text style={styles.title}>HISTORY · PLUS</Text>
           <Text style={styles.sub}>
             Look back across finished pay cycles and how your safe-to-spend held up.
           </Text>
@@ -31,7 +32,7 @@ export function HistoryScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>History</Text>
+        <Text style={styles.title}>HISTORY</Text>
         <SoftCard>
           {!activeCycle?.expenses.length ? (
             <Text style={styles.sub}>No spending logged yet.</Text>
@@ -61,7 +62,7 @@ export function HistoryScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 24, gap: 16 },
-  title: { fontSize: 32, fontWeight: '700', color: colors.ink },
-  sub: { color: colors.inkSecondary, fontSize: 15, lineHeight: 21 },
+  pad: { padding: 20, gap: 14 },
+  title: { ...hudType.screenTitle },
+  sub: { ...hudType.body },
 });
