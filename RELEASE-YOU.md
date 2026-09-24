@@ -66,12 +66,15 @@ Actions: https://github.com/IulianaIagodka/PayPace/actions
 
 ## 6. Що вже зроблено в коді (не треба повторювати)
 
-- 3 безкоштовні скани чеків  
-- Shared Budget лише в Plus  
+- 3 безкоштовні скани чеків; один чек → одна категорія; захист від подвійного Add  
+- Shared Budget лише в Plus (локальні алерти, без APNs)  
 - Statement більше не підставляє фейкові витрати  
 - Plus CTA → **MONTHLY** / **YEARLY** StoreKit subscriptions + restore (`expo-iap`), демо лише в dev  
-- Privacy / Support лінки в Settings  
-- Error boundary  
+- Категорії за замовч. з alloc 0; у списках лише spent або allocated; картка без бюджету показує spent  
+- Pace: LEFT AT PAYDAY, Day 1-based; clean full-bleed bg; єдиний `hudType`  
+- Privacy / Support лінки в Settings; Error boundary  
+
+Документація: [USER-GUIDE.md](./USER-GUIDE.md) · [TECHNICAL.md](./TECHNICAL.md)
 
 ## Готово до сабміту, коли
 
@@ -79,4 +82,5 @@ Actions: https://github.com/IulianaIagodka/PayPace/actions
 - [ ] Підписки `app.paypace.plus.monthly` + `app.paypace.plus.yearly` живі; покупка проходить у Sandbox на девайсі  
 - [ ] Privacy policy URL відкривається (GitHub Pages увімкнено)  
 - [ ] ASC метадані + скріни готові  
-- [ ] Новий білд з `main` після мерджу цього PR  
+- [ ] Новий білд з `main` після мерджу доків / останніх фіксів  
+

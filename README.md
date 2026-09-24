@@ -4,6 +4,14 @@ Payday → payday budgeting. Money = energy.
 
 One Expo app at the **repo root**. Develop from the **phone** or the **Mac**. Ship TestFlight from **EAS cloud** or a **local Mac** IPA.
 
+| Doc | Audience |
+|-----|----------|
+| **[USER-GUIDE.md](./USER-GUIDE.md)** | How to use Home, Pace, categories, receipts, Free/Plus |
+| **[TECHNICAL.md](./TECHNICAL.md)** | Architecture, services, invariants, tests, build |
+| [RELEASE-YOU.md](./RELEASE-YOU.md) | Owner checklist (ASC, secrets, subscriptions) |
+| [SHARED-BUDGET.md](./SHARED-BUDGET.md) | Partner sync + Supabase setup |
+| [TESTFLIGHT-EAS.md](./TESTFLIGHT-EAS.md) | Phone / Mac / cloud TestFlight paths |
+
 ## Setup
 
 ```bash
@@ -35,7 +43,7 @@ Statement import throws if the file can’t be parsed (no invented expenses).
 
 | Free | Plus |
 |------|------|
-| Available balance, safe-to-spend, days to payday | Leftover by category (Food, Eating out, …) |
+| Available balance, safe-to-spend, days to payday | Leftover by category (Home, Groceries, Eating out, …) |
 | Bills | Allocate amounts per category |
 | Manual expenses | Custom categories |
 | **3 receipt photo scans** | Unlimited receipt scans |
@@ -43,9 +51,11 @@ Statement import throws if the file can’t be parsed (no invented expenses).
 | | Spend-by-category detail + history |
 | | Shared budget with a partner |
 
+Default categories: **Home · Groceries · Eating out · Transport · Shopping · Kids · Health · Fun · Travel · Subscriptions · Other**. Home / lists show a category only if it has **spend** or a **user allocation**. One receipt maps to **one** category.
+
 - **Dev:** Settings → **TRY PLUS (DEMO)** (`__DEV__` only).  
 - **Store builds:** **PLUS MONTHLY** / **PLUS YEARLY** / **RESTORE PURCHASES** via Apple **StoreKit** (`expo-iap`). Product IDs: `app.paypace.plus.monthly`, `app.paypace.plus.yearly`.  
-- Your checklist: **[RELEASE-YOU.md](./RELEASE-YOU.md)**.
+- Your checklist: **[RELEASE-YOU.md](./RELEASE-YOU.md)**. Product walkthrough: **[USER-GUIDE.md](./USER-GUIDE.md)**.
 
 Also set in `.env` / EAS when ready:
 
