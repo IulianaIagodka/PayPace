@@ -15,15 +15,11 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, ScreenBackground, useTabBarClearance } from '../components/ui';
 import { HUDPanel } from '../components/HUDPanel';
-import { PlusUnlockButton } from '../components/PlusUnlockButton';
+import { PlusMembershipCard } from '../components/PlusMembershipCard';
 import { HudSelect } from '../components/HudSelect';
 import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../models/calculator';
 import { CURRENCIES } from '../services/currencies';
-import {
-  allowDemoPremiumUnlock,
-  PRIVACY_POLICY_URL,
-  SUPPORT_URL,
-} from '../services/plusBilling';
+import { PRIVACY_POLICY_URL, SUPPORT_URL } from '../services/plusBilling';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -91,155 +87,128 @@ export function SettingsScreen({ navigation }: Props) {
         </Text>
         <Text style={hudType.body}>Money is energy. Tune your payday budget here.</Text>
 
-        <HUDPanel variant="compact" contentStyle={styles.panelInner}>
-          <Text style={styles.section}>BUDGET</Text>
-          {s.isPremium ? (
-            <HudButton
-              compact
-              title="ALLOCATE RESOURCES"
-              onPress={() => navigation.navigate('Allocate')}
-              variant="secondary"
-            />
-          ) : null}
-          <HudButton
-            compact
-            title="EDIT CYCLE"
-            onPress={() => navigation.navigate('PayCycle')}
-            variant="secondary"
-          />
-          <HudButton
-            compact
-            title="BILLS"
-            onPress={() => navigation.navigate('Bills')}
-            variant="secondary"
-          />
-        </HUDPanel>
+        <PlusMembershipCard
+          isPremium={s.isPremium}
+          onDemoDowngrade={() => setPremium(false)}
+        />
 
-        {s.isPremium ? (
+        <View style={styles.prefsBlock}>
+          <Text style={styles.prefsLabel}>PREFERENCES</Text>
+
           <HUDPanel variant="compact" contentStyle={styles.panelInner}>
-            <Text style={styles.section}>SHARE</Text>
-            {household ? (
-              <Text style={hudType.body}>
-                Linked · {household.members.map((m) => m.displayName).join(' & ')}
-              </Text>
+            <Text style={styles.section}>BUDGET</Text>
+            {s.isPremium ? (
+              <HudButton
+                compact
+                title="ALLOCATE RESOURCES"
+                onPress={() => navigation.navigate('Allocate')}
+                variant="secondary"
+              />
             ) : null}
             <HudButton
               compact
-              title="SHARED BUDGET"
-              onPress={() => navigation.navigate('SharedBudget')}
+              title="EDIT CYCLE"
+              onPress={() => navigation.navigate('PayCycle')}
               variant="secondary"
-            />
-          </HUDPanel>
-        ) : null}
-
-        <HUDPanel variant="compact" contentStyle={styles.panelInner}>
-          <Text style={styles.section}>SYSTEM</Text>
-          <View style={styles.selectStack}>
-            <HudSelect
-              label="CURRENCY"
-              value={s.currencyCode}
-              options={currencyOptions}
-              onChange={(code) => updateSettings({ currencyCode: code })}
-              compact
-            />
-            <HudSelect
-              label="REMAINING HORIZON"
-              value={paceHorizon}
-              options={HORIZON_OPTIONS}
-              onChange={(value) => updateSettings({ paceHorizon: value })}
-              compact
-            />
-            <HudSelect
-              label="WEEK STARTS ON"
-              value={weekStartsOn}
-              options={weekOptions}
-              onChange={(value) => updateSettings({ weekStartsOn: value })}
-              compact
-            />
-          </View>
-        </HUDPanel>
-
-        <HUDPanel variant="compact" contentStyle={styles.panelInner}>
-          <Text style={styles.section}>PLUS</Text>
-          {s.isPremium ? (
-            allowDemoPremiumUnlock() ? (
-              <>
-                <Text style={hudType.body}>
-                  Category budgets, unlimited receipt scans, statement import, history, and a shared
-                  budget with a partner.
-                </Text>
-                <HudButton
-                  compact
-                  title="BACK TO FREE (DEMO)"
-                  onPress={() => setPremium(false)}
-                  variant="secondary"
-                />
-              </>
-            ) : (
-              <Text style={hudType.body}>
-                Plus is on. Manage or cancel anytime in your Apple ID subscriptions.
-              </Text>
-            )
-          ) : (
-            <View style={styles.plusCard}>
-              <Text style={hudType.bodyStrong}>Get more from your payday budget</Text>
-              <Text style={hudType.body}>
-                Category budgets, unlimited receipt scans, statement import, history, and a shared
-                budget with a partner.
-              </Text>
-              <PlusUnlockButton compact />
-              {!allowDemoPremiumUnlock() ? (
-                <PlusUnlockButton compact preferRestore variant="secondary" />
-              ) : null}
-            </View>
-          )}
-        </HUDPanel>
-
-        {s.isPremium ? (
-          <HUDPanel variant="compact" contentStyle={styles.panelInner}>
-            <Text style={styles.section}>CUSTOM CATEGORIES</Text>
-            {customs.map((c) => (
-              <View key={c.id} style={styles.customRow}>
-                <Text style={[hudType.bodyStrong, styles.customName]}>{c.title}</Text>
-                <Pressable
-                  onPress={() =>
-                    Alert.alert('Remove category?', c.title, [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Remove',
-                        style: 'destructive',
-                        onPress: () => removeCustomCategory(c.id),
-                      },
-                    ])
-                  }
-                >
-                  <Text style={styles.remove}>Remove</Text>
-                </Pressable>
-              </View>
-            ))}
-            <TextInput
-              value={newCategory}
-              onChangeText={setNewCategory}
-              placeholder="New category name"
-              placeholderTextColor={colors.textDim}
-              style={styles.input}
-              autoCapitalize="words"
-              returnKeyType="done"
-              blurOnSubmit
-              onSubmitEditing={() => {
-                Keyboard.dismiss();
-                if (newCategory.trim()) onAddCategory();
-              }}
             />
             <HudButton
               compact
-              title={adding ? 'ADDING…' : 'ADD CATEGORY'}
-              onPress={onAddCategory}
-              disabled={!newCategory.trim() || adding}
+              title="BILLS"
+              onPress={() => navigation.navigate('Bills')}
               variant="secondary"
             />
           </HUDPanel>
-        ) : null}
+
+          {s.isPremium ? (
+            <HUDPanel variant="compact" contentStyle={styles.panelInner}>
+              <Text style={styles.section}>SHARE</Text>
+              {household ? (
+                <Text style={hudType.body}>
+                  Linked · {household.members.map((m) => m.displayName).join(' & ')}
+                </Text>
+              ) : null}
+              <HudButton
+                compact
+                title="SHARED BUDGET"
+                onPress={() => navigation.navigate('SharedBudget')}
+                variant="secondary"
+              />
+            </HUDPanel>
+          ) : null}
+
+          <HUDPanel variant="compact" contentStyle={styles.panelInner}>
+            <Text style={styles.section}>SYSTEM</Text>
+            <View style={styles.selectStack}>
+              <HudSelect
+                label="CURRENCY"
+                value={s.currencyCode}
+                options={currencyOptions}
+                onChange={(code) => updateSettings({ currencyCode: code })}
+                compact
+              />
+              <HudSelect
+                label="REMAINING HORIZON"
+                value={paceHorizon}
+                options={HORIZON_OPTIONS}
+                onChange={(value) => updateSettings({ paceHorizon: value })}
+                compact
+              />
+              <HudSelect
+                label="WEEK STARTS ON"
+                value={weekStartsOn}
+                options={weekOptions}
+                onChange={(value) => updateSettings({ weekStartsOn: value })}
+                compact
+              />
+            </View>
+          </HUDPanel>
+
+          {s.isPremium ? (
+            <HUDPanel variant="compact" contentStyle={styles.panelInner}>
+              <Text style={styles.section}>CUSTOM CATEGORIES</Text>
+              {customs.map((c) => (
+                <View key={c.id} style={styles.customRow}>
+                  <Text style={[hudType.bodyStrong, styles.customName]}>{c.title}</Text>
+                  <Pressable
+                    onPress={() =>
+                      Alert.alert('Remove category?', c.title, [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Remove',
+                          style: 'destructive',
+                          onPress: () => removeCustomCategory(c.id),
+                        },
+                      ])
+                    }
+                  >
+                    <Text style={styles.remove}>Remove</Text>
+                  </Pressable>
+                </View>
+              ))}
+              <TextInput
+                value={newCategory}
+                onChangeText={setNewCategory}
+                placeholder="New category name"
+                placeholderTextColor={colors.textDim}
+                style={styles.input}
+                autoCapitalize="words"
+                returnKeyType="done"
+                blurOnSubmit
+                onSubmitEditing={() => {
+                  Keyboard.dismiss();
+                  if (newCategory.trim()) onAddCategory();
+                }}
+              />
+              <HudButton
+                compact
+                title={adding ? 'ADDING…' : 'ADD CATEGORY'}
+                onPress={onAddCategory}
+                disabled={!newCategory.trim() || adding}
+                variant="secondary"
+              />
+            </HUDPanel>
+          ) : null}
+        </View>
 
         <View style={styles.legalBlock}>
           <Text style={styles.section}>LEGAL</Text>
@@ -264,12 +233,11 @@ export function SettingsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  prefsBlock: { gap: 8, marginTop: 4 },
+  prefsLabel: { ...hudType.label, color: colors.textDim, marginBottom: 0 },
   panelInner: { gap: 6 },
   section: { ...hudType.label, color: colors.text, marginBottom: 2 },
   selectStack: { gap: 6 },
-  plusCard: {
-    gap: 8,
-  },
   customRow: {
     flexDirection: 'row',
     alignItems: 'center',
