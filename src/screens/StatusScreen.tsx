@@ -61,13 +61,13 @@ export function StatusScreen({}: Props) {
             strong
           />
           <Row
-            label="PROJECTED AT PAYDAY"
+            label="LEFT AT PAYDAY"
             value={formatMoney(snapshot.projectedEndBalance, currency)}
           />
         </Panel>
 
         <Panel>
-          <Text style={styles.label}>TRAJECTORY</Text>
+          <Text style={styles.label}>PACE</Text>
           <Text style={[styles.traj, { color: colorForTone(trajTone as any) }]}>
             {snapshot.trajectory}
           </Text>
