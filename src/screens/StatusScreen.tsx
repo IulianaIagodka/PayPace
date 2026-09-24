@@ -67,7 +67,7 @@ export function StatusScreen({}: Props) {
         </Panel>
 
         <Panel>
-          <Text style={styles.label}>TRAJECTORY</Text>
+          <Text style={styles.label}>PACE</Text>
           <Text style={[styles.traj, { color: colorForTone(trajTone as any) }]}>
             {snapshot.trajectory}
           </Text>

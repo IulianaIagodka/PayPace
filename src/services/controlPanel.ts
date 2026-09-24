@@ -212,7 +212,7 @@ export const CONTROL_PANEL_COPY = {
     title: 'PACE',
     sysTag: 'TELEMETRY // CYCLE HEALTH',
     poolLabel: 'RESOURCE POOL',
-    trajectoryLabel: 'TRAJECTORY',
+    trajectoryLabel: 'PACE',
     timelineLabel: 'CHECKPOINT TIMELINE',
   },
   activity: {
