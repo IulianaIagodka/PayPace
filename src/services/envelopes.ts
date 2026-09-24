@@ -2,65 +2,137 @@ import type { CustomCategory, Envelope, ExpenseCategory, PayCycle } from '../mod
 import { asMoney } from './formatting';
 import { colorForTone, toneForRatio, type ResourceTone } from '../theme/colors';
 import { newId } from './id';
-import { isBuiltinCategory } from './categories';
+import {
+  BUILTIN_CATEGORIES,
+  CATEGORY_META,
+  isBuiltinCategory,
+  normalizeCategory,
+  shouldShowCategory,
+} from './categories';
 
-export type EnvelopeKey = 'food' | 'transport' | 'kids' | 'fun' | 'home' | 'other' | (string & {});
+export type EnvelopeKey = import('../models/types').EnvelopeKey;
 
 export const ENVELOPE_DEFAULTS: Array<{
   key: EnvelopeKey;
   title: string;
   category: ExpenseCategory;
-  share: number;
-}> = [
-  { key: 'food', title: 'FOOD', category: 'groceries', share: 0.26 },
-  { key: 'fun', title: 'EAT OUT', category: 'food', share: 0.12 },
-  { key: 'transport', title: 'TRANSPORT', category: 'transport', share: 0.12 },
-  { key: 'kids', title: 'KIDS', category: 'childcare', share: 0.18 },
-  { key: 'home', title: 'HOME', category: 'utilities', share: 0.2 },
-  { key: 'other', title: 'OTHER', category: 'other', share: 0.12 },
-];
+}> = BUILTIN_CATEGORIES.map((category) => ({
+  key: category,
+  title: CATEGORY_META[category].title.toUpperCase(),
+  category,
+}));
 
-export function defaultEnvelopes(totalSpendPool: number): Envelope[] {
-  const pool = Math.max(asMoney(totalSpendPool), 0);
-  let allocated = 0;
-  return ENVELOPE_DEFAULTS.map((def, index) => {
-    const isLast = index === ENVELOPE_DEFAULTS.length - 1;
-    const amount = isLast
-      ? Math.max(pool - allocated, 0)
-      : Math.round(pool * def.share);
-    allocated += amount;
+/** Create the full default set with zero allocations (user fills what they use). */
+export function defaultEnvelopes(_totalSpendPool = 0): Envelope[] {
+  return ENVELOPE_DEFAULTS.map((def) => ({
+    id: newId(),
+    key: def.key,
+    title: def.title,
+    category: def.category,
+    allocated: 0,
+  }));
+}
+
+function migrateEnvelope(envelope: Envelope): Envelope {
+  const rawCategory = envelope.category ?? String(envelope.key);
+  const rawKey = String(envelope.key);
+  const rawTitle = (envelope.title ?? '').toUpperCase();
+
+  let key = rawKey;
+  let category = normalizeCategory(rawCategory);
+
+  // Legacy: key "food" held groceries; key "fun" held eating out.
+  if (rawKey === 'food' && (rawCategory === 'groceries' || rawTitle === 'FOOD')) {
+    key = 'groceries';
+    category = 'groceries';
+  } else if (rawKey === 'fun' && (rawCategory === 'food' || rawTitle === 'EAT OUT')) {
+    key = 'food';
+    category = 'food';
+  } else if (rawKey === 'childcare' || rawCategory === 'childcare') {
+    key = 'kids';
+    category = 'kids';
+  } else if (
+    rawKey === 'utilities' ||
+    rawKey === 'rent' ||
+    rawCategory === 'utilities' ||
+    rawCategory === 'rent'
+  ) {
+    key = 'home';
+    category = 'home';
+  } else if (rawKey === 'loan' || rawCategory === 'loan') {
+    key = 'other';
+    category = 'other';
+  } else {
+    key = String(normalizeCategory(rawKey));
+    category = normalizeCategory(rawCategory);
+  }
+
+  return {
+    ...envelope,
+    key,
+    category,
+    title: isBuiltinCategory(key)
+      ? key === 'food'
+        ? 'EATING OUT'
+        : CATEGORY_META[key].title.toUpperCase()
+      : envelope.title || 'CUSTOM',
+  };
+}
+
+/**
+ * Ensure every default category exists as an envelope.
+ * Preserves user allocations; adds missing categories at 0.
+ */
+export function ensureEnvelopes(cycle: PayCycle): Envelope[] {
+  const migrated = (cycle.envelopes?.length ? cycle.envelopes : []).map(migrateEnvelope);
+
+  const byKey = new Map<string, Envelope>();
+  for (const envelope of migrated) {
+    const key = String(envelope.key);
+    const prev = byKey.get(key);
+    if (!prev) {
+      byKey.set(key, envelope);
+      continue;
+    }
+    byKey.set(key, {
+      ...prev,
+      allocated: asMoney(prev.allocated) + asMoney(envelope.allocated),
+    });
+  }
+
+  const builtins = ENVELOPE_DEFAULTS.map((def) => {
+    const existing = byKey.get(String(def.key));
+    if (existing) {
+      return {
+        ...existing,
+        key: def.key,
+        category: def.category,
+        title: def.title,
+      };
+    }
     return {
       id: newId(),
       key: def.key,
       title: def.title,
       category: def.category,
-      allocated: amount,
+      allocated: 0,
     };
   });
-}
 
-/** Ensure envelopes exist; rename legacy FUN → EAT OUT when still default. */
-export function ensureEnvelopes(cycle: PayCycle): Envelope[] {
-  if (cycle.envelopes?.length) {
-    return cycle.envelopes.map((e) => {
-      if (e.key === 'fun' && (e.title === 'FUN' || !e.title)) {
-        return { ...e, title: 'EAT OUT', category: e.category || 'food' };
-      }
-      return e;
-    });
-  }
-  const metricsPool =
-    asMoney(cycle.currentBalance) -
-    cycle.bills.filter((b) => !b.isPaid).reduce((s, b) => s + asMoney(b.amount), 0) -
-    asMoney(cycle.savingsGoal) -
-    asMoney(cycle.emergencyBuffer) -
-    asMoney(cycle.spendingBuffer);
-  return defaultEnvelopes(Math.max(metricsPool, 0));
+  const customs = [...byKey.entries()]
+    .filter(([key]) => !isBuiltinCategory(key))
+    .map(([, envelope]) => envelope);
+
+  return [...builtins, ...customs];
 }
 
 export function spentInEnvelope(cycle: PayCycle, envelope: Envelope): number {
+  const envelopeCategory = normalizeCategory(envelope.category);
   return cycle.expenses
-    .filter((e) => (e.category ?? 'other') === envelope.category || e.envelopeKey === envelope.key)
+    .filter((e) => {
+      const cat = normalizeCategory(e.category);
+      return cat === envelopeCategory || e.envelopeKey === envelope.key;
+    })
     .reduce((s, e) => s + Math.max(asMoney(e.amount), 0), 0);
 }
 
@@ -98,15 +170,22 @@ export function envelopeStatuses(cycle: PayCycle): EnvelopeStatus[] {
   });
 }
 
+/** Home / balance lists: only spent or user-allocated categories. */
+export function envelopesForDisplay(cycle: PayCycle): EnvelopeStatus[] {
+  return envelopeStatuses(cycle).filter((row) =>
+    shouldShowCategory(row.spent, asMoney(row.envelope.allocated)),
+  );
+}
+
 export function unallocatedAmount(cycle: PayCycle, spendPool: number): number {
   const allocated = ensureEnvelopes(cycle).reduce((s, e) => s + asMoney(e.allocated), 0);
   return asMoney(spendPool) - allocated;
 }
 
 export function categoryToEnvelopeKey(category?: ExpenseCategory): EnvelopeKey {
-  if (!category) return 'other';
-  if (!isBuiltinCategory(category)) return category;
-  const hit = ENVELOPE_DEFAULTS.find((d) => d.category === category);
+  const normalized = normalizeCategory(category);
+  if (!isBuiltinCategory(normalized)) return normalized;
+  const hit = ENVELOPE_DEFAULTS.find((d) => d.category === normalized);
   return hit?.key ?? 'other';
 }
 

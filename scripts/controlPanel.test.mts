@@ -150,9 +150,11 @@ assert(
 );
 
 section('controlPanel · module grid helpers');
-assert(CONTROL_GRID_KEYS.length === 5, 'five core modules');
-assert(isControlGridKey('food'), 'food is grid key');
-assert(isControlGridKey('fun'), 'fun/eat-out is grid key');
+assert(CONTROL_GRID_KEYS.length === 10, 'ten core modules');
+assert(isControlGridKey('food'), 'food/eating-out is grid key');
+assert(isControlGridKey('groceries'), 'groceries is grid key');
+assert(isControlGridKey('fun'), 'fun is grid key');
+assert(isControlGridKey('home'), 'home is grid key');
 assert(!isControlGridKey('other'), 'other stays off home grid');
 assert(!isControlGridKey('custom'), 'custom off grid');
 {
@@ -171,10 +173,10 @@ assert(!isControlGridKey('custom'), 'custom off grid');
   assertEq(rows[1]!.length, 1, 'last row odd → hazard empty slot');
   assertEq(pairModuleRows([]).length, 0, 'empty modules → no rows');
 
-  const five = CONTROL_GRID_KEYS.map((key) => ({ envelope: { key } }));
-  const fiveRows = pairModuleRows(five);
-  assertEq(fiveRows.length, 3, '5 modules → 3 rows');
-  assertEq(fiveRows[2]!.length, 1, 'last row needs EmptyCell');
+  const ten = CONTROL_GRID_KEYS.map((key) => ({ envelope: { key } }));
+  const tenRows = pairModuleRows(ten);
+  assertEq(tenRows.length, 5, '10 modules → 5 rows');
+  assertEq(tenRows[4]!.length, 2, 'last row full');
 }
 
 section('controlPanel · drain log ordering');

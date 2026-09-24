@@ -29,9 +29,9 @@ import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 
 const billSuggestions: { name: string; category: ExpenseCategory }[] = [
-  { name: 'Rent', category: 'rent' },
-  { name: 'Utilities', category: 'utilities' },
-  { name: 'Internet', category: 'utilities' },
+  { name: 'Rent', category: 'home' },
+  { name: 'Utilities', category: 'home' },
+  { name: 'Internet', category: 'home' },
   { name: 'Netflix', category: 'subscriptions' },
   { name: 'Groceries', category: 'groceries' },
   { name: 'Transport', category: 'transport' },

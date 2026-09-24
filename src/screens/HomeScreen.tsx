@@ -20,7 +20,7 @@ import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 import { hud, hudType } from '../theme/hud';
 import { formatMoney, formatDays } from '../services/formatting';
-import { envelopeStatuses } from '../services/envelopes';
+import { envelopesForDisplay } from '../services/envelopes';
 import {
   AVAILABLE_RANGE_OPTIONS,
   availableAmountFor,
@@ -38,8 +38,20 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
-/** Most-used category order when spend is equal / zero */
-const POPULAR_KEYS = ['food', 'home', 'kids', 'fun', 'transport', 'other'] as const;
+/** Preferred order when spend/allocation ranks are equal */
+const POPULAR_KEYS = [
+  'home',
+  'groceries',
+  'food',
+  'transport',
+  'shopping',
+  'kids',
+  'health',
+  'fun',
+  'travel',
+  'subscriptions',
+  'other',
+] as const;
 
 export function HomeScreen({ navigation }: Props) {
   const { activeCycle, snapshot, store, updateSettings } = useBudget();
@@ -61,11 +73,11 @@ export function HomeScreen({ navigation }: Props) {
   }, [availableRatioLive]);
 
   const modules = useMemo(
-    () => (activeCycle ? envelopeStatuses(activeCycle) : []),
+    () => (activeCycle ? envelopesForDisplay(activeCycle) : []),
     [activeCycle],
   );
 
-  /** Popular first: by spend desc, then preferred key order */
+  /** Spent / allocated first, then preferred key order */
   const railModules = useMemo(() => {
     const rank = (key: string) => {
       const i = POPULAR_KEYS.indexOf(key as (typeof POPULAR_KEYS)[number]);
@@ -73,6 +85,9 @@ export function HomeScreen({ navigation }: Props) {
     };
     return [...modules].sort((a, b) => {
       if (b.spent !== a.spent) return b.spent - a.spent;
+      if (b.envelope.allocated !== a.envelope.allocated) {
+        return b.envelope.allocated - a.envelope.allocated;
+      }
       return rank(String(a.envelope.key)) - rank(String(b.envelope.key));
     });
   }, [modules]);
@@ -166,32 +181,45 @@ export function HomeScreen({ navigation }: Props) {
         {store.settings.isPremium ? (
           <View style={styles.railBlock}>
             <Text style={hudType.label}>CATEGORIES</Text>
-            <ScrollView
-              horizontal
-              nestedScrollEnabled
-              directionalLockEnabled
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.rail}
-              style={styles.railScroll}
-            >
-              {railModules.map((mod, index) => (
-                <CategoryCell
-                  key={mod.envelope.id}
-                  title={mod.envelope.title}
-                  iconKey={mod.envelope.key}
-                  spent={mod.spent}
-                  allocated={mod.envelope.allocated}
-                  currencyCode={currency}
-                  tone={mod.tone}
-                  depleted={mod.depleted}
-                  index={index}
-                  periodShare={periodShare}
-                  horizonLabel={horizonLabel}
-                  layout="rail"
-                  onPress={() => navigation.navigate('AddExpense')}
+            {railModules.length === 0 ? (
+              <HUDPanel variant="standard">
+                <HudBody>
+                  Categories show up here after you allocate them or log spending.
+                </HudBody>
+                <HudButton
+                  title="ALLOCATE"
+                  variant="secondary"
+                  onPress={() => navigation.navigate('Allocate')}
                 />
-              ))}
-            </ScrollView>
+              </HUDPanel>
+            ) : (
+              <ScrollView
+                horizontal
+                nestedScrollEnabled
+                directionalLockEnabled
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.rail}
+                style={styles.railScroll}
+              >
+                {railModules.map((mod, index) => (
+                  <CategoryCell
+                    key={mod.envelope.id}
+                    title={mod.envelope.title}
+                    iconKey={mod.envelope.key}
+                    spent={mod.spent}
+                    allocated={mod.envelope.allocated}
+                    currencyCode={currency}
+                    tone={mod.tone}
+                    depleted={mod.depleted}
+                    index={index}
+                    periodShare={periodShare}
+                    horizonLabel={horizonLabel}
+                    layout="rail"
+                    onPress={() => navigation.navigate('AddExpense')}
+                  />
+                ))}
+              </ScrollView>
+            )}
           </View>
         ) : (
           <HUDPanel variant="standard" label="CATEGORY REMAINING · PLUS">
