@@ -7,27 +7,24 @@ export type PaySchedule =
 
 /** Built-in category ids. Custom categories use ids like `c_<uuid>`. */
 export type BuiltinCategory =
-  | 'rent'
-  | 'utilities'
-  | 'subscriptions'
-  | 'loan'
-  | 'childcare'
+  | 'home'
   | 'groceries'
-  | 'transport'
   | 'food'
+  | 'transport'
+  | 'shopping'
+  | 'kids'
+  | 'health'
+  | 'fun'
+  | 'travel'
+  | 'subscriptions'
   | 'other';
 
 /** Expense category id — builtin or custom. */
 export type ExpenseCategory = BuiltinCategory | (string & {});
 
-/** Envelope key — builtin keys or custom category id. */
+/** Envelope key — builtin category keys or custom category id. */
 export type EnvelopeKey =
-  | 'food'
-  | 'transport'
-  | 'kids'
-  | 'fun'
-  | 'home'
-  | 'other'
+  | BuiltinCategory
   | (string & {});
 
 export interface CustomCategory {

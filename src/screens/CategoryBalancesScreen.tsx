@@ -6,7 +6,7 @@ import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import { formatMoney } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
-import { colors, toneForRatio } from '../theme/colors';
+import { colors } from '../theme/colors';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CategoryBalances'>;
@@ -33,17 +33,25 @@ export function CategoryBalancesScreen({ navigation }: Props) {
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.pad}>
         <Text style={styles.title}>BY CATEGORY</Text>
-        <Text style={styles.sub}>What you’ve spent in each category this pay cycle.</Text>
+        <Text style={styles.sub}>
+          Categories with spending or an allocation this pay cycle.
+        </Text>
         <Panel>
-          {rows.map((row) => (
-            <View key={row.category} style={styles.row}>
-              <View style={{ flex: 1, gap: 6 }}>
-                <Text style={styles.name}>{row.title}</Text>
-                <SegmentedBar ratio={row.share} segments={8} height={10} />
+          {rows.length === 0 ? (
+            <Text style={styles.sub}>
+              Nothing to show yet — log an expense or allocate a category.
+            </Text>
+          ) : (
+            rows.map((row) => (
+              <View key={row.category} style={styles.row}>
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Text style={styles.name}>{row.title}</Text>
+                  <SegmentedBar ratio={row.share} segments={8} height={10} />
+                </View>
+                <Text style={styles.amount}>{formatMoney(row.spent, currency)}</Text>
               </View>
-              <Text style={styles.amount}>{formatMoney(row.spent, currency)}</Text>
-            </View>
-          ))}
+            ))
+          )}
         </Panel>
         <HudButton title="SCAN RECEIPT" onPress={() => navigation.navigate('ReceiptScan')} />
       </ScrollView>

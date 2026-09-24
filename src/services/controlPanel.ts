@@ -12,7 +12,18 @@ function daysLabel(count: number): string {
   return n === 1 ? '1 day' : `${n} days`;
 }
 
-export const CONTROL_GRID_KEYS = ['food', 'transport', 'kids', 'fun', 'home'] as const;
+export const CONTROL_GRID_KEYS = [
+  'home',
+  'groceries',
+  'food',
+  'transport',
+  'shopping',
+  'kids',
+  'health',
+  'fun',
+  'travel',
+  'subscriptions',
+] as const;
 
 export type ControlGridKey = (typeof CONTROL_GRID_KEYS)[number];
 
@@ -212,7 +223,7 @@ export const CONTROL_PANEL_COPY = {
     title: 'PACE',
     sysTag: 'TELEMETRY // CYCLE HEALTH',
     poolLabel: 'RESOURCE POOL',
-    trajectoryLabel: 'TRAJECTORY',
+    trajectoryLabel: 'PACE',
     timelineLabel: 'CHECKPOINT TIMELINE',
   },
   activity: {

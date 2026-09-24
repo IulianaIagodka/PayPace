@@ -36,7 +36,6 @@ import {
   HudValue,
   type HUDPanelVariant,
 } from './HUDPanel';
-import { MetalPlateTexture } from './MetalPlateTexture';
 
 export { HUDPanel, HudBody, HudLabel, HudMeta, HudValue };
 export type { HUDPanelVariant };
@@ -59,19 +58,13 @@ export function ScreenBackground({
 }) {
   return (
     <View style={styles.root}>
+      {/* Full-bleed backdrop under translucent tab bar — gradient only, no grain/texture */}
       <View pointerEvents="none" style={styles.backdrop}>
         <LinearGradient
           colors={['#1A1410', '#0C0A08', '#060504']}
           locations={[0, 0.45, 1]}
           style={StyleSheet.absoluteFill}
         />
-        <MetalPlateTexture seed="paypace-screen-grain" intensity="screen" />
-        <View style={styles.scanlines}>
-          {Array.from({ length: 64 }).map((_, i) => (
-            <View key={i} style={styles.scanline} />
-          ))}
-        </View>
-        <View style={styles.vignette} />
       </View>
       <SafeAreaView style={styles.flex} edges={edges}>
         {children}
@@ -611,28 +604,6 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFill,
-  },
-  scanlines: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    opacity: 0.07,
-    justifyContent: 'space-between',
-  },
-  scanline: {
-    height: 1,
-    backgroundColor: '#000',
-  },
-  vignette: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    borderWidth: 22,
-    borderColor: 'rgba(0,0,0,0.5)',
   },
   chip: {
     flexDirection: 'row',

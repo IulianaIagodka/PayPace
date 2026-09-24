@@ -87,7 +87,11 @@ export function resolveDayPaceLock(
   daysToCover: number,
 ): DayPaceLock {
   if (existing && existing.date === todayKey) {
-    return existing;
+    // Keep a real lock stable for the day. But if we froze 0 (e.g. balance was
+    // still empty at first open) and the pool is now positive, re-lock once.
+    if (existing.allowance > 0 || !(poolAtDayStart > 0)) {
+      return existing;
+    }
   }
   return {
     date: todayKey,

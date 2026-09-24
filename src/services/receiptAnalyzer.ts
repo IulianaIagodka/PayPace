@@ -148,7 +148,7 @@ function demoRecognize(): ReceiptScanResult {
 
 async function recognizeWithOpenAI(base64: string, apiKey: string): Promise<ReceiptScanResult> {
   const prompt = `Extract this receipt into JSON only:
-{"merchant":"string","total":number,"category":"groceries|food|transport|subscriptions|utilities|childcare|rent|loan|other","items":[{"name":"string","amount":number}]}
+{"merchant":"string","total":number,"category":"home|groceries|food|transport|shopping|kids|health|fun|travel|subscriptions|other","items":[{"name":"string","amount":number}]}
 
 Rules:
 - One receipt = one category. Put the best overall category on "category" (store type / majority of spend).
@@ -219,12 +219,7 @@ Rules:
   const receiptCategory = isCategory(parsed.category) ? parsed.category : undefined;
   const rawItems = (parsed.items ?? [])
     .map((row, index) =>
-      normalizeItem(
-        row.name,
-        row.amount,
-        receiptCategory ?? row.category,
-        `ai-${index}`,
-      ),
+      normalizeItem(row.name, row.amount, receiptCategory ?? row.category, `ai-${index}`),
     )
     .filter(Boolean) as ReceiptLineItem[];
 

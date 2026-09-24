@@ -18,7 +18,7 @@ export function StatusScreen({}: Props) {
     if (!activeCycle) return [];
     const total = snapshot.totalDaysInCycle;
     return Array.from({ length: Math.min(total, 31) }).map((_, i) => {
-      const isToday = i === snapshot.daysElapsed;
+      const isToday = i === Math.min(snapshot.daysElapsed, Math.max(total - 1, 0));
       const passed = i < snapshot.daysElapsed;
       return { i, isToday, passed };
     });
@@ -61,13 +61,13 @@ export function StatusScreen({}: Props) {
             strong
           />
           <Row
-            label="PROJECTED AT PAYDAY"
+            label="LEFT AT PAYDAY"
             value={formatMoney(snapshot.projectedEndBalance, currency)}
           />
         </Panel>
 
         <Panel>
-          <Text style={styles.label}>TRAJECTORY</Text>
+          <Text style={styles.label}>PACE</Text>
           <Text style={[styles.traj, { color: colorForTone(trajTone as any) }]}>
             {snapshot.trajectory}
           </Text>
@@ -89,7 +89,8 @@ export function StatusScreen({}: Props) {
             ))}
           </View>
           <Text style={styles.sub}>
-            Day {snapshot.daysElapsed} of {snapshot.totalDaysInCycle} · today marked
+            Day {Math.min(snapshot.daysElapsed + 1, snapshot.totalDaysInCycle)} of{' '}
+            {snapshot.totalDaysInCycle} · today marked
           </Text>
         </Panel>
       </ScrollView>

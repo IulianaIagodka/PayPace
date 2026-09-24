@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -36,8 +36,9 @@ export function ReceiptScanScreen({ navigation }: Props) {
   const custom = store.settings.customCategories ?? [];
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [result, setResult] = useState<ReceiptScanResult | null>(null);
   const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState<ReceiptScanResult | null>(null);
+  const saveLock = useRef(false);
 
   const remaining = freeReceiptScansRemaining(store.settings);
   const allowed = canScanReceipt(store.settings);
@@ -117,7 +118,8 @@ export function ReceiptScanScreen({ navigation }: Props) {
   };
 
   const saveReceipt = async () => {
-    if (!result?.items.length || saving) return;
+    if (!result?.items.length || saving || saveLock.current) return;
+    saveLock.current = true;
     setSaving(true);
     try {
       // One receipt → one category: keep line items, never split categories.
@@ -128,12 +130,15 @@ export function ReceiptScanScreen({ navigation }: Props) {
           category: receiptCategory,
         })),
       );
+      setResult(null);
+      setPhotoUri(null);
       Alert.alert('Saved', 'Those items are now in this pay cycle.', [
         { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
       ]);
     } catch (error) {
       Alert.alert('Could not save', error instanceof Error ? error.message : 'Try again.');
     } finally {
+      saveLock.current = false;
       setSaving(false);
     }
   };
@@ -205,7 +210,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
             </SoftCard>
 
             <PrimaryButton
-              title={saving ? 'Saving…' : 'Add everything'}
+              title={saving ? 'Adding…' : 'Add everything'}
               onPress={saveReceipt}
               disabled={saving}
             />
@@ -214,9 +219,9 @@ export function ReceiptScanScreen({ navigation }: Props) {
 
         <Text style={styles.section}>Spending by category</Text>
         <SoftCard>
-          {cycleCategoryBalances.every((c) => c.spent === 0) ? (
+          {cycleCategoryBalances.length === 0 ? (
             <Text style={styles.sub}>
-              Nothing categorized yet — scan a receipt or log an expense.
+              Nothing to show yet — scan a receipt, log an expense, or allocate a category.
             </Text>
           ) : (
             cycleCategoryBalances.map((row) => (
