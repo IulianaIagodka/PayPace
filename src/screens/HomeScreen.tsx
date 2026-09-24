@@ -15,7 +15,6 @@ import {
   SegmentedBar,
   useTabBarClearance,
 } from '../components/ui';
-import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -197,10 +196,13 @@ export function HomeScreen({ navigation }: Props) {
         ) : (
           <HUDPanel variant="standard" label="CATEGORY REMAINING · PLUS">
             <HudBody>
-              Plus shows how much is left in each category — food, transport, kids, and the rest —
-              and lets you set those amounts.
+              Plus shows what’s left in each category and lets you set those budgets.
             </HudBody>
-            <PlusUnlockButton />
+            <HudButton
+              title="SEE PLUS IN SETTINGS"
+              variant="secondary"
+              onPress={() => navigation.navigate('Settings')}
+            />
           </HUDPanel>
         )}
 

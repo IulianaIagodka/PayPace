@@ -18,7 +18,6 @@ import { FormScroll } from '../components/FormScroll';
 import { HudSelect } from '../components/HudSelect';
 import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../models/calculator';
 import { CURRENCIES } from '../services/currencies';
-import { FREE_RECEIPT_SCAN_LIMIT } from '../services/receiptScanQuota';
 import {
   allowDemoPremiumUnlock,
   PRIVACY_POLICY_URL,
@@ -148,32 +147,36 @@ export function SettingsScreen({ navigation }: Props) {
 
           <View style={styles.divider} />
           <Text style={styles.label}>PLUS</Text>
-          <Text style={styles.subTight}>
-            Free: balance, safe-to-spend, bills, expenses, {FREE_RECEIPT_SCAN_LIMIT} receipt
-            scans.{'\n'}
-            Plus: allocate by category, custom categories, unlimited receipt scans, statements,
-            history, shared budget.
-          </Text>
           {s.isPremium ? (
             allowDemoPremiumUnlock() ? (
-              <HudButton
-                title="BACK TO FREE (DEMO)"
-                onPress={() => setPremium(false)}
-                variant="secondary"
-              />
+              <>
+                <Text style={styles.subTight}>
+                  Category budgets, unlimited receipt scans, statement import, history, and a shared
+                  budget with a partner.
+                </Text>
+                <HudButton
+                  title="BACK TO FREE (DEMO)"
+                  onPress={() => setPremium(false)}
+                  variant="secondary"
+                />
+              </>
             ) : (
               <Text style={styles.subTight}>
-                Plus subscription is active on this device. Manage or cancel in Apple ID
-                settings.
+                Plus is on. Manage or cancel anytime in your Apple ID subscriptions.
               </Text>
             )
           ) : (
-            <>
+            <View style={styles.plusCard}>
+              <Text style={styles.plusTitle}>Get more from your payday budget</Text>
+              <Text style={styles.plusBody}>
+                Category budgets, unlimited receipt scans, statement import, history, and a shared
+                budget with a partner.
+              </Text>
               <PlusUnlockButton />
               {!allowDemoPremiumUnlock() ? (
                 <PlusUnlockButton preferRestore variant="secondary" />
               ) : null}
-            </>
+            </View>
           )}
 
           <View style={styles.divider} />
@@ -268,6 +271,25 @@ const styles = StyleSheet.create({
   },
   selectStack: { gap: 10 },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: 10 },
+  plusCard: {
+    gap: 10,
+    padding: 12,
+    borderWidth: hud.stroke,
+    borderColor: colors.border,
+    backgroundColor: colors.panelDeep,
+  },
+  plusTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: fonts.body,
+  },
+  plusBody: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: fonts.body,
+  },
   customRow: {
     flexDirection: 'row',
     alignItems: 'center',
