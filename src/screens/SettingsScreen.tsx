@@ -4,6 +4,7 @@ import {
   Keyboard,
   Linking,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -14,7 +15,6 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HudButton, Panel, ScreenBackground, useTabBarClearance } from '../components/ui';
 import { PlusUnlockButton } from '../components/PlusUnlockButton';
-import { FormScroll } from '../components/FormScroll';
 import { HudSelect } from '../components/HudSelect';
 import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../models/calculator';
 import { CURRENCIES } from '../services/currencies';
@@ -43,7 +43,7 @@ const HORIZON_OPTIONS: Array<{ value: PaceHorizon; label: string }> = [
 export function SettingsScreen({ navigation }: Props) {
   const { store, updateSettings, setPremium, addCustomCategory, removeCustomCategory } =
     useBudget();
-  const tabClearance = useTabBarClearance(56);
+  const tabClearance = useTabBarClearance(72);
   const s = store.settings;
   const household = store.household;
   const weekStartsOn = (s.weekStartsOn ?? 1) as WeekStartsOn;
@@ -79,9 +79,11 @@ export function SettingsScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <FormScroll
+      <ScrollView
         contentContainerStyle={[styles.pad, { paddingBottom: tabClearance }]}
         scrollIndicatorInsets={{ bottom: tabClearance }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         <Text style={styles.brand}>
           PAY<Text style={{ color: colors.resource }}>PACE</Text>
@@ -123,7 +125,6 @@ export function SettingsScreen({ navigation }: Props) {
 
         <Panel>
           <Text style={styles.section}>SYSTEM</Text>
-
           <View style={styles.selectStack}>
             <HudSelect
               label="CURRENCY"
@@ -147,9 +148,10 @@ export function SettingsScreen({ navigation }: Props) {
               compact
             />
           </View>
+        </Panel>
 
-          <View style={styles.divider} />
-          <Text style={styles.label}>PLUS</Text>
+        <Panel>
+          <Text style={styles.section}>PLUS</Text>
           {s.isPremium ? (
             allowDemoPremiumUnlock() ? (
               <>
@@ -181,9 +183,10 @@ export function SettingsScreen({ navigation }: Props) {
               ) : null}
             </View>
           )}
+        </Panel>
 
-          <View style={styles.divider} />
-          <Text style={styles.label}>LEGAL</Text>
+        <Panel>
+          <Text style={styles.section}>LEGAL</Text>
           <HudButton
             title="PRIVACY POLICY"
             variant="secondary"
@@ -194,54 +197,53 @@ export function SettingsScreen({ navigation }: Props) {
             variant="secondary"
             onPress={() => Linking.openURL(SUPPORT_URL)}
           />
-
-          {s.isPremium ? (
-            <>
-              <View style={styles.divider} />
-              <Text style={styles.label}>CUSTOM CATEGORIES</Text>
-              {customs.map((c) => (
-                <View key={c.id} style={styles.customRow}>
-                  <Text style={styles.customName}>{c.title}</Text>
-                  <Pressable
-                    onPress={() =>
-                      Alert.alert('Remove category?', c.title, [
-                        { text: 'Cancel', style: 'cancel' },
-                        {
-                          text: 'Remove',
-                          style: 'destructive',
-                          onPress: () => removeCustomCategory(c.id),
-                        },
-                      ])
-                    }
-                  >
-                    <Text style={styles.remove}>Remove</Text>
-                  </Pressable>
-                </View>
-              ))}
-              <TextInput
-                value={newCategory}
-                onChangeText={setNewCategory}
-                placeholder="New category name"
-                placeholderTextColor={colors.textDim}
-                style={styles.input}
-                autoCapitalize="words"
-                returnKeyType="done"
-                blurOnSubmit
-                onSubmitEditing={() => {
-                  Keyboard.dismiss();
-                  if (newCategory.trim()) onAddCategory();
-                }}
-              />
-              <HudButton
-                title={adding ? 'ADDING…' : 'ADD CATEGORY'}
-                onPress={onAddCategory}
-                disabled={!newCategory.trim() || adding}
-                variant="secondary"
-              />
-            </>
-          ) : null}
         </Panel>
-      </FormScroll>
+
+        {s.isPremium ? (
+          <Panel>
+            <Text style={styles.section}>CUSTOM CATEGORIES</Text>
+            {customs.map((c) => (
+              <View key={c.id} style={styles.customRow}>
+                <Text style={styles.customName}>{c.title}</Text>
+                <Pressable
+                  onPress={() =>
+                    Alert.alert('Remove category?', c.title, [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Remove',
+                        style: 'destructive',
+                        onPress: () => removeCustomCategory(c.id),
+                      },
+                    ])
+                  }
+                >
+                  <Text style={styles.remove}>Remove</Text>
+                </Pressable>
+              </View>
+            ))}
+            <TextInput
+              value={newCategory}
+              onChangeText={setNewCategory}
+              placeholder="New category name"
+              placeholderTextColor={colors.textDim}
+              style={styles.input}
+              autoCapitalize="words"
+              returnKeyType="done"
+              blurOnSubmit
+              onSubmitEditing={() => {
+                Keyboard.dismiss();
+                if (newCategory.trim()) onAddCategory();
+              }}
+            />
+            <HudButton
+              title={adding ? 'ADDING…' : 'ADD CATEGORY'}
+              onPress={onAddCategory}
+              disabled={!newCategory.trim() || adding}
+              variant="secondary"
+            />
+          </Panel>
+        ) : null}
+      </ScrollView>
     </ScreenBackground>
   );
 }
@@ -265,25 +267,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     fontFamily: fonts.label,
   },
-  label: {
-    color: colors.textSecondary,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 1.4,
-    fontFamily: fonts.label,
-  },
   selectStack: { gap: 10 },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(90, 80, 64, 0.35)',
-    marginVertical: 12,
-  },
   plusCard: {
     gap: 10,
-    padding: 12,
-    borderWidth: hud.stroke,
-    borderColor: colors.border,
-    backgroundColor: colors.panelDeep,
+    marginTop: 4,
   },
   plusTitle: {
     color: colors.text,
