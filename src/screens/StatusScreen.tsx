@@ -18,7 +18,7 @@ export function StatusScreen({}: Props) {
     if (!activeCycle) return [];
     const total = snapshot.totalDaysInCycle;
     return Array.from({ length: Math.min(total, 31) }).map((_, i) => {
-      const isToday = i === snapshot.daysElapsed;
+      const isToday = i === Math.min(snapshot.daysElapsed, Math.max(total - 1, 0));
       const passed = i < snapshot.daysElapsed;
       return { i, isToday, passed };
     });
@@ -89,7 +89,8 @@ export function StatusScreen({}: Props) {
             ))}
           </View>
           <Text style={styles.sub}>
-            Day {snapshot.daysElapsed} of {snapshot.totalDaysInCycle} · today marked
+            Day {Math.min(snapshot.daysElapsed + 1, snapshot.totalDaysInCycle)} of{' '}
+            {snapshot.totalDaysInCycle} · today marked
           </Text>
         </Panel>
       </ScrollView>
