@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../theme/colors';
-import { fonts } from '../theme/fonts';
+import { hudType } from '../theme/hud';
 import { HudButton } from './ui';
 
 type Props = { children: React.ReactNode };
@@ -23,7 +23,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
       return (
         <View style={styles.root}>
           <ScrollView contentContainerStyle={styles.pad}>
-            <Text style={styles.title}>Something broke</Text>
+            <Text style={styles.title}>SOMETHING BROKE</Text>
             <Text style={styles.sub}>{this.state.error.message}</Text>
             <HudButton title="TRY AGAIN" onPress={this.reset} />
           </ScrollView>
@@ -37,11 +37,6 @@ export class ErrorBoundary extends React.Component<Props, State> {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   pad: { flexGrow: 1, justifyContent: 'center', padding: 24, gap: 14 },
-  title: {
-    color: colors.text,
-    fontFamily: fonts.display,
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  sub: { color: colors.textSecondary, fontSize: 15, lineHeight: 21 },
+  title: { ...hudType.screenTitle },
+  sub: { ...hudType.body },
 });
