@@ -24,7 +24,7 @@ import { categoryToEnvelopeKey } from '../services/envelopes';
 import { dateInHorizon, findCycleForDate, horizonWindow } from '../services/cycleMatching';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { fonts } from '../theme/fonts';
+import { hudType } from '../theme/hud';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'StatementImport'>;
@@ -266,23 +266,11 @@ export function StatementImportScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   pad: { padding: 20, gap: 14, paddingBottom: 40 },
-  title: {
-    color: colors.text,
-    fontSize: 22,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-  },
-  sub: { color: colors.textSecondary, fontSize: 13, lineHeight: 18, fontFamily: fonts.body },
-  label: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.4,
-    fontFamily: fonts.label,
-  },
-  fileName: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  meta: { color: colors.textDim, fontSize: 12, fontFamily: fonts.body },
+  title: { ...hudType.screenTitle },
+  sub: { ...hudType.body },
+  label: { ...hudType.label },
+  fileName: { ...hudType.bodyStrong },
+  meta: { ...hudType.body, color: colors.textDim, fontSize: 12, lineHeight: 16 },
   filterRow: { paddingTop: 8 },
   cycleRow: {
     flexDirection: 'row',
@@ -298,6 +286,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  rowTitle: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  rowAmount: { color: colors.text, fontSize: 15, fontWeight: '700', fontFamily: fonts.display },
+  rowTitle: { ...hudType.bodyStrong },
+  rowAmount: { ...hudType.valueMid },
 });

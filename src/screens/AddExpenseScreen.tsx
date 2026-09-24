@@ -11,7 +11,7 @@ import {
 } from '../services/receiptScanQuota';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { fonts } from '../theme/fonts';
+import { hudType } from '../theme/hud';
 import { ensureEnvelopes } from '../services/envelopes';
 import type { EnvelopeKey } from '../models/types';
 import type { RootStackParamList } from '../navigation/types';
@@ -134,69 +134,35 @@ export function AddExpenseScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   pad: { padding: 20, gap: 14, paddingBottom: 40 },
-  title: {
-    color: colors.text,
-    fontSize: 22,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-  },
-  sub: { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
+  title: { ...hudType.screenTitle },
+  sub: { ...hudType.body },
   importRow: { flexDirection: 'row', gap: 10 },
   importCard: {
     flex: 1,
     borderWidth: 1,
     borderColor: colors.resource,
     backgroundColor: colors.resourceSoft,
-    borderRadius: 4,
+    borderRadius: 0,
     padding: 14,
     gap: 6,
     minHeight: 96,
   },
-  importTitle: {
-    color: colors.resource,
-    fontSize: 12,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-  },
-  importHint: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontFamily: fonts.body,
-  },
-  or: {
-    color: colors.textDim,
-    fontSize: 11,
-    fontFamily: fonts.label,
-    fontWeight: '700',
-    letterSpacing: 1.6,
-    textAlign: 'center',
-  },
-  label: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.4,
-    fontFamily: fonts.label,
-  },
+  importTitle: { ...hudType.labelPrimary },
+  importHint: { ...hudType.body, fontSize: 12, lineHeight: 16 },
+  or: { ...hudType.meta, textAlign: 'center' },
+  label: { ...hudType.label },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   cat: {
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.panel,
     paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderRadius: 4,
+    paddingVertical: 10,
+    borderRadius: 0,
     minWidth: '30%',
   },
   catOn: { borderColor: colors.resource, backgroundColor: '#14301A' },
-  catText: { color: colors.textSecondary, fontWeight: '700', fontSize: 11, letterSpacing: 1 },
+  catText: { ...hudType.label },
   catTextOn: { color: colors.resource },
-  note: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-    paddingVertical: 4,
-  },
+  note: { ...hudType.field, paddingVertical: 4 },
 });

@@ -15,7 +15,6 @@ import {
 } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { fonts } from '../theme/fonts';
 import { hud, hudType } from '../theme/hud';
 import { formatMoney, formatShortDate } from '../services/formatting';
 import { CONTROL_PANEL_COPY } from '../services/controlPanel';
@@ -129,11 +128,7 @@ const styles = StyleSheet.create({
     gap: hud.stackGap,
   },
   brand: {
-    color: colors.text,
-    fontSize: 22,
-    fontFamily: fonts.display,
-    fontWeight: '700',
-    letterSpacing: 3.5,
+    ...hudType.brand,
   },
   feedHead: {
     marginTop: 2,

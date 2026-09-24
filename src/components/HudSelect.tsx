@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { fonts } from '../theme/fonts';
-import { hud } from '../theme/hud';
+import { hud, hudType } from '../theme/hud';
 
 export type HudSelectOption<T extends string | number> = {
   value: T;
@@ -31,8 +30,8 @@ export function HudSelect<T extends string | number>({
 
   return (
     <View style={[styles.wrap, compact && styles.wrapCompact]}>
-      <Text style={styles.label}>{label}</Text>
-      {!compact && hint ? <Text style={styles.hint}>{hint}</Text> : null}
+      <Text style={hudType.label}>{label}</Text>
+      {!compact && hint ? <Text style={hudType.body}>{hint}</Text> : null}
       <Pressable
         onPress={() => setOpen((v) => !v)}
         style={[
@@ -79,14 +78,6 @@ export function HudSelect<T extends string | number>({
 const styles = StyleSheet.create({
   wrap: { gap: 8 },
   wrapCompact: { gap: 4 },
-  label: {
-    color: colors.textSecondary,
-    fontWeight: '700',
-    fontSize: 11,
-    letterSpacing: 1.4,
-    fontFamily: fonts.label,
-  },
-  hint: { color: colors.textSecondary, fontSize: 13, lineHeight: 18, marginTop: -2 },
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -100,8 +91,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   triggerCompact: {
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    minHeight: 36,
   },
   triggerOpen: {
     borderColor: colors.borderBright,
@@ -109,12 +101,11 @@ const styles = StyleSheet.create({
   },
   triggerText: {
     flex: 1,
+    ...hudType.bodyStrong,
     color: colors.ammo,
-    fontSize: 15,
-    fontWeight: '600',
   },
   triggerTextCompact: {
-    fontSize: 14,
+    fontSize: 13,
   },
   menu: {
     borderWidth: hud.stroke,
@@ -133,10 +124,10 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   optionCompact: {
-    paddingVertical: 9,
+    paddingVertical: 7,
   },
   optionOn: { backgroundColor: 'rgba(154, 138, 106, 0.12)' },
-  optionText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600', flex: 1 },
+  optionText: { ...hudType.bodyStrong, color: colors.textSecondary, flex: 1 },
   optionTextOn: { color: colors.ammo },
-  check: { color: colors.ammo, fontSize: 12 },
+  check: { ...hudType.meta, color: colors.ammo },
 });

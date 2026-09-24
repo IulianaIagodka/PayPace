@@ -6,6 +6,7 @@ import { FormScroll } from '../components/FormScroll';
 import { currencySymbol, formatMoney, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { hudType } from '../theme/hud';
 
 export function BillsScreen() {
   const { activeCycle, addBill, updateBill, deleteBill, store } = useBudget();
@@ -21,7 +22,7 @@ export function BillsScreen() {
   return (
     <ScreenBackground>
       <FormScroll contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>Upcoming bills</Text>
+        <Text style={styles.title}>UPCOMING BILLS</Text>
         <Text style={styles.sub}>
           Total reserved: {formatMoney(upcoming.reduce((s, b) => s + b.amount, 0), currency)}
         </Text>
@@ -64,7 +65,7 @@ export function BillsScreen() {
           value={name}
           onChangeText={setName}
           placeholder="Name"
-          placeholderTextColor={colors.inkSecondary}
+          placeholderTextColor={colors.textDim}
           style={styles.textField}
           returnKeyType="done"
           blurOnSubmit
@@ -93,18 +94,18 @@ export function BillsScreen() {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 24, gap: 14 },
-  title: { fontSize: 32, fontWeight: '700', color: colors.ink },
-  sub: { color: colors.inkSecondary, fontSize: 15 },
-  section: { color: colors.ink, fontSize: 18, fontWeight: '700', marginTop: 8 },
-  link: { color: colors.accent, fontWeight: '600' },
+  pad: { padding: 20, gap: 12 },
+  title: { ...hudType.screenTitle },
+  sub: { ...hudType.body },
+  section: { ...hudType.label, color: colors.text, marginTop: 8 },
+  link: { ...hudType.link },
   textField: {
-    backgroundColor: colors.whiteSoft,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.ink,
+    backgroundColor: colors.panelDeep,
+    borderRadius: 0,
+    borderWidth: 2,
+    borderColor: colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    ...hudType.field,
   },
 });

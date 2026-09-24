@@ -27,6 +27,7 @@ import type { Bill, ExpenseCategory, PayCycle, PaySchedule } from '../models/typ
 import { asMoney, currencySymbol, parseAmount, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { hudType } from '../theme/hud';
 
 const billSuggestions: { name: string; category: ExpenseCategory }[] = [
   { name: 'Rent', category: 'home' },
@@ -218,7 +219,7 @@ export function OnboardingScreen() {
                 value={billName}
                 onChangeText={setBillName}
                 placeholder="Bill name"
-                placeholderTextColor={colors.inkSecondary}
+                placeholderTextColor={colors.textDim}
                 style={styles.textField}
                 returnKeyType="done"
                 blurOnSubmit
@@ -273,7 +274,7 @@ function Dots({ step }: { step: Step }) {
             height: 8,
             width: i === idx ? 28 : 10,
             borderRadius: 99,
-            backgroundColor: i <= idx ? colors.accent : 'rgba(24, 42, 34, 0.12)',
+            backgroundColor: i <= idx ? colors.resource : 'rgba(24, 42, 34, 0.12)',
           }}
         />
       ))}
@@ -282,34 +283,38 @@ function Dots({ step }: { step: Step }) {
 }
 
 const styles = StyleSheet.create({
-  pad: { flexGrow: 1, padding: 24, paddingBottom: 40, gap: 16 },
-  brand: { fontSize: 44, fontWeight: '700' },
-  brandPay: { color: colors.ink },
-  brandPace: { color: colors.accentMid },
-  title: { fontSize: 30, fontWeight: '700', color: colors.ink, lineHeight: 36 },
-  sub: { fontSize: 16, color: colors.inkSecondary, lineHeight: 22 },
-  rowTitle: { color: colors.ink, fontSize: 16, fontWeight: '600' },
+  pad: { flexGrow: 1, padding: 20, paddingBottom: 40, gap: 14 },
+  brand: { ...hudType.brand, fontSize: 36, letterSpacing: 4 },
+  brandPay: { color: colors.text },
+  brandPace: { ...hudType.brandAccent },
+  title: { ...hudType.screenTitle, fontSize: 26, letterSpacing: 2 },
+  sub: { ...hudType.body, fontSize: 14, lineHeight: 20 },
+  rowTitle: { ...hudType.bodyStrong },
   chip: {
-    backgroundColor: colors.whiteSoft,
-    borderRadius: 12,
+    backgroundColor: colors.panelDeep,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
-  chipText: { color: colors.ink, fontWeight: '600', fontSize: 13 },
+  chipText: { ...hudType.label, color: colors.text, letterSpacing: 1.2 },
   textField: {
-    backgroundColor: colors.whiteSoft,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.ink,
+    backgroundColor: colors.panelDeep,
+    borderRadius: 0,
+    borderWidth: 2,
+    borderColor: colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    ...hudType.field,
   },
   secondary: {
-    backgroundColor: colors.accentSoft,
-    borderRadius: 18,
-    paddingVertical: 16,
+    backgroundColor: colors.resourceSoft,
+    borderRadius: 0,
+    borderWidth: 2,
+    borderColor: colors.resource,
+    paddingVertical: 12,
     alignItems: 'center',
   },
-  secondaryText: { color: colors.accent, fontSize: 16, fontWeight: '600' },
+  secondaryText: { ...hudType.labelPrimary, fontSize: 13 },
 });

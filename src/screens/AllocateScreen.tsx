@@ -6,6 +6,7 @@ import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { FormScroll } from '../components/FormScroll';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { hudType } from '../theme/hud';
 import { currencySymbol, formatMoney, parseAmount } from '../services/formatting';
 import { calculateSafeSpend } from '../models/calculator';
 import { ensureEnvelopes } from '../services/envelopes';
@@ -131,11 +132,11 @@ export function AllocateScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   pad: { padding: 20, gap: 12, paddingBottom: 40 },
-  title: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 1.5 },
-  sub: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
-  label: { color: colors.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 1.4 },
-  big: { color: colors.text, fontSize: 32, fontWeight: '800' },
-  unalloc: { color: colors.warning, fontSize: 13, fontWeight: '700', letterSpacing: 1 },
+  title: { ...hudType.screenTitle },
+  sub: { ...hudType.body },
+  label: { ...hudType.label },
+  big: { ...hudType.value },
+  unalloc: { ...hudType.meta, color: colors.warning },
   quick: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   chip: {
     borderWidth: 1,
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.panelAlt,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 0,
   },
-  chipText: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },
+  chipText: { ...hudType.label },
 });

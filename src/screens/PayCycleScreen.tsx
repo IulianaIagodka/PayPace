@@ -18,6 +18,7 @@ import { asMoney, currencySymbol, formatMoney, fromDateKey, parseAmount, toDateK
 import { defaultEnvelopes } from '../services/envelopes';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
+import { hudType } from '../theme/hud';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PayCycle'>;
@@ -104,7 +105,7 @@ export function PayCycleScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
       <FormScroll contentContainerStyle={styles.pad}>
-        <Text style={styles.title}>Edit budget</Text>
+        <Text style={styles.title}>EDIT BUDGET</Text>
         <Text style={styles.sub}>
           Update your balance, payday, or buffers — safe-to-spend recalculates right away.
         </Text>
@@ -147,15 +148,17 @@ export function PayCycleScreen({ navigation }: Props) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-      <Text style={{ color: colors.inkSecondary }}>{label}</Text>
-      <Text style={{ color: colors.ink, fontWeight: '600' }}>{value}</Text>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={styles.rowValue}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 24, gap: 14, paddingBottom: 40 },
-  title: { fontSize: 32, fontWeight: '700', color: colors.ink },
-  sub: { color: colors.inkSecondary, fontSize: 14, lineHeight: 20 },
-  ok: { color: colors.success, fontSize: 14 },
+  pad: { padding: 20, gap: 12, paddingBottom: 40 },
+  title: { ...hudType.screenTitle },
+  sub: { ...hudType.body },
+  ok: { ...hudType.body, color: colors.resource },
+  rowLabel: { ...hudType.label },
+  rowValue: { ...hudType.bodyStrong },
 });
