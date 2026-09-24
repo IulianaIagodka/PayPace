@@ -89,7 +89,8 @@ export function StatusScreen({}: Props) {
             ))}
           </View>
           <Text style={styles.sub}>
-            Day {snapshot.daysElapsed} of {snapshot.totalDaysInCycle} · today marked
+            Day {Math.min(snapshot.daysElapsed + 1, snapshot.totalDaysInCycle)} of{' '}
+            {snapshot.totalDaysInCycle} · today marked
           </Text>
         </Panel>
       </ScrollView>
