@@ -54,6 +54,7 @@
     "test:range": "node --experimental-strip-types scripts/availableRange.test.mts",
     "test:notify": "node --experimental-strip-types scripts/partnerMetricsNotify.test.mts",
     "test:scans": "node --experimental-strip-types scripts/receiptScanQuota.test.mts",
+    "test:receipt-category": "node --experimental-strip-types scripts/receiptOneCategory.test.mts",
     "test:categories": "node --experimental-strip-types scripts/categoriesDisplay.test.mts",
     "postinstall": "patch-package",
     "build:ios": "EAS_BUILD_NO_EXPO_GO_WARNING=true npx eas-cli build --platform ios --profile production",
