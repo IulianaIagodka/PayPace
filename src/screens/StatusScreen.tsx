@@ -61,7 +61,7 @@ export function StatusScreen({}: Props) {
             strong
           />
           <Row
-            label="PROJECTED AT PAYDAY"
+            label="LEFT AT PAYDAY"
             value={formatMoney(snapshot.projectedEndBalance, currency)}
           />
         </Panel>
