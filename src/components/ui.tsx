@@ -11,6 +11,7 @@ import {
   View,
   Button,
   type TextInputProps,
+  type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -77,11 +78,13 @@ export function ScreenBackground({
 export function Panel({
   children,
   style,
+  contentStyle,
   glow,
   innerGlow,
 }: {
   children?: React.ReactNode;
   style?: ViewStyle;
+  contentStyle?: StyleProp<ViewStyle>;
   /** @deprecated ignored — use HUDPanel variants */
   alt?: boolean;
   glow?: boolean;
@@ -89,7 +92,7 @@ export function Panel({
 }) {
   const variant: HUDPanelVariant = glow || innerGlow ? 'primary' : 'standard';
   return (
-    <HUDPanel variant={variant} style={style}>
+    <HUDPanel variant={variant} style={style} contentStyle={contentStyle}>
       {children}
     </HUDPanel>
   );
@@ -125,11 +128,14 @@ export function HudButton({
   onPress,
   disabled,
   variant = 'primary',
+  compact = false,
 }: {
   title: string;
   onPress: () => void;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'danger';
+  /** Tighter padding — Settings lists and dense stacks. */
+  compact?: boolean;
 }) {
   return (
     <Pressable
@@ -137,6 +143,7 @@ export function HudButton({
       disabled={disabled}
       style={({ pressed }) => [
         styles.btn,
+        compact && styles.btnCompact,
         variant === 'primary' && styles.btnPrimary,
         variant === 'secondary' && styles.btnSecondary,
         variant === 'danger' && styles.btnDanger,
@@ -159,6 +166,8 @@ export function HudButton({
               style={[
                 styles.btnText,
                 styles.btnPlus,
+                compact && styles.btnTextCompact,
+                compact && styles.btnPlusCompact,
                 variant === 'secondary' && { color: colors.text },
                 variant === 'danger' && { color: colors.danger },
               ]}
@@ -168,6 +177,7 @@ export function HudButton({
             <Text
               style={[
                 styles.btnText,
+                compact && styles.btnTextCompact,
                 variant === 'secondary' && { color: colors.text },
                 variant === 'danger' && { color: colors.danger },
               ]}
@@ -179,6 +189,7 @@ export function HudButton({
           <Text
             style={[
               styles.btnText,
+              compact && styles.btnTextCompact,
               variant === 'secondary' && { color: colors.text },
               variant === 'danger' && { color: colors.danger },
             ]}
@@ -277,17 +288,27 @@ export function EnvelopeModule({
 }) {
   const remaining = Math.max(allocated - spent, 0);
   const planned = Math.max(allocated, 0);
-  const remainingRatio = planned > 0 ? remaining / planned : 0;
+  const hasBudget = planned > 0;
+  const remainingRatio = hasBudget ? remaining / planned : 0;
   return (
     <HUDPanel variant="compact" label={title}>
       <View style={styles.amountRow}>
-        <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
-          {formatMoney(remaining, currencyCode)}
-        </Text>
-        <Text style={styles.amountSep}> / </Text>
-        <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
+        {hasBudget ? (
+          <>
+            <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
+              {formatMoney(remaining, currencyCode)}
+            </Text>
+            <Text style={styles.amountSep}> / </Text>
+            <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
+          </>
+        ) : (
+          <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
+            {formatMoney(Math.max(spent, 0), currencyCode)}
+          </Text>
+        )}
       </View>
-      <SegmentedBar ratio={remainingRatio} tipAmber />
+      {hasBudget ? <SegmentedBar ratio={remainingRatio} tipAmber /> : null}
+      {!hasBudget && spent > 0 ? <HudLabel>SPENT</HudLabel> : null}
       {depleted ? <HudLabel tone="warn">DEPLETED</HudLabel> : null}
       {warning && !depleted ? (
         <HudLabel tone="warn">
@@ -329,9 +350,11 @@ export function CategoryCell({
 }) {
   const cycleRemaining = Math.max(allocated - spent, 0);
   const planned = Math.max(allocated, 0);
-  const remainingRatio = planned > 0 ? cycleRemaining / planned : 0;
+  const hasBudget = planned > 0;
+  const remainingRatio = hasBudget ? cycleRemaining / planned : 0;
   const enter = useRef(new Animated.Value(0)).current;
-  const muted = depleted || remainingRatio <= 0;
+  // No budget yet: still highlight when there is spend (don't look "empty").
+  const muted = hasBudget ? depleted || remainingRatio <= 0 : spent <= 0;
   const tipAmber = tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
   const isRail = layout === 'rail';
 
@@ -350,13 +373,19 @@ export function CategoryCell({
   const iconName = (ENVELOPE_ICON_NAMES[iconKey] ??
     ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
 
-  const amountLine = (
+  const amountLine = hasBudget ? (
     <View style={styles.amountRow}>
       <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
         {formatMoney(cycleRemaining, currencyCode)}
       </Text>
       <Text style={styles.amountSep}> / </Text>
       <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
+    </View>
+  ) : (
+    <View style={styles.amountRow}>
+      <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
+        {formatMoney(Math.max(spent, 0), currencyCode)}
+      </Text>
     </View>
   );
 
@@ -377,9 +406,11 @@ export function CategoryCell({
             />
           </View>
           {amountLine}
-          <View style={{ alignSelf: 'stretch' }}>
-            <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
-          </View>
+          {hasBudget ? (
+            <View style={{ alignSelf: 'stretch' }}>
+              <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
+            </View>
+          ) : null}
         </>
       ) : (
         <>
@@ -389,10 +420,12 @@ export function CategoryCell({
               size={15}
               color={muted ? colors.textDim : colors.textSecondary}
             />
-            <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
+            <HudMeta style={{ flex: 1 }}>
+              {hasBudget ? (muted ? 'EMPTY' : horizonLabel) : spent > 0 ? 'SPENT' : 'EMPTY'}
+            </HudMeta>
           </View>
           {amountLine}
-          <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
+          {hasBudget ? <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} /> : null}
         </>
       )}
     </HUDPanel>
@@ -635,6 +668,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     minHeight: 54,
   },
+  btnCompact: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    minHeight: 40,
+  },
   btnPrimary: {
     backgroundColor: '#10180E',
     borderColor: colors.resource,
@@ -663,6 +701,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 2.6,
   },
+  btnTextCompact: {
+    fontSize: 12,
+    letterSpacing: 1.8,
+  },
   btnPlus: {
     fontSize: 24,
     lineHeight: 24,
@@ -671,6 +713,11 @@ const styles = StyleSheet.create({
     marginTop: -1,
     includeFontPadding: false,
     textAlignVertical: 'center',
+  },
+  btnPlusCompact: {
+    fontSize: 18,
+    lineHeight: 18,
+    marginRight: 6,
   },
   barTrack: {
     flexDirection: 'row',
