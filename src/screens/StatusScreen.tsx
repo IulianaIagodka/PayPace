@@ -54,8 +54,9 @@ export function StatusScreen({}: Props) {
         <Panel>
           <Row label="INCOME" value={formatMoney(income, currency)} />
           <Row label="SPENT" value={formatMoney(snapshot.spentThisCycle, currency)} />
-          <Row label="REMAINING" value={formatMoney(Math.max(remaining, 0), currency)} />
+          <Row label="BILLS" value={formatMoney(snapshot.unpaidBillsTotal, currency)} />
           <Row label="RESERVED" value={formatMoney(reserve, currency)} />
+          <Row label="REMAINING" value={formatMoney(Math.max(remaining, 0), currency)} />
           <Row
             label="SAFE TO SPEND / DAY"
             value={formatMoney(Math.max(snapshot.safeToSpendToday, 0), currency)}
@@ -90,8 +91,8 @@ export function StatusScreen({}: Props) {
             ))}
           </View>
           <Text style={hudType.body}>
-            Day {Math.min(snapshot.daysElapsed + 1, snapshot.totalDaysInCycle)} of{' '}
-            {snapshot.totalDaysInCycle} · today marked
+            Day {Math.min(snapshot.daysElapsed + 1, Math.max(snapshot.totalDaysInCycle, 1))} of{' '}
+            {snapshot.totalDaysInCycle} · {snapshot.daysUntilPayday} left to payday
           </Text>
         </Panel>
       </ScrollView>
