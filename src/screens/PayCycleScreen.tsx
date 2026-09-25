@@ -54,7 +54,8 @@ export function PayCycleScreen({ navigation }: Props) {
 
   const save = async () => {
     const days = Math.max(Number(daysUntil) || 1, 0);
-    const nextPayday = startOfDay(addDays(new Date(), days));
+    const today = startOfDay(new Date());
+    const nextPayday = startOfDay(addDays(today, days));
     await updateActiveCycle((c) => ({
       ...c,
       currentBalance: parseAmount(balance) ?? 0,
@@ -63,7 +64,10 @@ export function PayCycleScreen({ navigation }: Props) {
       emergencyBuffer: parseAmount(emergency) ?? 0,
       spendingBuffer: parseAmount(buffer) ?? 0,
       schedule,
+      // “Days until payday” means a cycle from today → that payday (fixes Day 1 of 25 vs 30).
+      startDate: toDateKey(today),
       nextPayday: toDateKey(nextPayday),
+      dayPaceLock: undefined,
     }));
     setSaved(true);
     navigation.navigate('MainTabs');

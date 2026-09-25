@@ -62,7 +62,9 @@ export function nextPaydayAfter(schedule: PaySchedule, from: Date): Date {
 
 export function cycleMetrics(cycle: PayCycle, now = new Date()) {
   const today = startOfDay(now);
-  const start = fromDateKey(cycle.startDate);
+  const rawStart = fromDateKey(cycle.startDate);
+  // Never treat a future start as the cycle anchor (keeps Day X of Y aligned with days-until).
+  const start = rawStart.getTime() > today.getTime() ? today : rawStart;
   const payday = fromDateKey(cycle.nextPayday);
   const daysUntilPayday = Math.max(differenceInCalendarDays(payday, today), 0);
   const totalDaysInCycle = Math.max(differenceInCalendarDays(payday, start), 1);
