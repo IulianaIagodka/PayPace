@@ -41,9 +41,10 @@ export const PRIVACY_POLICY_URL =
   extra().privacyPolicyUrl?.trim() ||
   'https://iulianaiagodka.github.io/PayPace/privacy.html';
 
-/** Terms of Use (EULA) — required on App Store product page for auto-renewable subs. */
+/** Terms of Use (EULA) — Apple standard EULA (same as Rhythma App Store Description). */
 export const TERMS_OF_USE_URL =
-  extra().termsOfUseUrl?.trim() || 'https://iulianaiagodka.github.io/PayPace/terms.html';
+  extra().termsOfUseUrl?.trim() ||
+  'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
 export const SUPPORT_URL =
   extra().supportUrl?.trim() || 'https://iulianaiagodka.github.io/PayPace/support.html';

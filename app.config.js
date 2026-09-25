@@ -25,7 +25,7 @@ module.exports = ({ config }) => {
     'https://iulianaiagodka.github.io/PayPace/privacy.html';
   const termsOfUseUrl =
     process.env.EXPO_PUBLIC_TERMS_OF_USE_URL?.trim() ||
-    'https://iulianaiagodka.github.io/PayPace/terms.html';
+    'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
   const supportUrl =
     process.env.EXPO_PUBLIC_SUPPORT_URL?.trim() ||
     'https://iulianaiagodka.github.io/PayPace/support.html';
