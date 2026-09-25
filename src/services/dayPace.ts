@@ -11,6 +11,10 @@ export type DayPaceLock = {
   date: string;
   /** Locked daily allowance for that date (not reduced by spend). */
   allowance: number;
+  /** Morning spend pool used to compute allowance (excludes today's spend). */
+  poolAtDayStart?: number;
+  /** Days-until-payday used to compute allowance. */
+  daysToCover?: number;
 };
 
 export function sumAmounts(amounts: number[]): number {
@@ -86,15 +90,40 @@ export function resolveDayPaceLock(
   poolAtDayStart: number,
   daysToCover: number,
 ): DayPaceLock {
-  if (existing && existing.date === todayKey) {
-    // Keep a real lock stable for the day. But if we froze 0 (e.g. balance was
-    // still empty at first open) and the pool is now positive, re-lock once.
-    if (existing.allowance > 0 || !(poolAtDayStart > 0)) {
-      return existing;
+  const days = Math.max(daysToCover, 1);
+  const next: DayPaceLock = {
+    date: todayKey,
+    allowance: lockDailyAllowance(poolAtDayStart, days),
+    poolAtDayStart,
+    daysToCover: days,
+  };
+
+  if (!(existing && existing.date === todayKey)) {
+    return next;
+  }
+
+  // Stuck 0-lock while pool is now positive → re-lock once.
+  if (!(existing.allowance > 0) && poolAtDayStart > 0) {
+    return next;
+  }
+
+  const priorDays = existing.daysToCover;
+  const priorPool = existing.poolAtDayStart;
+
+  // Structural edits (bills, balance, payday length) change the basis → re-lock.
+  // Today's spend does not: poolAtDayStart excludes today's expenses.
+  if (priorDays != null && priorPool != null && existing.allowance > 0) {
+    const sameDays = priorDays === days;
+    const samePool = Math.abs(priorPool - poolAtDayStart) < 0.005;
+    if (sameDays && samePool) {
+      return {
+        ...existing,
+        poolAtDayStart: priorPool,
+        daysToCover: priorDays,
+      };
     }
   }
-  return {
-    date: todayKey,
-    allowance: lockDailyAllowance(poolAtDayStart, daysToCover),
-  };
+
+  // No basis yet (legacy) or basis changed → lock from current morning inputs.
+  return next;
 }

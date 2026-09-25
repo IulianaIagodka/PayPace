@@ -62,9 +62,27 @@ assertEq(adaptiveFutureDaily(900, 0), 0, 'no future days');
 
 assertEq(weekBudgetRemaining(70, 100, 5), 70 + 400, 'week = today left + future days');
 
-const locked = resolveDayPaceLock({ date: '2026-09-22', allowance: 100 }, '2026-09-22', 9999, 5);
-assertEq(locked.allowance, 100, 'existing same-day lock is stable');
+const locked = resolveDayPaceLock({ date: '2026-09-22', allowance: 100, poolAtDayStart: 500, daysToCover: 5 }, '2026-09-22', 500, 5);
+assertEq(locked.allowance, 100, 'existing same-day lock is stable when basis unchanged');
 assertEq(locked.date, '2026-09-22', 'lock date preserved');
+
+const afterBills = resolveDayPaceLock(
+  { date: '2026-09-22', allowance: 100, poolAtDayStart: 500, daysToCover: 5 },
+  '2026-09-22',
+  26700,
+  30,
+);
+assertEq(afterBills.allowance, 890, 'bills/payday change re-locks safe today');
+assertEq(afterBills.daysToCover, 30, 're-lock stores new days');
+assertEq(afterBills.poolAtDayStart, 26700, 're-lock stores new pool');
+
+const afterSpend = resolveDayPaceLock(
+  { date: '2026-09-22', allowance: 890, poolAtDayStart: 26700, daysToCover: 30 },
+  '2026-09-22',
+  26700, // today's spend excluded from morning pool
+  30,
+);
+assertEq(afterSpend.allowance, 890, 'same-day spend does not change locked allowance');
 
 const zeroRefresh = resolveDayPaceLock({ date: '2026-09-22', allowance: 0 }, '2026-09-22', 2000, 4);
 assertEq(zeroRefresh.allowance, 500, 'zero lock refreshes once pool is positive');
@@ -84,9 +102,21 @@ assertEq(afterCoffee, 85, 'coffee only burns today');
 const afterMore = todayBudgetRemaining(allowance, 15 + 20);
 assertEq(afterMore, 65, 'second spend still uses same lock');
 assert(
-  resolveDayPaceLock({ date: '2026-09-22', allowance }, '2026-09-22', 2000 - 35, 20).allowance ===
-    allowance,
-  'recompute with lower pool must not change locked allowance',
+  resolveDayPaceLock(
+    { date: '2026-09-22', allowance, poolAtDayStart: 2000, daysToCover: 20 },
+    '2026-09-22',
+    2000,
+    20,
+  ).allowance === allowance,
+  'recompute with same morning pool must not change locked allowance',
 );
+
+// Legacy lock (no basis) that no longer matches current math → re-lock
+const legacyStale = resolveDayPaceLock({ date: '2026-09-22', allowance: 1229 }, '2026-09-22', 26700, 30);
+assertEq(legacyStale.allowance, 890, 'legacy stale lock re-locks after bills/days');
+
+// User case: 44000 balance − 17300 bills, 30 days → 890/day
+assertEq(lockDailyAllowance(44000 - 17300, 30), 890, 'user case safe today');
+
 
 console.log(`\nOK — ${passed} day-pace assertions passed`);
