@@ -64,7 +64,7 @@ EXPO_PUBLIC_OPENAI_API_KEY=sk-...
 EXPO_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 EXPO_PUBLIC_PRIVACY_POLICY_URL=https://iulianaiagodka.github.io/PayPace/privacy.html
-EXPO_PUBLIC_TERMS_OF_USE_URL=https://iulianaiagodka.github.io/PayPace/terms.html
+EXPO_PUBLIC_TERMS_OF_USE_URL=https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 EXPO_PUBLIC_SUPPORT_URL=https://iulianaiagodka.github.io/PayPace/support.html
 ```
 

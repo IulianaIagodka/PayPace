@@ -52,19 +52,20 @@ Apple відхиляє білд з auto-renewable Plus, якщо на **App Stor
    - Source: **Deploy from a branch**  
    - Branch: **`main`** (після мерджу) → folder **`/docs`** → Save  
 3. Перевір у браузері, що `terms.html` відкривається (після мерджу на `main`).  
-4. **App Store Connect → Description** — додай у текст опису (видимий на product page):
+4. **App Store Connect → Description** — як у **Rhythma**: у текст опису (product page) встав:
 
 ```
-Terms of Use (EULA): https://iulianaiagodka.github.io/PayPace/terms.html
+Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 Privacy Policy: https://iulianaiagodka.github.io/PayPace/privacy.html
 ```
 
-5. **App Information → License Agreement** — або Standard Apple EULA **і** лінк у Description
-   (варіант Apple), або **Custom EULA** з текстом/URL наших Terms (`docs/terms.html`).  
+Цього **достатньо**, якщо License Agreement = **Apple’s Standard EULA** (той самий фікс, що пройшов у Rhythma). Новий білд для цього не обов’язковий — лише метадані.
+
+5. **Custom EULA** в App Information потрібен лише якщо свідомо ставиш свою ліцензію замість стандартної Apple.  
 6. ASC: скріншоти, age rating, Privacy Nutrition Labels (камера, Photos).  
 7. У ASC вкажи Privacy / Support URL.  
 
-Готовий текст / чеклист: [docs/APP-STORE-DESCRIPTION.md](./docs/APP-STORE-DESCRIPTION.md).
+Готовий текст: [docs/app-store-copy.md](./docs/app-store-copy.md) (дзеркало: [docs/APP-STORE-DESCRIPTION.md](./docs/APP-STORE-DESCRIPTION.md)).
 
 ## 4. Supabase для Shared Budget
 
@@ -98,7 +99,7 @@ Actions: https://github.com/IulianaIagodka/PayPace/actions
 - [ ] EAS secrets (OpenAI / Supabase) виставлені  
 - [ ] Підписки `app.paypace.plus.monthly` + `app.paypace.plus.yearly` живі; покупка проходить у Sandbox на девайсі  
 - [ ] Privacy + **Terms of Use** URL відкриваються (GitHub Pages увімкнено)  
-- [ ] **Description** містить лінк Terms of Use (EULA); Custom EULA в ASC за бажанням  
+- [ ] **Description** містить лінк Apple EULA (`stdeula`) + Privacy (як Rhythma); Custom EULA не потрібен якщо Standard  
 - [ ] ASC метадані + скріни готові  
 - [ ] Новий білд з `main` після мерджу Terms / останніх фіксів  
 
