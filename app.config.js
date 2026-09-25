@@ -23,6 +23,9 @@ module.exports = ({ config }) => {
   const privacyPolicyUrl =
     process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL?.trim() ||
     'https://iulianaiagodka.github.io/PayPace/privacy.html';
+  const termsOfUseUrl =
+    process.env.EXPO_PUBLIC_TERMS_OF_USE_URL?.trim() ||
+    'https://iulianaiagodka.github.io/PayPace/terms.html';
   const supportUrl =
     process.env.EXPO_PUBLIC_SUPPORT_URL?.trim() ||
     'https://iulianaiagodka.github.io/PayPace/support.html';
@@ -41,6 +44,7 @@ module.exports = ({ config }) => {
       supabaseUrl,
       supabaseAnonKey,
       privacyPolicyUrl,
+      termsOfUseUrl,
       supportUrl,
       plusProductId,
       plusMonthlyProductId,

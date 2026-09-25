@@ -4,6 +4,7 @@ import {
   allowDemoPremiumUnlock,
   PRIVACY_POLICY_URL,
   SUPPORT_URL,
+  TERMS_OF_USE_URL,
   unlockPlus,
 } from '../services/plusBilling';
 import { useBudget } from '../store/BudgetContext';
@@ -106,6 +107,10 @@ export function PlusMembershipCard({
       ) : null}
       <Text style={styles.finePrint}>
         Auto-renewing. Cancel anytime in Apple ID.{' '}
+        <Text style={styles.inlineLink} onPress={() => Linking.openURL(TERMS_OF_USE_URL)}>
+          Terms
+        </Text>
+        {' · '}
         <Text style={styles.inlineLink} onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}>
           Privacy
         </Text>
