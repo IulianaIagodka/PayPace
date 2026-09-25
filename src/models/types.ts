@@ -86,6 +86,8 @@ export interface PayCycle {
   dayPaceLock?: {
     date: string;
     allowance: number;
+    poolAtDayStart?: number;
+    daysToCover?: number;
   };
 }
 
