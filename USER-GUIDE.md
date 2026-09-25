@@ -108,7 +108,7 @@ Plus: **Allocate** — розклади пул по категоріях. **Cate
 - Якщо скан чека падає — на екрані буде реальна помилка (ключ, білінг OpenAI, погане фото), не «фейковий» чек.
 - Імпорт виписки не вигадує витрати: якщо файл не парситься — помилка.
 
-Privacy / Support:  
-https://iulianaiagodka.github.io/PayPace/privacy.html · https://iulianaiagodka.github.io/PayPace/support.html
+Privacy / Support / Terms:  
+https://iulianaiagodka.github.io/PayPace/privacy.html · https://iulianaiagodka.github.io/PayPace/terms.html · https://iulianaiagodka.github.io/PayPace/support.html
 
 Реліз-чеклист для власника: [RELEASE-YOU.md](./RELEASE-YOU.md).

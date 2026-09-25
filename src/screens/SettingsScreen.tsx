@@ -19,7 +19,7 @@ import { PlusMembershipCard } from '../components/PlusMembershipCard';
 import { HudSelect } from '../components/HudSelect';
 import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../models/calculator';
 import { CURRENCIES } from '../services/currencies';
-import { PRIVACY_POLICY_URL, SUPPORT_URL } from '../services/plusBilling';
+import { PRIVACY_POLICY_URL, SUPPORT_URL, TERMS_OF_USE_URL } from '../services/plusBilling';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -212,6 +212,13 @@ export function SettingsScreen({ navigation }: Props) {
 
         <View style={styles.legalBlock}>
           <Text style={styles.section}>LEGAL</Text>
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => Linking.openURL(TERMS_OF_USE_URL)}
+            hitSlop={8}
+          >
+            <Text style={styles.legalLink}>Terms of Use</Text>
+          </Pressable>
           <Pressable
             accessibilityRole="link"
             onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
