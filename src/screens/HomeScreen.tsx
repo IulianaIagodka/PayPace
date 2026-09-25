@@ -294,8 +294,11 @@ const styles = StyleSheet.create({
     color: colors.ammo,
   },
   railBlock: { gap: hud.gap },
-  railScroll: { overflow: 'visible' },
-  rail: { gap: 10, paddingRight: 8, paddingVertical: 2, flexGrow: 0 },
+  railScroll: {
+    overflow: 'hidden',
+    marginHorizontal: 0,
+  },
+  rail: { gap: 10, paddingRight: 4, paddingVertical: 2, flexGrow: 0 },
   recentBlock: { gap: hud.gap },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 });
