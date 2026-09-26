@@ -289,6 +289,7 @@ export function EnvelopeModule({
   const remaining = Math.max(allocated - spent, 0);
   const planned = Math.max(allocated, 0);
   const hasBudget = planned > 0;
+  // No allocate → empty meter (same card chrome as budgeted categories).
   const remainingRatio = hasBudget ? remaining / planned : 0;
   return (
     <HUDPanel variant="compact" label={title}>
@@ -307,10 +308,9 @@ export function EnvelopeModule({
           </Text>
         )}
       </View>
-      {hasBudget ? <SegmentedBar ratio={remainingRatio} tipAmber /> : null}
-      {!hasBudget && spent > 0 ? <HudLabel>SPENT</HudLabel> : null}
+      <SegmentedBar ratio={remainingRatio} tipAmber={hasBudget} />
       {depleted ? <HudLabel tone="warn">DEPLETED</HudLabel> : null}
-      {warning && !depleted ? (
+      {warning && !depleted && hasBudget ? (
         <HudLabel tone="warn">
           WARNING · reserve at {Math.round(remainingRatio * 100)}%
         </HudLabel>
@@ -351,11 +351,13 @@ export function CategoryCell({
   const cycleRemaining = Math.max(allocated - spent, 0);
   const planned = Math.max(allocated, 0);
   const hasBudget = planned > 0;
+  // No allocate → empty meter so every card keeps the same layout.
   const remainingRatio = hasBudget ? cycleRemaining / planned : 0;
   const enter = useRef(new Animated.Value(0)).current;
   // No budget yet: still highlight when there is spend (don't look "empty").
   const muted = hasBudget ? depleted || remainingRatio <= 0 : spent <= 0;
-  const tipAmber = tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
+  const tipAmber =
+    hasBudget && tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
   const isRail = layout === 'rail';
 
   useEffect(() => {
@@ -389,6 +391,12 @@ export function CategoryCell({
     </View>
   );
 
+  const meter = (
+    <View style={isRail ? { alignSelf: 'stretch' as const } : undefined}>
+      <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
+    </View>
+  );
+
   const panel = (
     <HUDPanel
       variant="compact"
@@ -406,11 +414,7 @@ export function CategoryCell({
             />
           </View>
           {amountLine}
-          {hasBudget ? (
-            <View style={{ alignSelf: 'stretch' }}>
-              <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
-            </View>
-          ) : null}
+          {meter}
         </>
       ) : (
         <>
@@ -420,12 +424,10 @@ export function CategoryCell({
               size={15}
               color={muted ? colors.textDim : colors.textSecondary}
             />
-            <HudMeta style={{ flex: 1 }}>
-              {hasBudget ? (muted ? 'EMPTY' : horizonLabel) : spent > 0 ? 'SPENT' : 'EMPTY'}
-            </HudMeta>
+            <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
           </View>
           {amountLine}
-          {hasBudget ? <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} /> : null}
+          {meter}
         </>
       )}
     </HUDPanel>
