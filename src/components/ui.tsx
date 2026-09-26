@@ -294,19 +294,13 @@ export function EnvelopeModule({
   return (
     <HUDPanel variant="compact" label={title}>
       <View style={styles.amountRow}>
-        {hasBudget ? (
-          <>
-            <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
-              {formatMoney(remaining, currencyCode)}
-            </Text>
-            <Text style={styles.amountSep}> / </Text>
-            <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
-          </>
-        ) : (
-          <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
-            {formatMoney(Math.max(spent, 0), currencyCode)}
-          </Text>
-        )}
+        <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
+          {formatMoney(hasBudget ? remaining : Math.max(spent, 0), currencyCode)}
+        </Text>
+        <Text style={styles.amountSep}> / </Text>
+        <Text style={styles.amountPlanned}>
+          {hasBudget ? formatMoney(planned, currencyCode) : '—'}
+        </Text>
       </View>
       <SegmentedBar ratio={remainingRatio} tipAmber={hasBudget} />
       {depleted ? <HudLabel tone="warn">DEPLETED</HudLabel> : null}
@@ -375,18 +369,14 @@ export function CategoryCell({
   const iconName = (ENVELOPE_ICON_NAMES[iconKey] ??
     ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
 
-  const amountLine = hasBudget ? (
+  const amountLine = (
     <View style={styles.amountRow}>
       <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
-        {formatMoney(cycleRemaining, currencyCode)}
+        {formatMoney(hasBudget ? cycleRemaining : Math.max(spent, 0), currencyCode)}
       </Text>
       <Text style={styles.amountSep}> / </Text>
-      <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
-    </View>
-  ) : (
-    <View style={styles.amountRow}>
-      <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
-        {formatMoney(Math.max(spent, 0), currencyCode)}
+      <Text style={styles.amountPlanned}>
+        {hasBudget ? formatMoney(planned, currencyCode) : '—'}
       </Text>
     </View>
   );

@@ -68,7 +68,7 @@ A **pay cycle** holds balance, payday, bills, envelopes, expenses. Snapshot math
 
 **Visibility:** `shouldShowCategory(spent, allocated)` → show iff spent > 0 **or** allocated > 0.
 
-**CategoryCell / EnvelopeModule:** if `allocated > 0` → remaining / planned + filled meter; else show **spent** and an **empty** meter (same card layout — never hide the bar, never misleading `0/0`).
+**CategoryCell / EnvelopeModule:** if `allocated > 0` → remaining / planned + filled meter; else **spent / —** and an **empty** meter (same card layout — never hide the bar, never misleading `0/0`).
 
 Legacy migration maps `rent`/`utilities`→home, `childcare`→kids, old food/fun envelope keys, etc.
 
