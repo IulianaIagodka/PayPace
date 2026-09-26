@@ -370,7 +370,7 @@ export function CategoryCell({
     ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
 
   const amountLine = (
-    <View style={styles.amountRow}>
+    <View style={[styles.amountRow, isRail && styles.amountRowRail]}>
       <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
         {formatMoney(hasBudget ? cycleRemaining : Math.max(spent, 0), currencyCode)}
       </Text>
@@ -739,6 +739,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'baseline',
+  },
+  /** Keep rail pods the same height whether the amount wraps or not. */
+  amountRowRail: {
+    minHeight: 40,
+    justifyContent: 'center',
   },
   amountLeft: {
     ...hudType.valueCompact,
