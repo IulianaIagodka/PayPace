@@ -1,0 +1,88 @@
+/**
+ * Bank statement CSV parsing (mBank + heuristics).
+ * Run: npm run test:statement
+ */
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  cleanMerchantName,
+  parseAmountTokenSigned,
+  parseStatementText,
+  splitDelimitedLine,
+} from '../src/services/statementParse.ts';
+
+let passed = 0;
+
+function assert(cond: unknown, msg: string): asserts cond {
+  if (!cond) throw new Error(`FAIL: ${msg}`);
+  passed += 1;
+}
+
+function assertEq(actual: unknown, expected: unknown, msg: string) {
+  if (actual !== expected) {
+    throw new Error(`FAIL: ${msg} (got ${JSON.stringify(actual)}, expected ${JSON.stringify(expected)})`);
+  }
+  passed += 1;
+}
+
+assertEq(parseAmountTokenSigned('-152,00'), -152, 'PL debit');
+assertEq(parseAmountTokenSigned('32 958,56'), 32958.56, 'PL thousands');
+assertEq(parseAmountTokenSigned('2 438,88 PLN'), 2438.88, 'PLN suffix');
+assert(parseAmountTokenSigned('79 1140 2004 0000 3402 8529 1556') == null, 'reject account#');
+assert(parseAmountTokenSigned('+48 (42) 6 300 800') == null, 'reject phone');
+
+const merchant = cleanMerchantName(
+  'ANDRZEJ OTOWSKI    /WARSZAWA                                          DATA TRANSAKCJI: 2026-09-25',
+);
+assertEq(merchant.name, 'ANDRZEJ OTOWSKI', 'merchant before city');
+assertEq(merchant.date, '2026-09-25', 'DATA TRANSAKCJI');
+
+const cols = splitDelimitedLine(
+  [
+    '2026-09-26',
+    '2026-09-26',
+    'ZAKUP',
+    '"SHELL 18 /Warszawa DATA TRANSAKCJI: 2026-09-25"',
+    '"  "',
+    "'",
+    '-675,41',
+    '31 896,15',
+    '',
+  ].join(';'),
+  ';',
+);
+assert(cols.length >= 8, 'quoted split keeps amount cols');
+assertEq(cols[6], '-675,41', 'kwota col');
+assertEq(cols[7], '31 896,15', 'saldo col');
+
+const here = dirname(fileURLToPath(import.meta.url));
+const fixture = readFileSync(join(here, 'fixtures/mbank-ekonto.csv'), 'utf8');
+const items = parseStatementText(fixture);
+
+assertEq(items.length, 10, '10 card ops from fixture');
+assertEq(items[0]!.amount, 152, 'first amount is kwota not saldo');
+assertEq(items[0]!.name, 'ANDRZEJ OTOWSKI', 'merchant name not ZAKUP…');
+assertEq(items[0]!.date, '2026-09-25', 'prefers DATA TRANSAKCJI');
+assertEq(items[7]!.amount, 675.41, 'SHELL amount');
+assertEq(items[7]!.name, 'SHELL 18', 'SHELL merchant');
+
+const sum = items.reduce((s, i) => s + i.amount, 0);
+assert(Math.abs(sum - (152 + 13 + 13 + 13 + 85 + 13 + 250 + 675.41 + 167.2 + 14)) < 0.01, 'sum');
+
+const fullPath = '/home/ubuntu/.cursor/projects/workspace/uploads/85291556_260925_260928_199c.csv';
+try {
+  const full = readFileSync(fullPath, 'utf8');
+  const all = parseStatementText(full);
+  assertEq(all.length, 29, 'full mBank export ops');
+  const total = all.reduce((s, i) => s + i.amount, 0);
+  assert(Math.abs(total - 2438.88) < 0.02, `full total got ${total}`);
+  assert(
+    !all.some((i) => i.name.toLowerCase().includes('zakup przy')),
+    'no generic ZAKUP labels',
+  );
+} catch (e) {
+  if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+}
+
+console.log(`statementParse.test.mts: ok (${passed} asserts)`);

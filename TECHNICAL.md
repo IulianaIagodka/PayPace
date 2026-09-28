@@ -81,7 +81,7 @@ Legacy migration maps `rent`/`utilities`→home, `childcare`→kids, old food/fu
 | `ReceiptScanScreen` | `saveLock` ref prevents double-add on rapid taps |
 | `receiptScanQuota.ts` | Free: 3 scans; Plus: unlimited |
 
-Statement import (`statementAnalyzer.ts`) fails closed — no invented expenses.
+Statement import (`statementParse.ts` + `statementAnalyzer.ts`) fails closed — no invented expenses. mBank-style CSV: use **Kwota** (not Saldo), merchant from **Tytuł**, prefer `DATA TRANSAKCJI` date; skip credits and header junk.
 
 ## Plus billing (`src/services/plusBilling.ts`)
 

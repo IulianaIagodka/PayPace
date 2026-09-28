@@ -1,0 +1,48 @@
+mBank S.A. Bankowoœæ Detaliczna;
+		Skrytka Pocztowa 2108;
+		90-959 £ódŸ 2;
+		www.mBank.pl;
+		mLinia: 801 300 800;
+		+48 (42) 6 300 800;
+		
+
+#Klient;
+MAKSYM KRAMARENKO;
+
+Elektroniczne zestawienie operacji;
+
+#Za okres:;
+25.09.2026;28.09.2026;
+#Rodzaj rachunku;
+EKONTO OSOBISTE UA;
+#Waluta;
+PLN;
+#Numer rachunku;
+79 1140 2004 0000 3402 8529 1556 ;
+#Data nastêpnej kapitalizacji;
+2026-09-30;
+#Oprocentowanie rachunku;
+0,00%;
+#Limit kredytu;
+0,00 PLN;
+#Oprocentowanie kredytu;
+0,00%;
+
+#Podsumowanie obrotów na rachunku;#Liczba operacji;#Wartoœæ operacji
+Uznania;0;0,00 PLN;
+Obci¹¿enia;29;2 438,88 PLN;
+£¹cznie;29;-2 438,88 PLN;
+
+#Saldo pocz¹tkowe;33 110,56 PLN;
+
+#Data ksiêgowania;#Data operacji;#Opis operacji;#Tytu³;#Nadawca/Odbiorca;#Numer konta;#Kwota;#Saldo po operacji;
+2026-09-26;2026-09-26;ZAKUP PRZY U¯YCIU KARTY;"ANDRZEJ OTOWSKI    /WARSZAWA                                          DATA TRANSAKCJI: 2026-09-25";"  ";'';-152,00;32 958,56;
+2026-09-26;2026-09-26;ZAKUP PRZY U¯YCIU KARTY;"MINI MELTS SP. Z O./KRAKOW                                            DATA TRANSAKCJI: 2026-09-25";"  ";'';-13,00;32 945,56;
+2026-09-26;2026-09-26;ZAKUP PRZY U¯YCIU KARTY;"MINI MELTS SP. Z O./KRAKOW                                            DATA TRANSAKCJI: 2026-09-25";"  ";'';-13,00;32 932,56;
+2026-09-26;2026-09-26;ZAKUP PRZY U¯YCIU KARTY;"MINI MELTS SP. Z O./KRAKOW                                            DATA TRANSAKCJI: 2026-09-25";"  ";'';-13,00;32 919,56;
+2026-09-26;2026-09-26;ZAKUP PRZY U¯YCIU KARTY;"ATO RAMEN WARSZAWA /WARSZAWA                                          DATA TRANSAKCJI: 2026-09-25";"  ";'';-85,00;32 834,56;
+2026-09-26;2026-09-26;ZAKUP PRZY U¯YCIU KARTY;"MINI MELTS SP. Z O./KRAKOW                                            DATA TRANSAKCJI: 2026-09-25";"  ";'';-13,00;32 821,56;
+2026-09-26;2026-09-26;ZAKUP PRZY U¯YCIU KARTY;"LASERVILLE 01      /WARSZAWA                                          DATA TRANSAKCJI: 2026-09-25";"  ";'';-250,00;32 571,56;
+2026-09-26;2026-09-26;ZAKUP PRZY U¯YCIU KARTY;"SHELL 18           /Warszawa                                          DATA TRANSAKCJI: 2026-09-25";"  ";'';-675,41;31 896,15;
+2026-09-26;2026-09-26;ZAKUP PRZY U¯YCIU KARTY;"AIRO PARK ROZRYWKI /WARSZAWA                                          DATA TRANSAKCJI: 2026-09-25";"  ";'';-167,20;31 728,95;
+2026-09-26;2026-09-26;ZAKUP PRZY U¯YCIU KARTY;"AIRO PARK ROZRYWKI /WARSZAWA                                          DATA TRANSAKCJI: 2026-09-25";"  ";'';-14,00;31 714,95;
