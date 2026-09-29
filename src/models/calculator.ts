@@ -1,6 +1,7 @@
 import { addDays, addMonths, differenceInCalendarDays, endOfWeek, startOfDay } from 'date-fns';
 import type { PayCycle, PaySchedule, SafeSpendSnapshot, TrajectoryLabel } from './types';
 import { asMoney, fromDateKey, toDateKey } from '../services/formatting';
+import { effectiveCycleStartDate } from '../services/cycleDates';
 import {
   adaptiveFutureDaily,
   remainingForFutureDays,
@@ -62,9 +63,8 @@ export function nextPaydayAfter(schedule: PaySchedule, from: Date): Date {
 
 export function cycleMetrics(cycle: PayCycle, now = new Date()) {
   const today = startOfDay(now);
-  const rawStart = fromDateKey(cycle.startDate);
-  // Never treat a future start as the cycle anchor (keeps Day X of Y aligned with days-until).
-  const start = rawStart.getTime() > today.getTime() ? today : rawStart;
+  // Prefer earliest spend/createdAt when startDate was wrongly reset to “today”.
+  const start = fromDateKey(effectiveCycleStartDate(cycle, now));
   const payday = fromDateKey(cycle.nextPayday);
   const daysUntilPayday = Math.max(differenceInCalendarDays(payday, today), 0);
   const totalDaysInCycle = Math.max(differenceInCalendarDays(payday, start), 1);
@@ -85,7 +85,7 @@ export function cycleMetrics(cycle: PayCycle, now = new Date()) {
   };
 }
 
-export { resolveCycleDatesOnSave } from '../services/cycleDates';
+export { effectiveCycleStartDate, resolveCycleDatesOnSave } from '../services/cycleDates';
 
 /** Inclusive days from today through end of the configured calendar week. */
 export function daysRemainingInWeek(now = new Date(), weekStartsOn: WeekStartsOn = 1): number {

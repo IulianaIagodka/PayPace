@@ -7,7 +7,10 @@
  */
 
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns';
-import { resolveCycleDatesOnSave } from '../src/services/cycleDates.ts';
+import {
+  effectiveCycleStartDate,
+  resolveCycleDatesOnSave,
+} from '../src/services/cycleDates.ts';
 
 let passed = 0;
 
@@ -73,7 +76,7 @@ function dayMetrics(startDate: string, nextPayday: string, now: Date) {
   assertEq(after.totalDaysInCycle, 26, 'total days unchanged after balance-only save');
 }
 
-// Changing days-until still resets the window to today → payday (Day 1 of N).
+// Changing days-until moves payday but keeps historical start (no jump to Day 1).
 {
   const now = startOfDay(new Date(2026, 8, 10));
   const dates = resolveCycleDatesOnSave({
@@ -82,14 +85,50 @@ function dayMetrics(startDate: string, nextPayday: string, now: Date) {
     daysUntilInput: 30,
     now,
   });
-  assertEq(dates.startDate, toDateKey(now), 'reset start to today when days change');
+  assertEq(dates.startDate, '2026-09-01', 'keep start when days-until changes');
   assertEq(dates.nextPayday, toDateKey(addDays(now, 30)), 'payday = today + new days');
-  assertEq(dates.resetDayLock, true, 'clear day lock when days change');
+  assertEq(dates.resetDayLock, true, 'refresh day lock when payday moves');
 
   const after = dayMetrics(dates.startDate, dates.nextPayday, now);
-  assertEq(after.daysElapsed, 0, 'Day 1 after days-until rewrite');
-  assertEq(after.totalDaysInCycle, 30, 'total matches new days-until');
+  assertEq(after.daysElapsed + 1, 10, 'still Day 10 after days-until rewrite');
   assertEq(after.daysUntilPayday, 30, 'days left matches new days-until');
+}
+
+// Bad reset: startDate = today but expenses from last week → heal to earliest spend.
+{
+  const now = startOfDay(new Date(2026, 8, 29)); // Sep 29
+  const healed = effectiveCycleStartDate(
+    {
+      startDate: '2026-09-29',
+      createdAt: '2026-09-21T10:00:00.000Z',
+      expenses: [
+        { date: '2026-09-25' },
+        { date: '2026-09-21' },
+        { date: '2026-09-27' },
+      ],
+    },
+    now,
+  );
+  assertEq(healed, '2026-09-21', 'pull start back to earliest activity');
+
+  const payday = toDateKey(addDays(now, 26));
+  const m = dayMetrics(healed, payday, now);
+  assertEq(m.daysElapsed + 1, 9, 'Day 9 of cycle after heal (Sep 21→29)');
+  assertEq(m.daysUntilPayday, 26, '26 left to payday unchanged');
+}
+
+// resolveCycleDatesOnSave also heals via earliestActivityDate.
+{
+  const now = startOfDay(new Date(2026, 8, 29));
+  const dates = resolveCycleDatesOnSave({
+    existingStartDate: '2026-09-29',
+    existingNextPayday: toDateKey(addDays(now, 26)),
+    daysUntilInput: 26,
+    earliestActivityDate: '2026-09-21',
+    now,
+  });
+  assertEq(dates.startDate, '2026-09-21', 'save heals start from earliest activity');
+  assertEq(dates.resetDayLock, false, 'days-until unchanged → no lock reset');
 }
 
 // Regression: repeating Edit Cycle save must not pin the timeline at Day 1.
@@ -104,7 +143,7 @@ function dayMetrics(startDate: string, nextPayday: string, now: Date) {
     const dates = resolveCycleDatesOnSave({
       existingStartDate: startDate,
       existingNextPayday: nextPayday,
-      daysUntilInput: left || 1,
+      daysUntilInput: left || 0,
       now,
     });
     startDate = dates.startDate;

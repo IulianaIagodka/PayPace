@@ -48,17 +48,24 @@ export function PayCycleScreen({ navigation }: Props) {
       differenceInCalendarDays(fromDateKey(activeCycle.nextPayday), startOfDay(new Date())),
       0,
     );
-    setDaysUntil(String(days || 1));
-  }, [activeCycle?.id]);
+    setDaysUntil(String(days));
+  }, [activeCycle?.id, activeCycle?.nextPayday]);
 
   if (!activeCycle) return null;
 
   const save = async () => {
-    const days = Math.max(Number(daysUntil) || 1, 0);
+    const days = Math.max(Number(daysUntil) || 0, 0);
+    const earliestActivity = [
+      activeCycle.createdAt?.slice(0, 10),
+      ...activeCycle.expenses.map((e) => e.date?.slice(0, 10)),
+    ]
+      .filter((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d)))
+      .sort()[0];
     const dates = resolveCycleDatesOnSave({
       existingStartDate: activeCycle.startDate,
       existingNextPayday: activeCycle.nextPayday,
       daysUntilInput: days,
+      earliestActivityDate: earliestActivity,
     });
     await updateActiveCycle((c) => ({
       ...c,

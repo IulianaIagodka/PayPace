@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { newId } from '../services/id';
-import { buildDayPaceLock, calculateSafeSpend } from '../models/calculator';
+import { buildDayPaceLock, calculateSafeSpend, effectiveCycleStartDate } from '../models/calculator';
 import {
   emptyStore,
   type AppSettings,
@@ -380,6 +380,22 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       ...current,
       cycles: current.cycles.map((c) =>
         c.id === activeCycle.id ? withCycleTouch({ ...c, dayPaceLock: lock }) : c,
+      ),
+    });
+  }, [ready, activeCycle, commit, todayKey]);
+
+  // Heal startDate if it was reset to “today” while older expenses still exist.
+  useEffect(() => {
+    if (!ready || !activeCycle) return;
+    const current = storeRef.current;
+    const cycle = current.cycles.find((c) => c.id === activeCycle.id);
+    if (!cycle) return;
+    const healed = effectiveCycleStartDate(cycle);
+    if (healed >= cycle.startDate.slice(0, 10)) return;
+    void commit({
+      ...current,
+      cycles: current.cycles.map((c) =>
+        c.id === activeCycle.id ? withCycleTouch({ ...c, startDate: healed }) : c,
       ),
     });
   }, [ready, activeCycle, commit, todayKey]);
