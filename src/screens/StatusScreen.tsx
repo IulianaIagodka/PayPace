@@ -49,7 +49,7 @@ export function StatusScreen({}: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { activeCycle, snapshot, store } = useBudget();
   const currency = store.settings.currencyCode;
-  const tabClearance = useTabBarClearance(40);
+  const tabClearance = useTabBarClearance(56);
   const reports = store.periodReports ?? [];
   const [detailsOpen, setDetailsOpen] = useState(false);
 
