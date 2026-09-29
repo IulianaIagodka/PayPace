@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Panel, ScreenBackground, SegmentedBar } from '../components/ui';
+import { Panel, ScreenBackground } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { hudType } from '../theme/hud';
@@ -65,12 +65,9 @@ export function PeriodReportScreen({ navigation, route }: Props) {
           <Text style={hudType.label}>BY CATEGORY</Text>
           {report.categories.map((row) => (
             <View key={row.category} style={styles.catRow}>
-              <View style={{ flex: 1, gap: 4 }}>
-                <View style={styles.catTitleRow}>
-                  <Text style={styles.catName}>{row.title}</Text>
-                  {row.slipping ? <Text style={styles.slipTag}>SLIP</Text> : null}
-                </View>
-                <SegmentedBar ratio={row.share} segments={8} height={8} />
+              <View style={styles.catTitleRow}>
+                <Text style={styles.catName}>{row.title}</Text>
+                {row.slipping ? <Text style={styles.slipTag}>SLIP</Text> : null}
               </View>
               <Text style={[styles.catAmount, row.slipping && { color: colors.warning }]}>
                 {formatMoney(row.spent, currency)}
@@ -127,12 +124,13 @@ const styles = StyleSheet.create({
   catRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  catTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  catTitleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   catName: { ...hudType.bodyStrong },
   slipTag: {
     ...hudType.label,
