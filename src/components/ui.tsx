@@ -606,11 +606,12 @@ export function CycleProgress({
   daysElapsed: number;
   totalDays: number;
 }) {
+  const dayNumber = Math.min(Math.max(daysElapsed, 0) + 1, Math.max(totalDays, 1));
   return (
     <View style={{ gap: hud.gap }}>
       <SegmentedBar ratio={1 - progress} />
       <HudMeta>
-        {daysElapsed} / {totalDays} days
+        Day {dayNumber} of {totalDays}
       </HudMeta>
     </View>
   );
