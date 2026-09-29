@@ -68,7 +68,7 @@ A **pay cycle** holds balance, payday, bills, envelopes, expenses. Snapshot math
 
 **Visibility:** `shouldShowCategory(spent, allocated)` → show iff spent > 0 **or** allocated > 0.
 
-**CategoryCell / EnvelopeModule:** if `allocated > 0` → remaining / planned; else show **spent** (never misleading `0/0` when there is spend).
+**CategoryCell / EnvelopeModule:** if `allocated > 0` → **spent / planned** with fill-up meter (`SegmentedBar mode="spent"`); else **spent / —** and empty meter (never misleading `0/0`).
 
 Legacy migration maps `rent`/`utilities`→home, `childcare`→kids, old food/fun envelope keys, etc.
 
@@ -137,7 +137,7 @@ Always `git pull` on `main` before a release build. Owner checklist: [RELEASE-YO
 ## Recent product invariants (do not regress)
 
 1. One receipt → one category (line items OK).
-2. Category rail/lists: spent **or** allocated only; cards show spent when alloc = 0.
+2. Category rail/lists: spent **or** allocated only; cards show **spent / planned** (or spent / — when alloc = 0).
 3. Default envelopes start at allocated 0 (no fake auto-budget).
 4. Pace Day is 1-based; labels LEFT TO SPEND NOW / IF THIS PACE → PAYDAY / PACE.
 5. Receipt save is single-flight (`saveLock`).

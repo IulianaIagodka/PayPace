@@ -214,6 +214,8 @@ export function SegmentedBar({
   animateFrom,
   tipAmber = true,
   height,
+  /** `remaining` = depleting reserve; `spent` = fill-up usage (colors still from leftover). */
+  mode = 'remaining',
 }: {
   ratio: number;
   /** @deprecated ignored — meter segment count is unified */
@@ -224,6 +226,7 @@ export function SegmentedBar({
   /** @deprecated ignored — meter geometry is unified */
   compact?: boolean;
   tipAmber?: boolean;
+  mode?: 'remaining' | 'spent';
 }) {
   const segments = hud.meterSegments;
   const clamped = Math.max(0, Math.min(ratio, 1));
@@ -238,7 +241,8 @@ export function SegmentedBar({
     }).start();
   }, [clamped, anim]);
 
-  const tone = toneForRatio(clamped);
+  // Fill amount follows `ratio`; tone always reflects how much budget is left.
+  const tone = toneForRatio(mode === 'spent' ? 1 - clamped : clamped);
   const lit = Math.round(clamped * segments);
 
   return (
@@ -286,31 +290,25 @@ export function EnvelopeModule({
   warning?: boolean;
   depleted?: boolean;
 }) {
-  const remaining = Math.max(allocated - spent, 0);
+  const used = Math.max(spent, 0);
   const planned = Math.max(allocated, 0);
   const hasBudget = planned > 0;
-  const remainingRatio = hasBudget ? remaining / planned : 0;
+  const remainingRatio = hasBudget ? Math.max(planned - used, 0) / planned : 0;
+  const spentRatio = hasBudget ? Math.min(used / planned, 1) : 0;
   return (
     <HUDPanel variant="compact" label={title}>
       <View style={styles.amountRow}>
-        {hasBudget ? (
-          <>
-            <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
-              {formatMoney(remaining, currencyCode)}
-            </Text>
-            <Text style={styles.amountSep}> / </Text>
-            <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
-          </>
-        ) : (
-          <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
-            {formatMoney(Math.max(spent, 0), currencyCode)}
-          </Text>
-        )}
+        <Text style={[styles.amountLeft, { color: colorForTone(tone) }]}>
+          {formatMoney(used, currencyCode)}
+        </Text>
+        <Text style={styles.amountSep}> / </Text>
+        <Text style={styles.amountPlanned}>
+          {hasBudget ? formatMoney(planned, currencyCode) : '—'}
+        </Text>
       </View>
-      {hasBudget ? <SegmentedBar ratio={remainingRatio} tipAmber /> : null}
-      {!hasBudget && spent > 0 ? <HudLabel>SPENT</HudLabel> : null}
+      <SegmentedBar ratio={spentRatio} mode="spent" tipAmber={hasBudget} />
       {depleted ? <HudLabel tone="warn">DEPLETED</HudLabel> : null}
-      {warning && !depleted ? (
+      {warning && !depleted && hasBudget ? (
         <HudLabel tone="warn">
           WARNING · reserve at {Math.round(remainingRatio * 100)}%
         </HudLabel>
@@ -348,14 +346,17 @@ export function CategoryCell({
   /** `rail` = fixed-width pod for horizontal scroll */
   layout?: 'grid' | 'rail';
 }) {
-  const cycleRemaining = Math.max(allocated - spent, 0);
+  const used = Math.max(spent, 0);
   const planned = Math.max(allocated, 0);
   const hasBudget = planned > 0;
-  const remainingRatio = hasBudget ? cycleRemaining / planned : 0;
+  const remainingRatio = hasBudget ? Math.max(planned - used, 0) / planned : 0;
+  // Fill meter with spend progress; empty when nothing allocated yet.
+  const spentRatio = hasBudget ? Math.min(used / planned, 1) : 0;
   const enter = useRef(new Animated.Value(0)).current;
   // No budget yet: still highlight when there is spend (don't look "empty").
   const muted = hasBudget ? depleted || remainingRatio <= 0 : spent <= 0;
-  const tipAmber = tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
+  const tipAmber =
+    hasBudget && tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
   const isRail = layout === 'rail';
 
   useEffect(() => {
@@ -373,19 +374,21 @@ export function CategoryCell({
   const iconName = (ENVELOPE_ICON_NAMES[iconKey] ??
     ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
 
-  const amountLine = hasBudget ? (
-    <View style={styles.amountRow}>
+  const amountLine = (
+    <View style={[styles.amountRow, isRail && styles.amountRowRail]}>
       <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
-        {formatMoney(cycleRemaining, currencyCode)}
+        {formatMoney(used, currencyCode)}
       </Text>
       <Text style={styles.amountSep}> / </Text>
-      <Text style={styles.amountPlanned}>{formatMoney(planned, currencyCode)}</Text>
-    </View>
-  ) : (
-    <View style={styles.amountRow}>
-      <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
-        {formatMoney(Math.max(spent, 0), currencyCode)}
+      <Text style={styles.amountPlanned}>
+        {hasBudget ? formatMoney(planned, currencyCode) : '—'}
       </Text>
+    </View>
+  );
+
+  const meter = (
+    <View style={isRail ? { alignSelf: 'stretch' as const } : undefined}>
+      <SegmentedBar ratio={spentRatio} mode="spent" tipAmber={tipAmber} />
     </View>
   );
 
@@ -406,11 +409,7 @@ export function CategoryCell({
             />
           </View>
           {amountLine}
-          {hasBudget ? (
-            <View style={{ alignSelf: 'stretch' }}>
-              <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} />
-            </View>
-          ) : null}
+          {meter}
         </>
       ) : (
         <>
@@ -420,12 +419,10 @@ export function CategoryCell({
               size={15}
               color={muted ? colors.textDim : colors.textSecondary}
             />
-            <HudMeta style={{ flex: 1 }}>
-              {hasBudget ? (muted ? 'EMPTY' : horizonLabel) : spent > 0 ? 'SPENT' : 'EMPTY'}
-            </HudMeta>
+            <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
           </View>
           {amountLine}
-          {hasBudget ? <SegmentedBar ratio={remainingRatio} tipAmber={tipAmber} /> : null}
+          {meter}
         </>
       )}
     </HUDPanel>
@@ -747,6 +744,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'baseline',
+  },
+  /** Keep rail pods the same height whether the amount wraps or not. */
+  amountRowRail: {
+    minHeight: 40,
+    justifyContent: 'center',
   },
   amountLeft: {
     ...hudType.valueCompact,
