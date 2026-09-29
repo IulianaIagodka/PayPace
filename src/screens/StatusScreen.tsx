@@ -1,19 +1,28 @@
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Panel, ScreenBackground, SegmentedBar, useTabBarClearance } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors, colorForTone } from '../theme/colors';
 import { hudType, tabScreen } from '../theme/hud';
 import { formatMoney } from '../services/formatting';
-import type { MainTabParamList } from '../navigation/types';
+import {
+  formatReportPeriodLabel,
+  reportKindLabel,
+} from '../services/periodReports';
+import type { PeriodReport } from '../models/types';
+import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Status'>;
 
 export function StatusScreen({}: Props) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { activeCycle, snapshot, store } = useBudget();
   const currency = store.settings.currencyCode;
   const tabClearance = useTabBarClearance(40);
+  const reports = store.periodReports ?? [];
 
   const timeline = useMemo(() => {
     if (!activeCycle) return [];
@@ -99,8 +108,57 @@ export function StatusScreen({}: Props) {
             {snapshot.totalDaysInCycle} · {snapshot.daysUntilPayday} left to payday
           </Text>
         </Panel>
+
+        <Panel>
+          <Text style={hudType.label}>REPORTS</Text>
+          {reports.length === 0 ? (
+            <Text style={hudType.body}>
+              Weekly and monthly spend-by-category reports land here when a period ends.
+            </Text>
+          ) : (
+            reports.map((report) => (
+              <ReportLink
+                key={report.id}
+                report={report}
+                currency={currency}
+                onPress={() => navigation.navigate('PeriodReport', { reportId: report.id })}
+              />
+            ))
+          )}
+        </Panel>
       </ScrollView>
     </ScreenBackground>
+  );
+}
+
+function ReportLink({
+  report,
+  currency,
+  onPress,
+}: {
+  report: PeriodReport;
+  currency: string;
+  onPress: () => void;
+}) {
+  const unread = !report.viewedAt;
+  const slipCount = report.categories.filter((c) => c.slipping).length;
+
+  return (
+    <Pressable onPress={onPress} style={styles.reportLink}>
+      <View style={{ flex: 1, gap: 4 }}>
+        <View style={styles.reportTitleRow}>
+          <Text style={hudType.labelPrimary}>
+            {reportKindLabel(report.kind)} · {formatReportPeriodLabel(report)}
+          </Text>
+          {unread ? <View style={styles.unreadDot} /> : null}
+        </View>
+        <Text style={hudType.body}>
+          {formatMoney(report.totalSpent, currency)}
+          {slipCount > 0 ? ` · ${slipCount} slipping` : ' · on track'}
+        </Text>
+      </View>
+      <Text style={styles.chevron}>›</Text>
+    </Pressable>
   );
 }
 
@@ -145,5 +203,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.resource,
     borderWidth: 1,
     borderColor: colors.borderBright,
+  },
+  reportLink: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    paddingTop: 10,
+    marginTop: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  reportTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  unreadDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 0,
+    backgroundColor: colors.resource,
+  },
+  chevron: {
+    ...hudType.label,
+    color: colors.textDim,
+    fontSize: 18,
   },
 });

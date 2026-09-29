@@ -32,9 +32,11 @@ import { ReceiptScanScreen } from './src/screens/ReceiptScanScreen';
 import { StatementImportScreen } from './src/screens/StatementImportScreen';
 import { CategoryBalancesScreen } from './src/screens/CategoryBalancesScreen';
 import { SharedBudgetScreen } from './src/screens/SharedBudgetScreen';
+import { PeriodReportScreen } from './src/screens/PeriodReportScreen';
 import { AmountDoneAccessory, TAB_BAR_ROW_HEIGHT } from './src/components/ui';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { PlusEntitlementSync } from './src/components/PlusEntitlementSync';
+import { PeriodReportPrompt } from './src/components/PeriodReportPrompt';
 import { colors } from './src/theme/colors';
 import { fonts } from './src/theme/fonts';
 
@@ -195,12 +197,14 @@ function RootNavigator() {
           />
           <Stack.Screen name="CategoryBalances" component={CategoryBalancesScreen} options={{ title: 'CELLS' }} />
           <Stack.Screen name="SharedBudget" component={SharedBudgetScreen} options={{ title: 'SHARE' }} />
+          <Stack.Screen name="PeriodReport" component={PeriodReportScreen} options={{ title: 'REPORT' }} />
         </Stack.Navigator>
       ) : (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         </Stack.Navigator>
       )}
+      {showHome ? <PeriodReportPrompt /> : null}
     </NavigationContainer>
   );
 }

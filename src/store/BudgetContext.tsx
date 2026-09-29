@@ -19,6 +19,7 @@ import {
   type Household,
   type HouseholdMember,
   type PayCycle,
+  type PeriodReport,
   type SafeSpendSnapshot,
   type SharedHouseholdPayload,
   type TrajectoryLabel,
@@ -41,6 +42,13 @@ import { HOUSEHOLD_POLL_MS } from '../services/householdSyncPolicy';
 import type { PaceMetrics } from '../services/partnerMetricsNotify';
 import { notifyPaceMetricsChanged } from '../services/partnerNotify';
 import { freeReceiptScansUsed } from '../services/receiptScanQuota';
+import {
+  collectNewPeriodReports,
+  dismissReportPromptFlag,
+  markReportViewed,
+  mergePeriodReports,
+  nextAwaitingPromptReport,
+} from '../services/periodReports';
 
 /** Background reconcile while the app is open. Live partner edits use Realtime. */
 
@@ -74,6 +82,10 @@ type BudgetContextValue = {
   cloudSyncReady: boolean;
   syncStatus: 'idle' | 'syncing' | 'error';
   syncError: string | null;
+  /** Newest unread period report waiting for View / Later prompt. */
+  pendingReportPrompt: PeriodReport | null;
+  dismissReportPrompt: (opts?: { view?: boolean }) => void;
+  markPeriodReportViewed: (reportId: string) => Promise<void>;
   completeOnboarding: (cycle: PayCycle) => Promise<void>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
   updateActiveCycle: (mutate: (cycle: PayCycle) => PayCycle) => Promise<void>;
@@ -119,10 +131,12 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
   const [store, setStore] = useState<AppStoreData>(emptyStore);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [pendingReportPrompt, setPendingReportPrompt] = useState<PeriodReport | null>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
   const syncingRef = useRef(false);
   const syncHouseholdNowRef = useRef<(() => Promise<void>) | null>(null);
+  const reportCheckBusyRef = useRef(false);
 
   const persist = useCallback(async (next: AppStoreData) => {
     setStore(next);
@@ -353,6 +367,40 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     });
   }, [ready, activeCycle, commit]);
 
+  const refreshPeriodReports = useCallback(async () => {
+    if (reportCheckBusyRef.current) return;
+    const current = storeRef.current;
+    if (!current.settings.hasCompletedOnboarding) return;
+    reportCheckBusyRef.current = true;
+    try {
+      const created = collectNewPeriodReports({
+        cycles: current.cycles,
+        existing: current.periodReports ?? [],
+        customCategories: current.settings.customCategories,
+        weekStartsOn: current.settings.weekStartsOn ?? 1,
+      });
+      let periodReports = current.periodReports ?? [];
+      if (created.length > 0) {
+        periodReports = mergePeriodReports(periodReports, created);
+        await persist({ ...current, periodReports });
+      }
+      const awaiting = nextAwaitingPromptReport(periodReports);
+      if (awaiting) setPendingReportPrompt(awaiting);
+    } finally {
+      reportCheckBusyRef.current = false;
+    }
+  }, [persist]);
+
+  useEffect(() => {
+    if (!ready) return;
+    void refreshPeriodReports();
+    const onAppState = (state: AppStateStatus) => {
+      if (state === 'active') void refreshPeriodReports();
+    };
+    const sub = AppState.addEventListener('change', onAppState);
+    return () => sub.remove();
+  }, [ready, refreshPeriodReports]);
+
   const attribution = useCallback(() => {
     const member = localMember;
     const name = member?.displayName || store.settings.displayName || undefined;
@@ -372,6 +420,26 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     cloudSyncReady: isCloudSyncConfigured(),
     syncStatus,
     syncError,
+    pendingReportPrompt,
+    dismissReportPrompt: (opts) => {
+      const report = pendingReportPrompt;
+      setPendingReportPrompt(null);
+      if (!report) return;
+      const current = storeRef.current;
+      // View opens PeriodReport screen (marks viewed there); Later only clears the prompt.
+      const periodReports = opts?.view
+        ? markReportViewed(current.periodReports ?? [], report.id)
+        : dismissReportPromptFlag(current.periodReports ?? [], report.id);
+      void persist({ ...current, periodReports }).then(() => {
+        const next = nextAwaitingPromptReport(periodReports);
+        if (next) setPendingReportPrompt(next);
+      });
+    },
+    markPeriodReportViewed: async (reportId) => {
+      const current = storeRef.current;
+      const periodReports = markReportViewed(current.periodReports ?? [], reportId);
+      await persist({ ...current, periodReports });
+    },
     completeOnboarding: async (cycle) => {
       const withEnv = {
         ...cycle,

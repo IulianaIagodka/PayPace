@@ -7,7 +7,7 @@ export type MainTabParamList = {
 
 export type RootStackParamList = {
   Onboarding: undefined;
-  MainTabs: undefined;
+  MainTabs: { screen?: keyof MainTabParamList; params?: undefined } | undefined;
   AddExpense: undefined;
   Bills: undefined;
   PayCycle: undefined;
@@ -17,6 +17,7 @@ export type RootStackParamList = {
   StatementImport: { horizon?: 'week' | 'month' } | undefined;
   CategoryBalances: undefined;
   SharedBudget: undefined;
+  PeriodReport: { reportId: string };
   // legacy names kept so older imports typecheck during transition
   Home: undefined;
   Settings: undefined;
