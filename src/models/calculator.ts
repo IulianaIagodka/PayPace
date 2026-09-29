@@ -85,6 +85,8 @@ export function cycleMetrics(cycle: PayCycle, now = new Date()) {
   };
 }
 
+export { resolveCycleDatesOnSave } from '../services/cycleDates';
+
 /** Inclusive days from today through end of the configured calendar week. */
 export function daysRemainingInWeek(now = new Date(), weekStartsOn: WeekStartsOn = 1): number {
   const today = startOfDay(now);

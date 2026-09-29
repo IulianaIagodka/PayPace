@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns';
+import { differenceInCalendarDays, startOfDay } from 'date-fns';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { newId } from '../services/id';
 import {
@@ -13,6 +13,7 @@ import {
 import { FormScroll } from '../components/FormScroll';
 import { HudSelect } from '../components/HudSelect';
 import { nextPaydayAfter, scheduleOptions } from '../models/calculator';
+import { resolveCycleDatesOnSave } from '../services/cycleDates';
 import type { PaySchedule } from '../models/types';
 import { asMoney, currencySymbol, formatMoney, fromDateKey, parseAmount, toDateKey } from '../services/formatting';
 import { defaultEnvelopes } from '../services/envelopes';
@@ -54,8 +55,11 @@ export function PayCycleScreen({ navigation }: Props) {
 
   const save = async () => {
     const days = Math.max(Number(daysUntil) || 1, 0);
-    const today = startOfDay(new Date());
-    const nextPayday = startOfDay(addDays(today, days));
+    const dates = resolveCycleDatesOnSave({
+      existingStartDate: activeCycle.startDate,
+      existingNextPayday: activeCycle.nextPayday,
+      daysUntilInput: days,
+    });
     await updateActiveCycle((c) => ({
       ...c,
       currentBalance: parseAmount(balance) ?? 0,
@@ -64,10 +68,9 @@ export function PayCycleScreen({ navigation }: Props) {
       emergencyBuffer: parseAmount(emergency) ?? 0,
       spendingBuffer: parseAmount(buffer) ?? 0,
       schedule,
-      // “Days until payday” means a cycle from today → that payday (fixes Day 1 of 25 vs 30).
-      startDate: toDateKey(today),
-      nextPayday: toDateKey(nextPayday),
-      dayPaceLock: undefined,
+      startDate: dates.startDate,
+      nextPayday: dates.nextPayday,
+      ...(dates.resetDayLock ? { dayPaceLock: undefined } : {}),
     }));
     setSaved(true);
     navigation.navigate('MainTabs');

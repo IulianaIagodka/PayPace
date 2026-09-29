@@ -304,6 +304,24 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     };
   }, [ready, store.household?.id, syncHouseholdNow]);
 
+  const [todayKey, setTodayKey] = useState(() => toDateKey(new Date()));
+
+  useEffect(() => {
+    const refreshToday = () => {
+      const next = toDateKey(new Date());
+      setTodayKey((prev) => (prev === next ? prev : next));
+    };
+    const onAppState = (state: AppStateStatus) => {
+      if (state === 'active') refreshToday();
+    };
+    const sub = AppState.addEventListener('change', onAppState);
+    const timer = setInterval(refreshToday, 60_000);
+    return () => {
+      sub.remove();
+      clearInterval(timer);
+    };
+  }, []);
+
   const activeCycle = useMemo(
     () => store.cycles.find((c) => c.isActive) ?? store.cycles[0] ?? null,
     [store.cycles],
@@ -342,14 +360,13 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
             trajectory: 'ON TARGET' as TrajectoryLabel,
             projectedEndBalance: 0,
           },
-    [activeCycle, store.settings.weekStartsOn],
+    [activeCycle, store.settings.weekStartsOn, todayKey],
   );
 
   // Persist day lock so today's allowance stays stable across reloads / partners.
   // Also rewrite a stuck 0-lock once the spend pool becomes positive (balance set later).
   useEffect(() => {
     if (!ready || !activeCycle) return;
-    const today = toDateKey(new Date());
     const lock = buildDayPaceLock(activeCycle, new Date());
     const current = storeRef.current;
     const cycle = current.cycles.find((c) => c.id === activeCycle.id);
@@ -365,7 +382,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         c.id === activeCycle.id ? withCycleTouch({ ...c, dayPaceLock: lock }) : c,
       ),
     });
-  }, [ready, activeCycle, commit]);
+  }, [ready, activeCycle, commit, todayKey]);
 
   const refreshPeriodReports = useCallback(async () => {
     if (reportCheckBusyRef.current) return;
