@@ -18,6 +18,7 @@ export function HUDPanel({
   children,
   style,
   contentStyle,
+  dense = false,
 }: {
   variant?: HUDPanelVariant;
   /** Optional top label — same position/type for every module */
@@ -27,6 +28,8 @@ export function HUDPanel({
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
+  /** Tighter padding/gap — home category rail pods */
+  dense?: boolean;
 }) {
   const isPrimary = variant === 'primary';
   const isCompact = variant === 'compact';
@@ -43,7 +46,8 @@ export function HUDPanel({
         style={[
           styles.shell,
           { borderColor: border },
-          isCompact ? styles.padCompact : styles.pad,
+          isCompact ? (dense ? styles.padDense : styles.padCompact) : styles.pad,
+          dense && styles.shellDense,
         ]}
       >
         <LinearGradient
@@ -142,6 +146,13 @@ const styles = StyleSheet.create({
   },
   padCompact: {
     padding: hud.padCompact,
+  },
+  padDense: {
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+  },
+  shellDense: {
+    gap: 4,
   },
   fg: {
     zIndex: 1,

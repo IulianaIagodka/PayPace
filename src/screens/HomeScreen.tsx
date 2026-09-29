@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   },
   railBlock: { gap: hud.gap },
   railScroll: { overflow: 'visible' },
-  rail: { gap: 10, paddingRight: 8, paddingVertical: 2, flexGrow: 0 },
+  rail: { gap: 6, paddingRight: 8, paddingVertical: 0, flexGrow: 0 },
   recentBlock: { gap: hud.gap },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 });
