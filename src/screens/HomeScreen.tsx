@@ -52,6 +52,9 @@ const POPULAR_KEYS = [
   'other',
 ] as const;
 
+/** Space for sticky + ADD above the translucent tab bar. */
+const STICKY_CTA_BLOCK = 72;
+
 export function HomeScreen({ navigation }: Props) {
   const { activeCycle, snapshot, store, updateSettings } = useBudget();
   const currency = store.settings.currencyCode;
@@ -59,7 +62,7 @@ export function HomeScreen({ navigation }: Props) {
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
   const availableRatioLive = availableRatioFor(horizon, snapshot);
   const prevRatio = useRef(availableRatioLive);
-  const tabClearance = useTabBarClearance(28);
+  const tabClearance = useTabBarClearance(0);
 
   useEffect(() => {
     if (prevRatio.current > availableRatioLive) {
@@ -97,6 +100,10 @@ export function HomeScreen({ navigation }: Props) {
     return list.slice(0, 4);
   }, [activeCycle?.expenses]);
 
+  const openAddExpense = (envelopeKey?: string) => {
+    navigation.navigate('AddExpense', envelopeKey ? { envelopeKey } : undefined);
+  };
+
   if (!activeCycle) {
     return (
       <ScreenBackground>
@@ -120,161 +127,170 @@ export function HomeScreen({ navigation }: Props) {
   const availableLabel = availableLabelFor(horizon);
   const metaLeft = availableMetaLeftFor(horizon, snapshot, pct);
   const safeColor =
-    snapshot.remainingUntilPayday < 0 ? colors.danger : colors.resource;
+    snapshot.remainingUntilPayday < 0 ? colors.danger : colors.safeValue;
+  const dayMatchesHero = horizon === 'day';
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <ScrollView
-        contentContainerStyle={[tabScreen.pad, { paddingBottom: tabClearance }]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={hudType.brand}>
-          PAY<Text style={hudType.brandAccent}>PACE</Text>
-        </Text>
+      <View style={styles.flex}>
+        <ScrollView
+          contentContainerStyle={[
+            tabScreen.pad,
+            { paddingBottom: tabClearance + STICKY_CTA_BLOCK + 16 },
+          ]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={hudType.brand}>
+            PAY<Text style={hudType.brandAccent}>PACE</Text>
+          </Text>
 
-        <HUDPanel variant="standard" label="SAFE TO SPEND TODAY" labelTone="primary">
-          <HudValue size="hero" style={{ color: safeColor }}>
-            {formatMoney(safe, currency)}
-          </HudValue>
-        </HUDPanel>
-
-        <HUDPanel variant="standard" label={availableLabel}>
-          <View style={styles.rangeRow}>
-            {AVAILABLE_RANGE_OPTIONS.map((opt) => {
-              const on = opt.value === horizon;
-              return (
-                <Pressable
-                  key={opt.value}
-                  onPress={() => updateSettings({ paceHorizon: opt.value })}
-                  style={[styles.rangeBtn, on && styles.rangeBtnOn]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: on }}
-                >
-                  <Text style={[styles.rangeText, on && styles.rangeTextOn]}>{opt.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <HudValue>{formatMoney(availableAmount, currency)}</HudValue>
-          <SegmentedBar
-            ratio={availableRatio}
-            animateFrom={drainFrom}
-            tipAmber
-            height={22}
-          />
-          <View style={styles.metaRow}>
-            <HudMeta>{metaLeft}</HudMeta>
-            <HudMeta style={styles.daysMeta}>
-              {formatDays(snapshot.daysUntilPayday)} to payday
+          {/* 1 · Primary: today’s safe spend — the only hero number */}
+          <HUDPanel variant="primary" label="SAFE TO SPEND TODAY">
+            <HudValue size="hero" style={{ color: safeColor }}>
+              {formatMoney(safe, currency)}
+            </HudValue>
+            <HudMeta>
+              Your daily limit · {formatDays(snapshot.daysUntilPayday)} to payday
             </HudMeta>
-          </View>
-        </HUDPanel>
-
-        {snapshot.projectedShortfallDays != null ? (
-          <HUDPanel variant="standard" label="SPENDING RATE HIGH" labelTone="warn">
-            <HudBody>
-              At current pace, available money will be depleted {snapshot.projectedShortfallDays}{' '}
-              days before your next income.
-            </HudBody>
           </HUDPanel>
-        ) : null}
 
-        {store.settings.isPremium ? (
-          <View style={styles.railBlock}>
-            <Text style={hudType.label}>CATEGORIES</Text>
-            {railModules.length === 0 ? (
-              <HUDPanel variant="standard">
-                <HudBody>
-                  Categories show up here after you allocate them or log spending.
-                </HudBody>
-                <HudButton
-                  title="ALLOCATE"
-                  variant="secondary"
-                  onPress={() => navigation.navigate('Allocate')}
+          {/* 2 · Secondary: horizon window — compact, not competing */}
+          <HUDPanel variant="compact" label="SPEND WINDOW">
+            <View style={styles.rangeRow}>
+              {AVAILABLE_RANGE_OPTIONS.map((opt) => {
+                const on = opt.value === horizon;
+                return (
+                  <Pressable
+                    key={opt.value}
+                    onPress={() => updateSettings({ paceHorizon: opt.value })}
+                    style={[styles.rangeBtn, on && styles.rangeBtnOn]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: on }}
+                  >
+                    <Text style={[styles.rangeText, on && styles.rangeTextOn]}>{opt.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={styles.windowLabel}>{availableLabel}</Text>
+            {dayMatchesHero ? (
+              <HudMeta>Same as safe today — switch week or payday for a wider view.</HudMeta>
+            ) : (
+              <>
+                <Text style={styles.windowValue}>{formatMoney(availableAmount, currency)}</Text>
+                <SegmentedBar
+                  ratio={availableRatio}
+                  animateFrom={drainFrom}
+                  tipAmber
+                  height={12}
                 />
-              </HUDPanel>
-            ) : (
-              <ScrollView
-                horizontal
-                nestedScrollEnabled
-                directionalLockEnabled
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.rail}
-                style={styles.railScroll}
-              >
-                {railModules.map((mod, index) => (
-                  <CategoryCell
-                    key={mod.envelope.id}
-                    title={mod.envelope.title}
-                    iconKey={mod.envelope.key}
-                    spent={mod.spent}
-                    allocated={mod.envelope.allocated}
-                    currencyCode={currency}
-                    tone={mod.tone}
-                    depleted={mod.depleted}
-                    index={index}
-                    periodShare={periodShare}
-                    horizonLabel={horizonLabel}
-                    layout="rail"
-                    onPress={() => navigation.navigate('AddExpense')}
+                <HudMeta>{metaLeft}</HudMeta>
+              </>
+            )}
+          </HUDPanel>
+
+          {snapshot.projectedShortfallDays != null ? (
+            <HUDPanel variant="standard" label="SPENDING RATE HIGH" labelTone="warn">
+              <HudBody>
+                At current pace, available money will be depleted {snapshot.projectedShortfallDays}{' '}
+                days before your next income.
+              </HudBody>
+            </HUDPanel>
+          ) : null}
+
+          {store.settings.isPremium ? (
+            <View style={styles.railBlock}>
+              <Text style={hudType.label}>CATEGORIES</Text>
+              {railModules.length === 0 ? (
+                <HUDPanel variant="standard">
+                  <HudBody>
+                    Categories show up here after you allocate them or log spending.
+                  </HudBody>
+                  <HudButton
+                    title="ALLOCATE"
+                    variant="secondary"
+                    onPress={() => navigation.navigate('Allocate')}
                   />
-                ))}
-              </ScrollView>
-            )}
-          </View>
-        ) : (
-          <HUDPanel variant="standard" label="CATEGORY REMAINING · PLUS">
-            <HudBody>
-              Plus shows what’s left in each category and lets you set those budgets.
-            </HudBody>
-            <HudButton
-              title="SEE PLUS IN SETTINGS"
-              variant="secondary"
-              onPress={() => navigation.navigate('Settings')}
-            />
-          </HUDPanel>
-        )}
+                </HUDPanel>
+              ) : (
+                <ScrollView
+                  horizontal
+                  nestedScrollEnabled
+                  directionalLockEnabled
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.rail}
+                  style={styles.railScroll}
+                >
+                  {railModules.map((mod, index) => (
+                    <CategoryCell
+                      key={mod.envelope.id}
+                      title={mod.envelope.title}
+                      iconKey={mod.envelope.key}
+                      spent={mod.spent}
+                      allocated={mod.envelope.allocated}
+                      currencyCode={currency}
+                      tone={mod.tone}
+                      depleted={mod.depleted}
+                      index={index}
+                      periodShare={periodShare}
+                      horizonLabel={horizonLabel}
+                      layout="rail"
+                      onPress={() => openAddExpense(String(mod.envelope.key))}
+                    />
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          ) : (
+            <HUDPanel variant="compact" label="CATEGORIES · PLUS">
+              <HudBody>
+                Plus shows what’s left in each category and lets you set those budgets.
+              </HudBody>
+              <HudButton
+                title="SEE PLUS"
+                variant="secondary"
+                compact
+                onPress={() => navigation.navigate('Settings')}
+              />
+            </HUDPanel>
+          )}
 
-        <View style={styles.recentBlock}>
-          <View style={styles.recentHead}>
-            <Text style={hudType.label}>RECENT</Text>
-            <Pressable onPress={() => navigation.navigate('Activity')}>
-              <Text style={hudType.link}>SPEND ›</Text>
-            </Pressable>
+          <View style={styles.recentBlock}>
+            <View style={styles.recentHead}>
+              <Text style={hudType.label}>RECENT</Text>
+              <Pressable onPress={() => navigation.navigate('Activity')}>
+                <Text style={hudType.link}>SPEND ›</Text>
+              </Pressable>
+            </View>
+            <HUDPanel variant="standard">
+              {recent.length === 0 ? (
+                <HudBody>No expenses yet.</HudBody>
+              ) : (
+                recent.map((e) => (
+                  <ExpenseRow key={e.id} expense={e} currencyCode={currency} />
+                ))
+              )}
+            </HUDPanel>
           </View>
-          <HUDPanel variant="standard">
-            {recent.length === 0 ? (
-              <HudBody>No expenses yet.</HudBody>
-            ) : (
-              recent.map((e) => (
-                <ExpenseRow key={e.id} expense={e} currencyCode={currency} />
-              ))
-            )}
-          </HUDPanel>
+        </ScrollView>
+
+        <View style={[styles.stickyCta, { bottom: tabClearance + 8 }]} pointerEvents="box-none">
+          <HudButton title="+ ADD EXPENSE" onPress={() => openAddExpense()} />
         </View>
-
-        <HudButton title="+ ADD EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
-      </ScrollView>
+      </View>
     </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  daysMeta: {
-    textTransform: 'none',
-    letterSpacing: 0.4,
-  },
+  flex: { flex: 1 },
   rangeRow: {
     flexDirection: 'row',
     gap: 6,
   },
   rangeBtn: {
     flex: 1,
-    minHeight: 34,
+    minHeight: 32,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: hud.stroke,
@@ -293,9 +309,23 @@ const styles = StyleSheet.create({
   rangeTextOn: {
     color: colors.ammo,
   },
+  windowLabel: {
+    ...hudType.meta,
+    color: colors.textSecondary,
+  },
+  windowValue: {
+    ...hudType.valueMid,
+    fontSize: 20,
+    color: colors.ammo,
+  },
   railBlock: { gap: hud.gap },
   railScroll: { overflow: 'visible' },
   rail: { gap: 10, paddingRight: 8, paddingVertical: 2, flexGrow: 0 },
   recentBlock: { gap: hud.gap },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  stickyCta: {
+    position: 'absolute',
+    left: hud.screenPad,
+    right: hud.screenPad,
+  },
 });

@@ -1,3 +1,5 @@
+import type { EnvelopeKey } from '../models/types';
+
 export type MainTabParamList = {
   Home: undefined;
   Activity: undefined;
@@ -8,7 +10,7 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Onboarding: undefined;
   MainTabs: { screen?: keyof MainTabParamList; params?: undefined } | undefined;
-  AddExpense: undefined;
+  AddExpense: { envelopeKey?: EnvelopeKey } | undefined;
   Bills: undefined;
   PayCycle: undefined;
   History: undefined;
