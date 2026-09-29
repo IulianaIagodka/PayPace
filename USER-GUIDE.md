@@ -106,7 +106,7 @@ Plus: **Allocate** — розклади пул по категоріях. **Cate
 
 - Завжди оновлюй додаток з TestFlight після нового білду з `main`.
 - Якщо скан чека падає — на екрані буде реальна помилка (ключ, білінг OpenAI, погане фото), не «фейковий» чек.
-- Імпорт виписки не вигадує витрати: якщо файл не парситься — помилка.
+- Імпорт виписки не вигадує витрати: якщо файл не парситься — помилка. Прев’ю групує рядки **по днях** і показує суми **по категоріях**; кожна витрата зберігається зі своєю датою.
 
 Privacy / Support / Terms:  
 https://iulianaiagodka.github.io/PayPace/privacy.html · https://iulianaiagodka.github.io/PayPace/terms.html · https://iulianaiagodka.github.io/PayPace/support.html
