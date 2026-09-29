@@ -35,6 +35,7 @@ import { SharedBudgetScreen } from './src/screens/SharedBudgetScreen';
 import { AmountDoneAccessory, TAB_BAR_ROW_HEIGHT } from './src/components/ui';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { PlusEntitlementSync } from './src/components/PlusEntitlementSync';
+import { PeriodReportPrompt } from './src/components/PeriodReportPrompt';
 import { colors } from './src/theme/colors';
 import { fonts } from './src/theme/fonts';
 
@@ -201,6 +202,7 @@ function RootNavigator() {
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         </Stack.Navigator>
       )}
+      {showHome ? <PeriodReportPrompt /> : null}
     </NavigationContainer>
   );
 }

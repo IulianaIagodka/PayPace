@@ -7,7 +7,7 @@ export type MainTabParamList = {
 
 export type RootStackParamList = {
   Onboarding: undefined;
-  MainTabs: undefined;
+  MainTabs: { screen?: keyof MainTabParamList; params?: undefined } | undefined;
   AddExpense: undefined;
   Bills: undefined;
   PayCycle: undefined;

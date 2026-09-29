@@ -130,11 +130,41 @@ export interface AppSettings {
   freeReceiptScansUsed: number;
 }
 
+export type PeriodReportKind = 'week' | 'month';
+
+export interface PeriodReportCategory {
+  category: ExpenseCategory;
+  title: string;
+  spent: number;
+  allocated: number;
+  /** 0..1 of period spend */
+  share: number;
+  /** Over budget or concentrated spend — "slipping" */
+  slipping: boolean;
+}
+
+/** Saved weekly / monthly spend report (Pace tab). */
+export interface PeriodReport {
+  id: string;
+  kind: PeriodReportKind;
+  periodStart: string;
+  periodEnd: string;
+  createdAt: string;
+  totalSpent: number;
+  categories: PeriodReportCategory[];
+  summary: string;
+  viewedAt?: string | null;
+  /** True until user picks View or Later on the ready prompt. */
+  awaitingPrompt?: boolean;
+}
+
 export interface AppStoreData {
   settings: AppSettings;
   cycles: PayCycle[];
   household: Household | null;
   localMemberId: string | null;
+  /** Local-only weekly/monthly category reports (not cloud-synced). */
+  periodReports: PeriodReport[];
 }
 
 export interface SharedHouseholdPayload {
@@ -204,4 +234,5 @@ export const emptyStore: AppStoreData = {
   cycles: [],
   household: null,
   localMemberId: null,
+  periodReports: [],
 };

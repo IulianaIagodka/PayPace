@@ -1,19 +1,40 @@
-import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { Panel, ScreenBackground, SegmentedBar, useTabBarClearance } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors, colorForTone } from '../theme/colors';
 import { hudType, tabScreen } from '../theme/hud';
 import { formatMoney } from '../services/formatting';
+import {
+  formatReportPeriodLabel,
+  reportKindLabel,
+} from '../services/periodReports';
+import type { PeriodReport } from '../models/types';
 import type { MainTabParamList } from '../navigation/types';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Status'>;
 
 export function StatusScreen({}: Props) {
-  const { activeCycle, snapshot, store } = useBudget();
+  const {
+    activeCycle,
+    snapshot,
+    store,
+    focusReportId,
+    clearFocusReportId,
+    markPeriodReportViewed,
+  } = useBudget();
   const currency = store.settings.currencyCode;
   const tabClearance = useTabBarClearance(40);
+  const reports = store.periodReports ?? [];
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!focusReportId) return;
+    setExpandedId(focusReportId);
+    void markPeriodReportViewed(focusReportId);
+    clearFocusReportId();
+  }, [focusReportId, clearFocusReportId, markPeriodReportViewed]);
 
   const timeline = useMemo(() => {
     if (!activeCycle) return [];
@@ -99,8 +120,93 @@ export function StatusScreen({}: Props) {
             {snapshot.totalDaysInCycle} · {snapshot.daysUntilPayday} left to payday
           </Text>
         </Panel>
+
+        <Panel>
+          <Text style={hudType.label}>REPORTS</Text>
+          {reports.length === 0 ? (
+            <Text style={hudType.body}>
+              Weekly and monthly spend-by-category reports land here when a period ends.
+            </Text>
+          ) : (
+            reports.map((report) => (
+              <ReportCard
+                key={report.id}
+                report={report}
+                currency={currency}
+                expanded={expandedId === report.id}
+                onToggle={() => {
+                  const next = expandedId === report.id ? null : report.id;
+                  setExpandedId(next);
+                  if (next) void markPeriodReportViewed(next);
+                }}
+              />
+            ))
+          )}
+        </Panel>
       </ScrollView>
     </ScreenBackground>
+  );
+}
+
+function ReportCard({
+  report,
+  currency,
+  expanded,
+  onToggle,
+}: {
+  report: PeriodReport;
+  currency: string;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const unread = !report.viewedAt;
+  const slipCount = report.categories.filter((c) => c.slipping).length;
+
+  return (
+    <View style={styles.reportBlock}>
+      <Pressable onPress={onToggle} style={styles.reportHead}>
+        <View style={{ flex: 1, gap: 4 }}>
+          <View style={styles.reportTitleRow}>
+            <Text style={hudType.labelPrimary}>
+              {reportKindLabel(report.kind)} · {formatReportPeriodLabel(report)}
+            </Text>
+            {unread ? <View style={styles.unreadDot} /> : null}
+          </View>
+          <Text style={hudType.body}>
+            {formatMoney(report.totalSpent, currency)}
+            {slipCount > 0 ? ` · ${slipCount} slipping` : ' · on track'}
+          </Text>
+        </View>
+        <Text style={styles.chevron}>{expanded ? '▾' : '▸'}</Text>
+      </Pressable>
+
+      {expanded ? (
+        <View style={styles.reportBody}>
+          <Text style={hudType.body}>{report.summary}</Text>
+          {report.categories.map((row) => (
+            <View key={row.category} style={styles.catRow}>
+              <View style={{ flex: 1, gap: 4 }}>
+                <View style={styles.catTitleRow}>
+                  <Text style={styles.catName}>{row.title}</Text>
+                  {row.slipping ? (
+                    <Text style={styles.slipTag}>SLIP</Text>
+                  ) : null}
+                </View>
+                <SegmentedBar ratio={row.share} segments={8} height={8} />
+              </View>
+              <Text
+                style={[
+                  styles.catAmount,
+                  row.slipping && { color: colors.warning },
+                ]}
+              >
+                {formatMoney(row.spent, currency)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -146,4 +252,44 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderBright,
   },
+  reportBlock: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    paddingTop: 10,
+    marginTop: 6,
+    gap: 8,
+  },
+  reportHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  reportTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  unreadDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 0,
+    backgroundColor: colors.resource,
+  },
+  chevron: {
+    ...hudType.label,
+    color: colors.textDim,
+    fontSize: 14,
+  },
+  reportBody: { gap: 10, paddingBottom: 4 },
+  catRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 4,
+  },
+  catTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  catName: { ...hudType.bodyStrong },
+  slipTag: {
+    ...hudType.label,
+    color: colors.warning,
+    fontSize: 9,
+    letterSpacing: 1.4,
+  },
+  catAmount: { ...hudType.valueMid },
 });

@@ -46,6 +46,7 @@ function migrate(raw: unknown): AppStoreData {
     cycles: Array.isArray(data.cycles) ? data.cycles.map((c) => migrateCycle(c as PayCycle)) : [],
     household: data.household ?? null,
     localMemberId: data.localMemberId ?? null,
+    periodReports: Array.isArray(data.periodReports) ? data.periodReports : [],
   };
 }
 
