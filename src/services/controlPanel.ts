@@ -231,6 +231,8 @@ export const CONTROL_PANEL_COPY = {
     sysTag: 'EXPENSE LOG // THIS CYCLE',
     totalLabel: 'TOTAL SPENT',
     feedLabel: 'BY DAY',
+    expandAll: 'EXPAND ALL',
+    collapseAll: 'COLLAPSE ALL',
     empty: 'No expenses yet. Log one to start the ledger.',
   },
   onboarding: {
