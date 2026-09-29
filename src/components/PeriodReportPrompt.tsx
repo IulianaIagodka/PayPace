@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
-import { CommonActions, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { useBudget } from '../store/BudgetContext';
 import { reportReadyPrompt } from '../services/periodReports';
@@ -8,7 +8,7 @@ import type { RootStackParamList } from '../navigation/types';
 
 /**
  * When a week/month report is generated, ask View now vs Later.
- * Later keeps it on the Pace tab; View jumps there and expands it.
+ * Later keeps a link on Pace; View opens the report screen.
  */
 export function PeriodReportPrompt() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -36,12 +36,7 @@ export function PeriodReportPrompt() {
         onPress: () => {
           promptingRef.current = false;
           dismissReportPrompt({ view: true });
-          navigation.dispatch(
-            CommonActions.navigate({
-              name: 'MainTabs',
-              params: { screen: 'Status' },
-            }),
-          );
+          navigation.navigate('PeriodReport', { reportId: report.id });
         },
       },
     ]);

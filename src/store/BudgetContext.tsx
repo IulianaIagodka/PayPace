@@ -84,9 +84,6 @@ type BudgetContextValue = {
   syncError: string | null;
   /** Newest unread period report waiting for View / Later prompt. */
   pendingReportPrompt: PeriodReport | null;
-  /** Report id to expand on Pace after user chooses View. */
-  focusReportId: string | null;
-  clearFocusReportId: () => void;
   dismissReportPrompt: (opts?: { view?: boolean }) => void;
   markPeriodReportViewed: (reportId: string) => Promise<void>;
   completeOnboarding: (cycle: PayCycle) => Promise<void>;
@@ -135,7 +132,6 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
   const [syncError, setSyncError] = useState<string | null>(null);
   const [pendingReportPrompt, setPendingReportPrompt] = useState<PeriodReport | null>(null);
-  const [focusReportId, setFocusReportId] = useState<string | null>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
   const syncingRef = useRef(false);
@@ -425,20 +421,15 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     syncStatus,
     syncError,
     pendingReportPrompt,
-    focusReportId,
-    clearFocusReportId: () => setFocusReportId(null),
     dismissReportPrompt: (opts) => {
       const report = pendingReportPrompt;
       setPendingReportPrompt(null);
       if (!report) return;
       const current = storeRef.current;
-      let periodReports = current.periodReports ?? [];
-      if (opts?.view) {
-        setFocusReportId(report.id);
-        periodReports = markReportViewed(periodReports, report.id);
-      } else {
-        periodReports = dismissReportPromptFlag(periodReports, report.id);
-      }
+      // View opens PeriodReport screen (marks viewed there); Later only clears the prompt.
+      const periodReports = opts?.view
+        ? markReportViewed(current.periodReports ?? [], report.id)
+        : dismissReportPromptFlag(current.periodReports ?? [], report.id);
       void persist({ ...current, periodReports }).then(() => {
         const next = nextAwaitingPromptReport(periodReports);
         if (next) setPendingReportPrompt(next);

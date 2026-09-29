@@ -1,6 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Panel, ScreenBackground, SegmentedBar, useTabBarClearance } from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors, colorForTone } from '../theme/colors';
@@ -11,30 +13,16 @@ import {
   reportKindLabel,
 } from '../services/periodReports';
 import type { PeriodReport } from '../models/types';
-import type { MainTabParamList } from '../navigation/types';
+import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Status'>;
 
 export function StatusScreen({}: Props) {
-  const {
-    activeCycle,
-    snapshot,
-    store,
-    focusReportId,
-    clearFocusReportId,
-    markPeriodReportViewed,
-  } = useBudget();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { activeCycle, snapshot, store } = useBudget();
   const currency = store.settings.currencyCode;
   const tabClearance = useTabBarClearance(40);
   const reports = store.periodReports ?? [];
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!focusReportId) return;
-    setExpandedId(focusReportId);
-    void markPeriodReportViewed(focusReportId);
-    clearFocusReportId();
-  }, [focusReportId, clearFocusReportId, markPeriodReportViewed]);
 
   const timeline = useMemo(() => {
     if (!activeCycle) return [];
@@ -129,16 +117,11 @@ export function StatusScreen({}: Props) {
             </Text>
           ) : (
             reports.map((report) => (
-              <ReportCard
+              <ReportLink
                 key={report.id}
                 report={report}
                 currency={currency}
-                expanded={expandedId === report.id}
-                onToggle={() => {
-                  const next = expandedId === report.id ? null : report.id;
-                  setExpandedId(next);
-                  if (next) void markPeriodReportViewed(next);
-                }}
+                onPress={() => navigation.navigate('PeriodReport', { reportId: report.id })}
               />
             ))
           )}
@@ -148,65 +131,34 @@ export function StatusScreen({}: Props) {
   );
 }
 
-function ReportCard({
+function ReportLink({
   report,
   currency,
-  expanded,
-  onToggle,
+  onPress,
 }: {
   report: PeriodReport;
   currency: string;
-  expanded: boolean;
-  onToggle: () => void;
+  onPress: () => void;
 }) {
   const unread = !report.viewedAt;
   const slipCount = report.categories.filter((c) => c.slipping).length;
 
   return (
-    <View style={styles.reportBlock}>
-      <Pressable onPress={onToggle} style={styles.reportHead}>
-        <View style={{ flex: 1, gap: 4 }}>
-          <View style={styles.reportTitleRow}>
-            <Text style={hudType.labelPrimary}>
-              {reportKindLabel(report.kind)} · {formatReportPeriodLabel(report)}
-            </Text>
-            {unread ? <View style={styles.unreadDot} /> : null}
-          </View>
-          <Text style={hudType.body}>
-            {formatMoney(report.totalSpent, currency)}
-            {slipCount > 0 ? ` · ${slipCount} slipping` : ' · on track'}
+    <Pressable onPress={onPress} style={styles.reportLink}>
+      <View style={{ flex: 1, gap: 4 }}>
+        <View style={styles.reportTitleRow}>
+          <Text style={hudType.labelPrimary}>
+            {reportKindLabel(report.kind)} · {formatReportPeriodLabel(report)}
           </Text>
+          {unread ? <View style={styles.unreadDot} /> : null}
         </View>
-        <Text style={styles.chevron}>{expanded ? '▾' : '▸'}</Text>
-      </Pressable>
-
-      {expanded ? (
-        <View style={styles.reportBody}>
-          <Text style={hudType.body}>{report.summary}</Text>
-          {report.categories.map((row) => (
-            <View key={row.category} style={styles.catRow}>
-              <View style={{ flex: 1, gap: 4 }}>
-                <View style={styles.catTitleRow}>
-                  <Text style={styles.catName}>{row.title}</Text>
-                  {row.slipping ? (
-                    <Text style={styles.slipTag}>SLIP</Text>
-                  ) : null}
-                </View>
-                <SegmentedBar ratio={row.share} segments={8} height={8} />
-              </View>
-              <Text
-                style={[
-                  styles.catAmount,
-                  row.slipping && { color: colors.warning },
-                ]}
-              >
-                {formatMoney(row.spent, currency)}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
-    </View>
+        <Text style={hudType.body}>
+          {formatMoney(report.totalSpent, currency)}
+          {slipCount > 0 ? ` · ${slipCount} slipping` : ' · on track'}
+        </Text>
+      </View>
+      <Text style={styles.chevron}>›</Text>
+    </Pressable>
   );
 }
 
@@ -252,14 +204,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderBright,
   },
-  reportBlock: {
+  reportLink: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
     paddingTop: 10,
     marginTop: 6,
-    gap: 8,
-  },
-  reportHead: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -274,22 +223,6 @@ const styles = StyleSheet.create({
   chevron: {
     ...hudType.label,
     color: colors.textDim,
-    fontSize: 14,
+    fontSize: 18,
   },
-  reportBody: { gap: 10, paddingBottom: 4 },
-  catRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 4,
-  },
-  catTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  catName: { ...hudType.bodyStrong },
-  slipTag: {
-    ...hudType.label,
-    color: colors.warning,
-    fontSize: 9,
-    letterSpacing: 1.4,
-  },
-  catAmount: { ...hudType.valueMid },
 });

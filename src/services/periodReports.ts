@@ -357,7 +357,7 @@ export function reportReadyPrompt(report: PeriodReport): { title: string; body: 
   const kind = report.kind === 'week' ? 'Weekly' : 'Monthly';
   return {
     title: `${kind} report ready`,
-    body: `${report.summary} View it now, or find it later on the Pace tab.`,
+    body: `${report.summary} View it now, or open it later from the Pace tab.`,
   };
 }
 

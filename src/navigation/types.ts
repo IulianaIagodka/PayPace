@@ -17,6 +17,7 @@ export type RootStackParamList = {
   StatementImport: { horizon?: 'week' | 'month' } | undefined;
   CategoryBalances: undefined;
   SharedBudget: undefined;
+  PeriodReport: { reportId: string };
   // legacy names kept so older imports typecheck during transition
   Home: undefined;
   Settings: undefined;
