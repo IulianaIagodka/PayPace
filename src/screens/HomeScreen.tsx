@@ -128,7 +128,6 @@ export function HomeScreen({ navigation }: Props) {
   const metaLeft = availableMetaLeftFor(horizon, snapshot, pct);
   const safeColor =
     snapshot.remainingUntilPayday < 0 ? colors.danger : colors.safeValue;
-  const dayMatchesHero = horizon === 'day';
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
@@ -173,20 +172,14 @@ export function HomeScreen({ navigation }: Props) {
               })}
             </View>
             <Text style={styles.windowLabel}>{availableLabel}</Text>
-            {dayMatchesHero ? (
-              <HudMeta>Same as safe today — switch week or payday for a wider view.</HudMeta>
-            ) : (
-              <>
-                <Text style={styles.windowValue}>{formatMoney(availableAmount, currency)}</Text>
-                <SegmentedBar
-                  ratio={availableRatio}
-                  animateFrom={drainFrom}
-                  tipAmber
-                  height={12}
-                />
-                <HudMeta>{metaLeft}</HudMeta>
-              </>
-            )}
+            <Text style={styles.windowValue}>{formatMoney(availableAmount, currency)}</Text>
+            <SegmentedBar
+              ratio={availableRatio}
+              animateFrom={drainFrom}
+              tipAmber
+              height={12}
+            />
+            <HudMeta>{metaLeft}</HudMeta>
           </HUDPanel>
 
           {snapshot.projectedShortfallDays != null ? (

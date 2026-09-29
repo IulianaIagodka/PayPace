@@ -341,6 +341,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
             safeToSpendToday: 0,
             todayAllowance: 0,
             spentToday: 0,
+            spentThisWeek: 0,
             safeToSpendThisWeek: 0,
             safeToSpendThisMonth: 0,
             daysLeftInWeek: 0,

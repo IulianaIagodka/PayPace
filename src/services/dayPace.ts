@@ -39,6 +39,24 @@ export function spentBeforeDate(
   );
 }
 
+/** Inclusive spend from `startKey` through `endKey` (YYYY-MM-DD). */
+export function spentBetweenDates(
+  expenses: Array<{ date: string; amount: number }>,
+  startKey: string,
+  endKey: string,
+): number {
+  const start = startKey.slice(0, 10);
+  const end = endKey.slice(0, 10);
+  return sumAmounts(
+    expenses
+      .filter((e) => {
+        const d = e.date.slice(0, 10);
+        return d >= start && d <= end;
+      })
+      .map((e) => e.amount),
+  );
+}
+
 /** Morning pool ÷ days left until payday. */
 export function lockDailyAllowance(poolAtDayStart: number, daysToCover: number): number {
   const days = Math.max(daysToCover, 1);

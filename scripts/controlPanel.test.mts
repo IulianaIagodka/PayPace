@@ -58,6 +58,7 @@ function snap(partial: Partial<SafeSpendSnapshot> = {}): SafeSpendSnapshot {
     safeToSpendToday: 200,
     todayAllowance: 200,
     spentToday: 0,
+    spentThisWeek: 0,
     safeToSpendThisWeek: 1000,
     safeToSpendThisMonth: 4000,
     daysLeftInWeek: 5,
