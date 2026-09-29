@@ -53,7 +53,7 @@ A **pay cycle** holds balance, payday, bills, envelopes, expenses. Snapshot math
 
 ### Control panel / Pace (`src/services/controlPanel.ts` + StatusScreen)
 
-- UI copy: **LEFT AT PAYDAY** (projected leftover), **PACE** (trajectory / burn status).
+- UI copy: **LEFT TO SPEND NOW** (pool left), **IF THIS PACE → PAYDAY** (projectedEndBalance), **PACE** (trajectory).
 - Timeline: **Day `{daysElapsed + 1}` of N** (1-based for humans).
 
 ## Categories & envelopes
@@ -139,6 +139,6 @@ Always `git pull` on `main` before a release build. Owner checklist: [RELEASE-YO
 1. One receipt → one category (line items OK).
 2. Category rail/lists: spent **or** allocated only; cards show spent when alloc = 0.
 3. Default envelopes start at allocated 0 (no fake auto-budget).
-4. Pace Day is 1-based; labels LEFT AT PAYDAY / PACE.
+4. Pace Day is 1-based; labels LEFT TO SPEND NOW / IF THIS PACE → PAYDAY / PACE.
 5. Receipt save is single-flight (`saveLock`).
 6. Screen text goes through `hudType`.

@@ -56,20 +56,24 @@ export function StatusScreen({}: Props) {
           <Row label="SPENT" value={formatMoney(snapshot.spentThisCycle, currency)} />
           <Row label="BILLS" value={formatMoney(snapshot.unpaidBillsTotal, currency)} />
           <Row label="RESERVED" value={formatMoney(reserve, currency)} />
-          <Row label="REMAINING" value={formatMoney(Math.max(remaining, 0), currency)} />
           <Row
-            label="SAFE TO SPEND / DAY"
+            label="LEFT TO SPEND NOW"
+            value={formatMoney(Math.max(remaining, 0), currency)}
+          />
+          <Row
+            label="SAFE TODAY"
             value={formatMoney(Math.max(snapshot.safeToSpendToday, 0), currency)}
             strong
           />
           <Row
-            label="LEFT AT PAYDAY"
+            label="IF THIS PACE → PAYDAY"
             value={formatMoney(snapshot.projectedEndBalance, currency)}
           />
         </Panel>
 
         <Panel>
           <Text style={hudType.label}>PACE</Text>
+          <Text style={styles.paceHint}>Burn vs plan until payday</Text>
           <Text style={[hudType.value, { color: colorForTone(trajTone as any) }]}>
             {snapshot.trajectory}
           </Text>
@@ -128,6 +132,7 @@ const styles = StyleSheet.create({
   },
   rowValue: { ...hudType.valueMid, color: colors.text },
   rowValueStrong: { color: colors.resource },
+  paceHint: { ...hudType.body, color: colors.textDim, marginBottom: 4 },
   timeline: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   tick: {
     width: 10,

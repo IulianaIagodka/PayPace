@@ -89,7 +89,7 @@ Actions: https://github.com/IulianaIagodka/PayPace/actions
 - Statement більше не підставляє фейкові витрати  
 - Plus CTA → **MONTHLY** / **YEARLY** StoreKit subscriptions + restore (`expo-iap`), демо лише в dev  
 - Категорії за замовч. з alloc 0; у списках лише spent або allocated; картка без бюджету показує spent  
-- Pace: LEFT AT PAYDAY, Day 1-based; clean full-bleed bg; єдиний `hudType`  
+- Pace: LEFT TO SPEND NOW / IF THIS PACE → PAYDAY, Day 1-based; clean full-bleed bg; єдиний `hudType`  
 - Privacy / **Terms of Use** / Support лінки в Settings + Plus card; Error boundary  
 
 Документація: [USER-GUIDE.md](./USER-GUIDE.md) · [TECHNICAL.md](./TECHNICAL.md)

@@ -19,7 +19,7 @@ export type MetricChange = {
 };
 
 const LABELS: Record<keyof PaceMetrics, string> = {
-  remainingUntilPayday: 'Remaining',
+  remainingUntilPayday: 'Left to spend now',
   safeToSpendToday: 'Safe today',
   spentThisCycle: 'Spent',
   unpaidBillsTotal: 'Bills due',

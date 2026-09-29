@@ -20,7 +20,7 @@ Payday → payday. Гроші = енергія. Додаток показує, �
 |---------|-----------|
 | **Home** | Баланс, safe today, прогрес до payday, картки категорій |
 | **Trans** (Spend) | Список витрат цього циклу |
-| **Pace** | LEFT AT PAYDAY, темп (PACE), день циклу (Day 1…N) |
+| **Pace** | LEFT TO SPEND NOW, прогноз IF THIS PACE → PAYDAY, темп (PACE), Day 1…N |
 | **Settings** | Plus, shared budget, рахунки, цикл, категорії, privacy |
 
 ---
@@ -69,8 +69,10 @@ Plus: **Allocate** — розклади пул по категоріях. **Cate
 
 ## Pace (колишня Status)
 
-- **LEFT AT PAYDAY** — прогноз залишку на день зарплати (раніше Projected).
-- **PACE** — темп витрат відносно плану (раніше Trajectory).
+- **LEFT TO SPEND NOW** — скільки ще можна витратити до зарплати (пул мінус bills / reserved / spent).
+- **SAFE TODAY** — денний ліміт на сьогодні.
+- **IF THIS PACE → PAYDAY** — прогноз на день зарплати, якщо витрачатимеш таким самим темпом (може бути мінус = DEFICIT).
+- **PACE** — статус темпу (ON TARGET / DEFICIT / …).
 - **Day 1 of N** — перший день циклу = 1, не 0.
 
 ---
