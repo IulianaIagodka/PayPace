@@ -156,12 +156,7 @@ export function HomeScreen({ navigation }: Props) {
             })}
           </View>
           <HudValue>{formatMoney(availableAmount, currency)}</HudValue>
-          <SegmentedBar
-            ratio={availableRatio}
-            animateFrom={drainFrom}
-            tipAmber
-            height={22}
-          />
+          <SegmentedBar ratio={availableRatio} animateFrom={drainFrom} tipAmber />
           <View style={styles.metaRow}>
             <HudMeta>{metaLeft}</HudMeta>
             <HudMeta style={styles.daysMeta}>

@@ -213,14 +213,13 @@ export function SegmentedBar({
   ratio,
   animateFrom,
   tipAmber = true,
-  height,
   /** `remaining` = depleting reserve; `spent` = fill-up usage (colors still from leftover). */
   mode = 'remaining',
 }: {
   ratio: number;
-  /** @deprecated ignored — meter segment count is unified */
+  /** @deprecated ignored — meter segment count is unified via hud.meterSegments */
   segments?: number;
-  /** Override track height; defaults to hud.meterHeight */
+  /** @deprecated ignored — meter height is unified via hud.meterHeight */
   height?: number;
   animateFrom?: number;
   /** @deprecated ignored — meter geometry is unified */
@@ -231,7 +230,6 @@ export function SegmentedBar({
   const segments = hud.meterSegments;
   const clamped = Math.max(0, Math.min(ratio, 1));
   const anim = useRef(new Animated.Value(animateFrom ?? clamped)).current;
-  const trackHeight = height ?? hud.meterHeight;
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -246,7 +244,7 @@ export function SegmentedBar({
   const lit = Math.round(clamped * segments);
 
   return (
-    <View style={[styles.barTrack, { height: trackHeight }]}>
+    <View style={styles.barTrack}>
       {Array.from({ length: segments }).map((_, i) => {
         const bg =
           tipAmber && tone === 'healthy'
@@ -717,6 +715,7 @@ const styles = StyleSheet.create({
   },
   barTrack: {
     flexDirection: 'row',
+    height: hud.meterHeight,
     gap: hud.meterGap,
     backgroundColor: '#080604',
     borderWidth: hud.stroke,

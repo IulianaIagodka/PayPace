@@ -47,7 +47,7 @@ export function CategoryBalancesScreen({ navigation }: Props) {
               <View key={row.category} style={styles.row}>
                 <View style={{ flex: 1, gap: 6 }}>
                   <Text style={styles.name}>{row.title}</Text>
-                  <SegmentedBar ratio={row.share} segments={8} height={10} />
+                  <SegmentedBar ratio={row.share} />
                 </View>
                 <Text style={styles.amount}>{formatMoney(row.spent, currency)}</Text>
               </View>

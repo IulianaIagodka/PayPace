@@ -227,11 +227,9 @@ export function ReceiptScanScreen({ navigation }: Props) {
           ) : (
             cycleCategoryBalances.map((row) => (
               <View key={row.category} style={styles.balanceRow}>
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, gap: 6 }}>
                   <Text style={styles.lineName}>{row.title}</Text>
-                  <View style={styles.barTrack}>
-                    <SegmentedBar ratio={row.share} segments={8} height={8} />
-                  </View>
+                  <SegmentedBar ratio={row.share} />
                 </View>
                 <Text style={styles.amount}>{formatMoney(row.spent, currency)}</Text>
               </View>
@@ -266,13 +264,5 @@ const styles = StyleSheet.create({
   tapHint: { ...hudType.meta, marginTop: 2, textTransform: 'none', letterSpacing: 0.4 },
   lineAmount: { ...hudType.valueMid },
   balanceRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
-  barTrack: {
-    height: 8,
-    borderRadius: 0,
-    backgroundColor: colors.panelDeep,
-    overflow: 'hidden',
-    marginTop: 6,
-  },
-  barFill: { height: '100%', borderRadius: 0 },
   link: { ...hudType.link },
 });

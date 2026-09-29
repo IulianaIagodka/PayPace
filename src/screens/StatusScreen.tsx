@@ -86,7 +86,7 @@ export function StatusScreen({}: Props) {
           <Text style={[hudType.value, { color: colorForTone(trajTone as any) }]}>
             {snapshot.trajectory}
           </Text>
-          <SegmentedBar ratio={snapshot.resourcesRemainingRatio} segments={12} height={14} />
+          <SegmentedBar ratio={snapshot.resourcesRemainingRatio} />
         </Panel>
 
         <Panel>
