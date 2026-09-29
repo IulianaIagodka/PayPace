@@ -20,6 +20,11 @@ import {
   type StatementImportResult,
   type StatementLineItem,
 } from '../services/statementAnalyzer';
+import {
+  groupByDate,
+  hasItemsOutsideWindow,
+  summarizeByCategory,
+} from '../services/statementGrouping';
 import { categoryToEnvelopeKey } from '../services/envelopes';
 import { dateInHorizon, findCycleForDate, horizonWindow } from '../services/cycleMatching';
 import { useBudget } from '../store/BudgetContext';
@@ -60,6 +65,13 @@ export function StatementImportScreen({ navigation, route }: Props) {
     });
   }, [result, filterToHorizon, horizon, weekStartsOn, paydayKey]);
 
+  const categorySummary = useMemo(
+    () => summarizeByCategory(visibleItems),
+    [visibleItems],
+  );
+
+  const dayGroups = useMemo(() => groupByDate(visibleItems), [visibleItems]);
+
   const cyclePreview = useMemo(() => {
     const map = new Map<string, { label: string; count: number; total: number }>();
     for (const item of visibleItems) {
@@ -88,7 +100,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>UPLOAD STATEMENT</Text>
           <Text style={styles.sub}>
-            Plus imports a bank statement, sorts the rows by category, and puts each one in the right
+            Plus imports a bank statement, sorts by day and category, and puts each row in the right
             pay cycle.
           </Text>
           <PlusUnlockButton />
@@ -136,6 +148,13 @@ export function StatementImportScreen({ navigation, route }: Props) {
       try {
         const scanned = await analyzeStatementFile(asset.uri, asset.name, asset.mimeType);
         setResult(scanned);
+        // Multi-day exports often sit outside the week filter — show everything first.
+        if (
+          hasItemsOutsideWindow(scanned.items, window.startKey, window.endKey) ||
+          new Set(scanned.items.map((i) => i.date).filter(Boolean)).size > 1
+        ) {
+          setFilterToHorizon(false);
+        }
       } catch (error) {
         Alert.alert('Import failed', error instanceof Error ? error.message : 'Try another file.');
       } finally {
@@ -161,7 +180,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
       );
       Alert.alert(
         'Saved',
-        `${itemCount} expenses added across ${cycleCount} pay cycle${cycleCount === 1 ? '' : 's'}.`,
+        `${itemCount} expenses added across ${cycleCount} pay cycle${cycleCount === 1 ? '' : 's'} (by date + category).`,
         [{ text: 'OK', onPress: () => navigation.navigate('MainTabs') }],
       );
     } finally {
@@ -174,8 +193,8 @@ export function StatementImportScreen({ navigation, route }: Props) {
       <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.title}>UPLOAD STATEMENT</Text>
         <Text style={styles.sub}>
-          Import a bank export for this {horizon === 'week' ? 'week' : 'stretch until payday'}. Each
-          row lands in the pay cycle that matches its date.
+          Each row keeps its bank date and a guessed category. Tap a row to change category. Import
+          places every expense on its own day in the matching pay cycle.
         </Text>
 
         <Panel>
@@ -204,7 +223,8 @@ export function StatementImportScreen({ navigation, route }: Props) {
             {result ? (
               <Text style={styles.meta}>
                 {result.source === 'parsed' ? 'PARSED' : 'DEMO PARSE'} · {visibleItems.length}/
-                {result.items.length} shown · {formatMoney(total, currency)}
+                {result.items.length} shown · {formatMoney(total, currency)} · {dayGroups.length}{' '}
+                day{dayGroups.length === 1 ? '' : 's'}
               </Text>
             ) : null}
           </Panel>
@@ -214,6 +234,20 @@ export function StatementImportScreen({ navigation, route }: Props) {
           <Panel>
             <ActivityIndicator color={colors.resource} />
             <Text style={styles.sub}>Reading statement…</Text>
+          </Panel>
+        ) : null}
+
+        {categorySummary.length ? (
+          <Panel>
+            <Text style={styles.label}>BY CATEGORY</Text>
+            {categorySummary.map((row) => (
+              <View key={row.category} style={styles.cycleRow}>
+                <Text style={styles.rowTitle}>
+                  {categoryTitle(row.category, { custom })} · {row.count}
+                </Text>
+                <Text style={styles.meta}>{formatMoney(row.total, currency)}</Text>
+              </View>
+            ))}
           </Panel>
         ) : null}
 
@@ -231,24 +265,38 @@ export function StatementImportScreen({ navigation, route }: Props) {
           </Panel>
         ) : null}
 
-        {visibleItems.map((item) => {
-          const date = item.date ?? toDateKey(new Date());
-          const cycle = findCycleForDate(store.cycles, date, activeCycle);
-          return (
-            <Pressable key={item.id} onPress={() => cycleItemCategory(item.id)} style={styles.row}>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={styles.rowTitle}>{item.name}</Text>
-                <Text style={styles.meta}>
-                  {formatShortDate(date)} · {categoryTitle(item.category, { custom })}
-                  {cycle
-                    ? ` · cycle ${formatShortDate(cycle.startDate)}`
-                    : ' · no cycle match'}
-                </Text>
-              </View>
-              <Text style={styles.rowAmount}>{formatMoney(item.amount, currency)}</Text>
-            </Pressable>
-          );
-        })}
+        {dayGroups.map((group) => (
+          <View key={group.date} style={styles.dayBlock}>
+            <View style={styles.dayHeader}>
+              <Text style={styles.label}>{formatShortDate(group.date).toUpperCase()}</Text>
+              <Text style={styles.dayTotal}>
+                {group.items.length} · {formatMoney(group.total, currency)}
+              </Text>
+            </View>
+            {group.items.map((item) => {
+              const cycle = findCycleForDate(store.cycles, group.date, activeCycle);
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => cycleItemCategory(item.id)}
+                  style={styles.row}
+                >
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={styles.rowTitle}>{item.name}</Text>
+                    <Text style={styles.meta}>
+                      {categoryTitle(item.category, { custom })}
+                      {cycle
+                        ? ` · cycle ${formatShortDate(cycle.startDate)}`
+                        : ' · no cycle match'}
+                      {' · tap to change'}
+                    </Text>
+                  </View>
+                  <Text style={styles.rowAmount}>{formatMoney(item.amount, currency)}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
 
         {visibleItems.length ? (
           <HudButton
@@ -278,6 +326,17 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 4,
   },
+  dayBlock: { gap: 0 },
+  dayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    paddingTop: 8,
+    paddingBottom: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderBright,
+  },
+  dayTotal: { ...hudType.meta, color: colors.textSecondary },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
