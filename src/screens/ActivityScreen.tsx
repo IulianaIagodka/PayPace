@@ -143,7 +143,8 @@ export function ActivityScreen({ navigation }: Props) {
             const dayTotal = items.reduce((sum, e) => sum + e.amount, 0);
             const expanded = expandedDates.has(date);
             return (
-              <HUDPanel key={date} variant="compact" texture="full" seed={`spend-day:${date}`}>
+              // Same standard plate as TOTAL SPENT — compact looks flat when tall
+              <HUDPanel key={date} variant="standard" seed={`spend-day:${date}`}>
                 <Pressable
                   onPress={() => toggleDay(date)}
                   style={styles.dayHeader}

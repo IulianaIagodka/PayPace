@@ -64,7 +64,8 @@ export function MetalPlateTexture({
   intensity?: 'panel' | 'screen';
 }) {
   const isScreen = intensity === 'screen';
-  const speckCount = isScreen ? 200 : compact ? 28 : 64;
+  // Compact home pods stay light; standard panels match TOTAL SPENT grit density.
+  const speckCount = isScreen ? 200 : compact ? 28 : 96;
   const specks = useMemo(() => buildSpecks(seed, speckCount), [seed, speckCount]);
   const drift = useMemo(() => {
     const rand = mulberry32(hashSeed(`drift:${seed}`));
@@ -72,7 +73,8 @@ export function MetalPlateTexture({
       tx: Math.round((rand() - 0.5) * (isScreen ? 80 : 48)),
       ty: Math.round((rand() - 0.5) * (isScreen ? 64 : 36)),
       scale: (isScreen ? 1.45 : 1.25) + rand() * 0.4,
-      opacity: isScreen ? 0.52 : compact ? 0.28 : 0.42,
+      // Strong enough that tall expanded lists still read as the same plate
+      opacity: isScreen ? 0.52 : compact ? 0.28 : 0.5,
       shear: (rand() - 0.5) * 0.04,
     };
   }, [seed, compact, isScreen]);
@@ -91,6 +93,7 @@ export function MetalPlateTexture({
         end={{ x: 1, y: drift.shear > 0 ? 0.55 : 0.2 }}
         style={StyleSheet.absoluteFill}
       />
+      {/* Always paint grain on standard panels; compact pods skip for density */}
       {!compact || isScreen ? (
         <Image
           source={METAL_GRAIN}

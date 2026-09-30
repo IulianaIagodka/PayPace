@@ -1,13 +1,5 @@
-import React, { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  type LayoutChangeEvent,
-  type StyleProp,
-  type TextStyle,
-  type ViewStyle,
-} from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/colors';
 import { hud, hudType, type HUDPanelVariant } from '../theme/hud';
@@ -27,8 +19,6 @@ export function HUDPanel({
   style,
   contentStyle,
   dense = false,
-  /** Full metal grain even on compact — use for tall / expandable panels */
-  texture = 'auto',
   /** Override grit seed so adjacent same-variant cards stay unique */
   seed,
 }: {
@@ -42,12 +32,10 @@ export function HUDPanel({
   contentStyle?: StyleProp<ViewStyle>;
   /** Tighter padding/gap — home category rail pods */
   dense?: boolean;
-  texture?: 'auto' | 'full';
   seed?: string;
 }) {
   const isPrimary = variant === 'primary';
   const isCompact = variant === 'compact';
-  const useCompactPlate = texture === 'full' ? false : isCompact;
   const corner = isPrimary ? colors.resource : colors.borderBright;
   const border = isPrimary ? colors.resource : colors.border;
   const tone = labelTone ?? (isPrimary ? 'primary' : 'default');
@@ -55,20 +43,9 @@ export function HUDPanel({
     tone === 'primary' ? hudType.labelPrimary : tone === 'warn' ? hudType.labelWarn : hudType.label;
   const grainSeed = seed ?? `${variant}:${label ?? 'panel'}`;
 
-  // Absolute plate layers can stick to the first laid-out height on some RN builds.
-  // Size them from onLayout so expand/collapse keeps the same metal fill.
-  const [plateSize, setPlateSize] = useState({ w: 0, h: 0 });
-  const onShellLayout = (e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout;
-    setPlateSize((prev) =>
-      prev.w === width && prev.h === height ? prev : { w: width, h: height },
-    );
-  };
-
   return (
     <View style={style}>
       <View
-        onLayout={onShellLayout}
         style={[
           styles.shell,
           { borderColor: border },
@@ -76,27 +53,22 @@ export function HUDPanel({
           dense && styles.shellDense,
         ]}
       >
-        {plateSize.w > 0 && plateSize.h > 0 ? (
-          <View
-            key={`plate-${plateSize.w}x${plateSize.h}`}
-            pointerEvents="none"
-            style={[styles.plate, { width: plateSize.w, height: plateSize.h }]}
-          >
-            <LinearGradient
-              colors={isPrimary ? ['#1E3318', '#10180E'] : ['#2A241C', '#1A1612', '#12100C']}
-              locations={isPrimary ? [0, 1] : [0, 0.55, 1]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0.15, y: 1 }}
-              style={StyleSheet.absoluteFill}
-            />
-            <MetalPlateTexture seed={grainSeed} compact={useCompactPlate} />
-            <LinearGradient
-              colors={['rgba(255,245,220,0.05)', 'transparent']}
-              locations={[0, 0.5]}
-              style={StyleSheet.absoluteFill}
-            />
-          </View>
-        ) : null}
+        {/* absoluteFill tracks shell height on expand — never pin a stale measured size */}
+        <View pointerEvents="none" style={styles.plate}>
+          <LinearGradient
+            colors={isPrimary ? ['#1E3318', '#10180E'] : ['#2A241C', '#1A1612', '#12100C']}
+            locations={isPrimary ? [0, 1] : [0, 0.55, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.15, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <MetalPlateTexture seed={grainSeed} compact={isCompact} />
+          <LinearGradient
+            colors={['rgba(255,245,220,0.05)', 'transparent']}
+            locations={[0, 0.5]}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
 
         <View style={[styles.corner, styles.cornerTL, { borderColor: corner }]} />
         <View style={[styles.corner, styles.cornerTR, { borderColor: corner }]} />
@@ -176,6 +148,8 @@ const styles = StyleSheet.create({
   plate: {
     position: 'absolute',
     top: 0,
+    right: 0,
+    bottom: 0,
     left: 0,
     overflow: 'hidden',
   },
