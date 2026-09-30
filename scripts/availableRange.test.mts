@@ -35,6 +35,7 @@ function snap(partial: Partial<SafeSpendSnapshot> = {}): SafeSpendSnapshot {
     safeToSpendToday: 80,
     todayAllowance: 100,
     spentToday: 20,
+    spentThisWeek: 20,
     safeToSpendThisWeek: 480,
     safeToSpendThisMonth: 2000,
     daysLeftInWeek: 5,
@@ -68,11 +69,17 @@ assertEq(availableAmountFor('week', s), 480, 'week amount');
 assertEq(availableAmountFor('month', s), 2000, 'payday amount');
 
 assertClose(availableRatioFor('day', s), 0.8, 'day ratio = left/allowance');
-assertClose(availableRatioFor('week', s), 480 / 500, 'week ratio vs todayAllowance*days');
+assertClose(availableRatioFor('week', s), 480 / 500, 'week ratio = left/(left+spent)');
 assertClose(availableRatioFor('month', s), 0.8, 'payday uses cycle ratio');
 
-assertEq(availableMetaLeftFor('day', s, 80), '20% USED TODAY', 'day meta used');
-assertEq(availableMetaLeftFor('week', s, 80), '80% REMAINING', 'week meta');
+// Earlier-week spend must drain the week meter (not stay at 100%).
+const weekSpent = snap({ spentThisWeek: 200, safeToSpendThisWeek: 800 });
+assertClose(availableRatioFor('week', weekSpent), 800 / 1000, 'week drains after spend');
+assertEq(availableMetaLeftFor('week', weekSpent, 80), '80% REMAINING', 'week meta remaining');
+
+assertEq(availableMetaLeftFor('day', s, 80), '80% REMAINING', 'day meta remaining');
+assertEq(availableMetaLeftFor('week', s, 96), '96% REMAINING', 'week meta');
+assertEq(availableMetaLeftFor('month', s, 80), '80% REMAINING', 'payday meta remaining');
 
 assertEq(availableHorizonLabel('day'), 'DAY', 'horizon day');
 assertEq(availableHorizonLabel('month'), 'CYCLE', 'horizon payday');

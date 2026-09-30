@@ -1,9 +1,18 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Panel, ScreenBackground, SegmentedBar, useTabBarClearance } from '../components/ui';
+import {
+  HudBody,
+  HudMeta,
+  HudValue,
+  Panel,
+  ScreenBackground,
+  SegmentedBar,
+  useTabBarClearance,
+} from '../components/ui';
 import { useBudget } from '../store/BudgetContext';
 import { colors, colorForTone } from '../theme/colors';
 import { hudType, tabScreen } from '../theme/hud';
@@ -12,17 +21,37 @@ import {
   formatReportPeriodLabel,
   reportKindLabel,
 } from '../services/periodReports';
-import type { PeriodReport } from '../models/types';
+import type { PeriodReport, TrajectoryLabel } from '../models/types';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Status'>;
+
+function trajectoryTone(trajectory: TrajectoryLabel): 'healthy' | 'warning' | 'critical' {
+  if (trajectory === 'DEFICIT') return 'critical';
+  if (trajectory === 'LOW RESERVE') return 'warning';
+  return 'healthy';
+}
+
+function trajectoryHint(trajectory: TrajectoryLabel): string {
+  switch (trajectory) {
+    case 'DEFICIT':
+      return 'At this pace you’ll be short before payday.';
+    case 'LOW RESERVE':
+      return 'Burn is high — money may run thin before payday.';
+    case 'WITH RESERVE':
+      return 'Ahead of plan. You’re building a buffer.';
+    default:
+      return 'Spending matches the plan to payday.';
+  }
+}
 
 export function StatusScreen({}: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { activeCycle, snapshot, store } = useBudget();
   const currency = store.settings.currencyCode;
-  const tabClearance = useTabBarClearance(40);
+  const tabClearance = useTabBarClearance(56);
   const reports = store.periodReports ?? [];
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const timeline = useMemo(() => {
     if (!activeCycle) return [];
@@ -48,47 +77,48 @@ export function StatusScreen({}: Props) {
   const income = activeCycle.expectedPaycheck || activeCycle.currentBalance;
   const remaining = snapshot.remainingUntilPayday;
   const reserve = snapshot.reservedTotal;
-  const trajTone =
-    snapshot.trajectory === 'DEFICIT'
-      ? 'critical'
-      : snapshot.trajectory === 'LOW RESERVE'
-        ? 'warning'
-        : 'healthy';
+  const trajTone = trajectoryTone(snapshot.trajectory);
+  const dayNum = Math.min(snapshot.daysElapsed + 1, Math.max(snapshot.totalDaysInCycle, 1));
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={[tabScreen.pad, { paddingBottom: tabClearance }]}>
         <Text style={hudType.brand}>PACE</Text>
 
-        <Panel>
-          <Row label="INCOME" value={formatMoney(income, currency)} />
-          <Row label="SPENT" value={formatMoney(snapshot.spentThisCycle, currency)} />
-          <Row label="BILLS" value={formatMoney(snapshot.unpaidBillsTotal, currency)} />
-          <Row label="RESERVED" value={formatMoney(reserve, currency)} />
-          <Row
-            label="LEFT TO SPEND NOW"
-            value={formatMoney(Math.max(remaining, 0), currency)}
-          />
-          <Row
-            label="SAFE TODAY"
-            value={formatMoney(Math.max(snapshot.safeToSpendToday, 0), currency)}
-            strong
-          />
-          <Row
-            label="IF THIS PACE → PAYDAY"
-            value={formatMoney(snapshot.projectedEndBalance, currency)}
-          />
-        </Panel>
-
-        <Panel>
-          <Text style={hudType.label}>PACE</Text>
-          <Text style={styles.paceHint}>Burn vs plan until payday</Text>
-          <Text style={[hudType.value, { color: colorForTone(trajTone as any) }]}>
-            {snapshot.trajectory}
-          </Text>
+        {/* 1 · Status first */}
+        <Panel glow>
+          <Text style={hudType.labelPrimary}>STATUS</Text>
+          <HudValue style={{ color: colorForTone(trajTone) }}>{snapshot.trajectory}</HudValue>
+          <HudBody>{trajectoryHint(snapshot.trajectory)}</HudBody>
           <SegmentedBar ratio={snapshot.resourcesRemainingRatio} />
+          <HudMeta>
+            Day {dayNum} of {snapshot.totalDaysInCycle} · {snapshot.daysUntilPayday} left to payday
+          </HudMeta>
         </Panel>
 
+        {/* 2 · Three key numbers */}
+        <Panel>
+          <Text style={hudType.label}>KEY NUMBERS</Text>
+          <KeyRow
+            label="LEFT TO SPEND"
+            hint="Until payday"
+            value={formatMoney(Math.max(remaining, 0), currency)}
+            emphasize
+          />
+          <KeyRow
+            label="SAFE TODAY"
+            hint="Daily limit"
+            value={formatMoney(Math.max(snapshot.safeToSpendToday, 0), currency)}
+          />
+          <KeyRow
+            label="AT THIS PACE → PAYDAY"
+            hint="Projected leftover"
+            value={formatMoney(snapshot.projectedEndBalance, currency)}
+            warn={snapshot.projectedEndBalance < 0}
+          />
+        </Panel>
+
+        {/* 3 · Timeline */}
         <Panel>
           <Text style={hudType.label}>CYCLE TIMELINE</Text>
           <View style={styles.timeline}>
@@ -103,18 +133,45 @@ export function StatusScreen({}: Props) {
               />
             ))}
           </View>
-          <Text style={hudType.body}>
-            Day {Math.min(snapshot.daysElapsed + 1, Math.max(snapshot.totalDaysInCycle, 1))} of{' '}
-            {snapshot.totalDaysInCycle} · {snapshot.daysUntilPayday} left to payday
-          </Text>
+          <HudMeta>
+            Day {dayNum} · {snapshot.daysUntilPayday} days to payday
+          </HudMeta>
+        </Panel>
+
+        {/* 4 · Details on demand */}
+        <Panel>
+          <Pressable
+            onPress={() => setDetailsOpen((v) => !v)}
+            style={styles.detailsHead}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: detailsOpen }}
+          >
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text style={hudType.label}>BREAKDOWN</Text>
+              <HudMeta>{detailsOpen ? 'Hide income, bills, reserves' : 'Income, bills, reserves'}</HudMeta>
+            </View>
+            <Ionicons
+              name={detailsOpen ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={colors.borderBright}
+            />
+          </Pressable>
+          {detailsOpen ? (
+            <View style={styles.detailsBody}>
+              <Row label="INCOME" value={formatMoney(income, currency)} />
+              <Row label="SPENT" value={formatMoney(snapshot.spentThisCycle, currency)} />
+              <Row label="BILLS" value={formatMoney(snapshot.unpaidBillsTotal, currency)} />
+              <Row label="RESERVED" value={formatMoney(reserve, currency)} />
+            </View>
+          ) : null}
         </Panel>
 
         <Panel>
           <Text style={hudType.label}>REPORTS</Text>
           {reports.length === 0 ? (
-            <Text style={hudType.body}>
+            <HudBody>
               Weekly and monthly spend-by-category reports land here when a period ends.
-            </Text>
+            </HudBody>
           ) : (
             reports.map((report) => (
               <ReportLink
@@ -128,6 +185,38 @@ export function StatusScreen({}: Props) {
         </Panel>
       </ScrollView>
     </ScreenBackground>
+  );
+}
+
+function KeyRow({
+  label,
+  hint,
+  value,
+  emphasize,
+  warn,
+}: {
+  label: string;
+  hint: string;
+  value: string;
+  emphasize?: boolean;
+  warn?: boolean;
+}) {
+  return (
+    <View style={styles.keyRow}>
+      <View style={styles.keyText}>
+        <Text style={hudType.label}>{label}</Text>
+        <HudMeta style={styles.keyHint}>{hint}</HudMeta>
+      </View>
+      <Text
+        style={[
+          styles.keyValue,
+          emphasize && styles.keyValueStrong,
+          warn && styles.keyValueWarn,
+        ]}
+      >
+        {value}
+      </Text>
+    </View>
   );
 }
 
@@ -162,24 +251,43 @@ function ReportLink({
   );
 }
 
-function Row({
-  label,
-  value,
-  strong,
-}: {
-  label: string;
-  value: string;
-  strong?: boolean;
-}) {
+function Row({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.row}>
       <Text style={hudType.label}>{label}</Text>
-      <Text style={[styles.rowValue, strong && styles.rowValueStrong]}>{value}</Text>
+      <Text style={styles.rowValue}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  keyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  keyText: { flex: 1, gap: 2 },
+  keyHint: {
+    textTransform: 'none',
+    letterSpacing: 0.4,
+    color: colors.textDim,
+  },
+  keyValue: { ...hudType.valueMid, color: colors.text },
+  keyValueStrong: { color: colors.resource },
+  keyValueWarn: { color: colors.danger },
+  detailsHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  detailsBody: {
+    marginTop: 4,
+    gap: 0,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -189,8 +297,6 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   rowValue: { ...hudType.valueMid, color: colors.text },
-  rowValueStrong: { color: colors.resource },
-  paceHint: { ...hudType.body, color: colors.textDim, marginBottom: 4 },
   timeline: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   tick: {
     width: 10,

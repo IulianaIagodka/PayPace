@@ -9,6 +9,7 @@ import {
   remainingForFutureDays,
   resolveDayPaceLock,
   spentBeforeDate,
+  spentBetweenDates,
   spentOnDate,
   todayBudgetRemaining,
   weekBudgetRemaining,
@@ -44,6 +45,11 @@ const expenses = [
 
 assertEq(spentOnDate(expenses, '2026-09-22'), 50, 'spent today sums same-day expenses');
 assertEq(spentBeforeDate(expenses, '2026-09-22'), 125, 'spent before today');
+assertEq(
+  spentBetweenDates(expenses, '2026-09-20', '2026-09-22'),
+  175,
+  'spent between dates is inclusive',
+);
 
 assertEq(lockDailyAllowance(1000, 10), 100, 'morning lock = pool / days');
 assertEq(lockDailyAllowance(0, 10), 0, 'empty pool locks 0');

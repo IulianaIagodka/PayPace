@@ -18,13 +18,23 @@ import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
 
-export function AddExpenseScreen({ navigation }: Props) {
+function initialEnvelopeKey(
+  envelopes: { key: EnvelopeKey }[],
+  preferred?: EnvelopeKey,
+): EnvelopeKey {
+  if (preferred && envelopes.some((e) => e.key === preferred)) return preferred;
+  return envelopes[0]?.key ?? 'other';
+}
+
+export function AddExpenseScreen({ navigation, route }: Props) {
   const { addExpense, store, activeCycle } = useBudget();
   const suffix = currencySymbol(store.settings.currencyCode);
   const envelopes = activeCycle ? ensureEnvelopes(activeCycle) : [];
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
-  const [envelopeKey, setEnvelopeKey] = useState<EnvelopeKey>(envelopes[0]?.key ?? 'other');
+  const [envelopeKey, setEnvelopeKey] = useState<EnvelopeKey>(() =>
+    initialEnvelopeKey(envelopes, route.params?.envelopeKey),
+  );
   const [busy, setBusy] = useState(false);
   const scansLeft = freeReceiptScansRemaining(store.settings);
 

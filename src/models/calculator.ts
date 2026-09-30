@@ -1,4 +1,11 @@
-import { addDays, addMonths, differenceInCalendarDays, endOfWeek, startOfDay } from 'date-fns';
+import {
+  addDays,
+  addMonths,
+  differenceInCalendarDays,
+  endOfWeek,
+  startOfDay,
+  startOfWeek,
+} from 'date-fns';
 import type { PayCycle, PaySchedule, SafeSpendSnapshot, TrajectoryLabel } from './types';
 import { asMoney, fromDateKey, toDateKey } from '../services/formatting';
 import { effectiveCycleStartDate } from '../services/cycleDates';
@@ -7,6 +14,7 @@ import {
   remainingForFutureDays,
   resolveDayPaceLock,
   spentBeforeDate,
+  spentBetweenDates,
   spentOnDate,
   todayBudgetRemaining,
   weekBudgetRemaining,
@@ -127,12 +135,15 @@ export function calculateSafeSpend(
     reservedTotal,
   } = cycleMetrics(cycle, now);
 
-  const todayKey = toDateKey(startOfDay(now));
+  const today = startOfDay(now);
+  const todayKey = toDateKey(today);
   const expenses = cycle.expenses.map((e) => ({
     date: e.date,
     amount: asMoney(e.amount),
   }));
   const spentToday = spentOnDate(expenses, todayKey);
+  const weekStartKey = toDateKey(startOfWeek(today, { weekStartsOn }));
+  const spentThisWeek = spentBetweenDates(expenses, weekStartKey, todayKey);
 
   const spendPool = balance - unpaidBillsTotal - reservedTotal;
   const remainingUntilPayday = spendPool - spentThisCycle;
@@ -188,6 +199,7 @@ export function calculateSafeSpend(
     safeToSpendToday,
     todayAllowance,
     spentToday,
+    spentThisWeek,
     safeToSpendThisWeek,
     safeToSpendThisMonth,
     daysLeftInWeek,

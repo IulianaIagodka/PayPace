@@ -45,7 +45,7 @@ export function availableRatioFor(
     | 'safeToSpendToday'
     | 'todayAllowance'
     | 'safeToSpendThisWeek'
-    | 'daysLeftInWeek'
+    | 'spentThisWeek'
     | 'resourcesRemainingRatio'
   >,
 ): number {
@@ -55,29 +55,24 @@ export function availableRatioFor(
     return clamp01(snapshot.safeToSpendToday / cap);
   }
   if (range === 'week') {
-    const cap = Math.max(
-      snapshot.todayAllowance * Math.max(snapshot.daysLeftInWeek, 1),
-      snapshot.safeToSpendThisWeek,
-      0,
-    );
+    const left = Math.max(snapshot.safeToSpendThisWeek, 0);
+    const spent = Math.max(snapshot.spentThisWeek, 0);
+    const cap = left + spent;
+    // Cap from spend+left so earlier-week spend drains the meter (not a fresh forward budget).
     if (!(cap > 0)) return 0;
-    return clamp01(snapshot.safeToSpendThisWeek / cap);
+    return clamp01(left / cap);
   }
   return clamp01(snapshot.resourcesRemainingRatio);
 }
 
+/** Always remaining — never “used/spent” under the Home progress bar. */
 export function availableMetaLeftFor(
-  range: AvailableRange,
-  snapshot: Pick<SafeSpendSnapshot, 'safeToSpendToday' | 'todayAllowance' | 'resourcesRemainingRatio'>,
+  _range: AvailableRange,
+  _snapshot: Pick<SafeSpendSnapshot, 'safeToSpendToday' | 'todayAllowance' | 'resourcesRemainingRatio'>,
   pct: number,
 ): string {
-  if (range === 'day') {
-    const cap = snapshot.todayAllowance;
-    if (!(cap > 0)) return 'NO DAY LOCK';
-    const used = Math.round((1 - clamp01(snapshot.safeToSpendToday / cap)) * 100);
-    return `${Math.max(0, used)}% USED TODAY`;
-  }
-  return `${pct}% REMAINING`;
+  const n = Math.max(0, Math.min(100, Math.round(pct)));
+  return `${n}% REMAINING`;
 }
 
 export function availableHorizonLabel(range: AvailableRange): string {

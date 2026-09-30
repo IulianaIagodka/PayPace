@@ -185,6 +185,8 @@ export interface SafeSpendSnapshot {
   todayAllowance: number;
   /** Spend recorded on today's date key. */
   spentToday: number;
+  /** Spend in the current calendar week (weekStartsOn → today, inclusive). */
+  spentThisWeek: number;
   /** Remaining allowance for the current calendar week (weekStartsOn → +6). */
   safeToSpendThisWeek: number;
   /** Remaining allowance until next payday (pay-cycle window, not calendar month). */
