@@ -374,11 +374,14 @@ export function CategoryCell({
 
   const amountLine = (
     <View style={[styles.amountRow, isRail && styles.amountRowRail]}>
-      <Text style={[styles.amountLeft, muted && { color: colors.textDim }]}>
+      <Text
+        style={[styles.amountLeft, muted && { color: colors.textDim }]}
+        numberOfLines={1}
+      >
         {formatMoney(used, currencyCode)}
       </Text>
       <Text style={styles.amountSep}> / </Text>
-      <Text style={styles.amountPlanned}>
+      <Text style={styles.amountPlanned} numberOfLines={1}>
         {hasBudget ? formatMoney(planned, currencyCode) : '—'}
       </Text>
     </View>
@@ -386,7 +389,12 @@ export function CategoryCell({
 
   const meter = (
     <View style={isRail ? { alignSelf: 'stretch' as const } : undefined}>
-      <SegmentedBar ratio={spentRatio} mode="spent" tipAmber={tipAmber} />
+      <SegmentedBar
+        ratio={spentRatio}
+        mode="spent"
+        tipAmber={tipAmber}
+        height={isRail ? 10 : undefined}
+      />
     </View>
   );
 
@@ -394,19 +402,22 @@ export function CategoryCell({
     <HUDPanel
       variant="compact"
       label={title}
+      dense={isRail}
       style={isRail ? styles.cellRail : styles.cell}
       contentStyle={isRail ? styles.cellRailInner : undefined}
     >
       {isRail ? (
         <>
-          <View style={styles.cellIconWrap}>
-            <Ionicons
-              name={iconName}
-              size={18}
-              color={muted ? colors.textDim : colors.resource}
-            />
+          <View style={styles.cellRailHead}>
+            <View style={styles.cellIconWrap}>
+              <Ionicons
+                name={iconName}
+                size={14}
+                color={muted ? colors.textDim : colors.resource}
+              />
+            </View>
+            {amountLine}
           </View>
-          {amountLine}
           {meter}
         </>
       ) : (
@@ -725,19 +736,26 @@ const styles = StyleSheet.create({
   },
   barSeg: { flex: 1, borderRadius: 0 },
   cell: { flex: 1 },
-  cellRail: { width: 124 },
-  railItem: { width: 124 },
+  cellRail: { width: 108 },
+  railItem: { width: 108 },
   cellRailInner: {
+    gap: 5,
+  },
+  cellRailHead: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    alignSelf: 'stretch',
   },
   cellIconWrap: {
-    width: 32,
-    height: 32,
+    width: 24,
+    height: 24,
     borderWidth: hud.stroke,
     borderColor: colors.borderBright,
     backgroundColor: colors.resourceSoft,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   cellTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   amountRow: {
@@ -745,10 +763,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'baseline',
   },
-  /** Keep rail pods the same height whether the amount wraps or not. */
+  /** Single-line spent/planned beside the icon on the home rail. */
   amountRowRail: {
-    minHeight: 40,
-    justifyContent: 'center',
+    flex: 1,
+    flexWrap: 'nowrap',
+    minWidth: 0,
   },
   amountLeft: {
     ...hudType.valueCompact,
