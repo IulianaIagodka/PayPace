@@ -52,20 +52,22 @@ function buildSpecks(seed: string, count: number): Speck[] {
 /**
  * Non-repeating plate grit: stretched organic grain + seeded random flecks
  * so adjacent cards don't look like the same tiled stamp.
+ *
+ * One plate look everywhere — `compact` is ignored (kept for call-site compat).
  */
 export function MetalPlateTexture({
   seed,
-  compact = false,
+  compact: _compact = false,
   intensity = 'panel',
 }: {
   seed: string;
+  /** @deprecated no visual effect — all HUD panels share the same plate fill */
   compact?: boolean;
   /** `screen` = fuller grit for full-bleed backdrops */
   intensity?: 'panel' | 'screen';
 }) {
   const isScreen = intensity === 'screen';
-  // Compact home pods stay light; standard panels match TOTAL SPENT grit density.
-  const speckCount = isScreen ? 200 : compact ? 28 : 96;
+  const speckCount = isScreen ? 200 : 96;
   const specks = useMemo(() => buildSpecks(seed, speckCount), [seed, speckCount]);
   const drift = useMemo(() => {
     const rand = mulberry32(hashSeed(`drift:${seed}`));
@@ -73,11 +75,10 @@ export function MetalPlateTexture({
       tx: Math.round((rand() - 0.5) * (isScreen ? 80 : 48)),
       ty: Math.round((rand() - 0.5) * (isScreen ? 64 : 36)),
       scale: (isScreen ? 1.45 : 1.25) + rand() * 0.4,
-      // Strong enough that tall expanded lists still read as the same plate
-      opacity: isScreen ? 0.52 : compact ? 0.28 : 0.5,
+      opacity: isScreen ? 0.52 : 0.5,
       shear: (rand() - 0.5) * 0.04,
     };
-  }, [seed, compact, isScreen]);
+  }, [seed, isScreen]);
 
   return (
     <View pointerEvents="none" style={styles.wrap}>
@@ -93,24 +94,21 @@ export function MetalPlateTexture({
         end={{ x: 1, y: drift.shear > 0 ? 0.55 : 0.2 }}
         style={StyleSheet.absoluteFill}
       />
-      {/* Always paint grain on standard panels; compact pods skip for density */}
-      {!compact || isScreen ? (
-        <Image
-          source={METAL_GRAIN}
-          resizeMode="cover"
-          style={[
-            styles.grain,
-            {
-              opacity: drift.opacity,
-              transform: [
-                { translateX: drift.tx },
-                { translateY: drift.ty },
-                { scale: drift.scale },
-              ],
-            },
-          ]}
-        />
-      ) : null}
+      <Image
+        source={METAL_GRAIN}
+        resizeMode="cover"
+        style={[
+          styles.grain,
+          {
+            opacity: drift.opacity,
+            transform: [
+              { translateX: drift.tx },
+              { translateY: drift.ty },
+              { scale: drift.scale },
+            ],
+          },
+        ]}
+      />
       {specks.map((s, i) => (
         <View
           key={i}

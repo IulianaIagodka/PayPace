@@ -53,16 +53,16 @@ export function HUDPanel({
           dense && styles.shellDense,
         ]}
       >
-        {/* absoluteFill tracks shell height on expand — never pin a stale measured size */}
+        {/* One plate fill everywhere — variants only change border/label/padding */}
         <View pointerEvents="none" style={styles.plate}>
           <LinearGradient
-            colors={isPrimary ? ['#1E3318', '#10180E'] : ['#2A241C', '#1A1612', '#12100C']}
-            locations={isPrimary ? [0, 1] : [0, 0.55, 1]}
+            colors={['#2A241C', '#1A1612', '#12100C']}
+            locations={[0, 0.55, 1]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0.15, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          <MetalPlateTexture seed={grainSeed} compact={isCompact} />
+          <MetalPlateTexture seed={grainSeed} />
           <LinearGradient
             colors={['rgba(255,245,220,0.05)', 'transparent']}
             locations={[0, 0.5]}
