@@ -53,20 +53,16 @@ export function HUDPanel({
           dense && styles.shellDense,
         ]}
       >
-        {/* One plate fill everywhere — variants only change border/label/padding */}
+        {/* Uniform plate fill — no height-stretched gradient (tall Spend days
+            used to look like a lighter/different background than TOTAL SPENT). */}
         <View pointerEvents="none" style={styles.plate}>
-          <LinearGradient
-            colors={['#2A241C', '#1A1612', '#12100C']}
-            locations={[0, 0.55, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0.15, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
+          <View style={[StyleSheet.absoluteFill, styles.plateBase]} />
           <MetalPlateTexture seed={grainSeed} />
+          {/* Fixed-height sheen so short and tall modules share the same tone */}
           <LinearGradient
             colors={['rgba(255,245,220,0.05)', 'transparent']}
-            locations={[0, 0.5]}
-            style={StyleSheet.absoluteFill}
+            locations={[0, 1]}
+            style={styles.plateSheen}
           />
         </View>
 
@@ -152,6 +148,16 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     overflow: 'hidden',
+  },
+  plateBase: {
+    backgroundColor: '#1A1612',
+  },
+  plateSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 72,
   },
   pad: {
     padding: hud.pad,

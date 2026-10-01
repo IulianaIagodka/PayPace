@@ -4,17 +4,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const METAL_GRAIN = require('../../assets/metal-grain.png');
 
-/** Reference card (~TOTAL SPENT) — grit scale & fleck density target */
-const REF_W = 340;
-const REF_H = 120;
-const REF_AREA = REF_W * REF_H;
+/** Reference card (~TOTAL SPENT) — fleck density target */
+const REF_AREA = 340 * 120;
 const REF_SPECKS_PANEL = 96;
 const REF_SPECKS_SCREEN = 200;
-/** Soft cap so tall Spend day lists stay smooth while matching density */
 const MAX_SPECKS_PANEL = 280;
 const MAX_SPECKS_SCREEN = 480;
-/** Vertical strip height ≈ short module — keeps grain scale constant when tall */
-const GRAIN_STRIP = 132;
 
 type Speck = {
   left: `${number}%`;
@@ -71,9 +66,10 @@ function speckCountForArea(area: number, isScreen: boolean): number {
 }
 
 /**
- * Non-repeating plate grit: strip-tiled organic grain + seeded flecks.
- * Speck count and grain strips scale with panel height so expanded Spend
- * day lists keep the same metal density as short modules like TOTAL SPENT.
+ * Plate grit: one tiled grain layer + seeded flecks.
+ * Speck count scales with panel area so expanded Spend day lists keep the
+ * same metal density as short modules like TOTAL SPENT. Grain uses a single
+ * `repeat` layer (no stacked strips) so tall plates don't lighten.
  *
  * One plate look everywhere — `compact` is ignored (kept for call-site compat).
  */
@@ -106,17 +102,16 @@ export function MetalPlateTexture({
   const drift = useMemo(() => {
     const rand = mulberry32(hashSeed(`drift:${seed}`));
     return {
-      tx: Math.round((rand() - 0.5) * (isScreen ? 80 : 48)),
-      ty: Math.round((rand() - 0.5) * (isScreen ? 64 : 36)),
-      scale: (isScreen ? 1.45 : 1.28) + rand() * 0.22,
+      tx: Math.round((rand() - 0.5) * (isScreen ? 96 : 56)),
+      ty: Math.round((rand() - 0.5) * (isScreen ? 72 : 40)),
       opacity: isScreen ? 0.52 : 0.5,
       shear: (rand() - 0.5) * 0.04,
     };
   }, [seed, isScreen]);
 
-  const stripH = isScreen ? 180 : GRAIN_STRIP;
-  const stripCount =
-    size.h > 0 ? Math.max(1, Math.ceil(size.h / stripH)) : 1;
+  const pad = isScreen ? 120 : 80;
+  const grainW = Math.max(size.w + pad * 2, 1);
+  const grainH = Math.max(size.h + pad * 2, 1);
 
   return (
     <View pointerEvents="none" style={styles.wrap} onLayout={onLayout}>
@@ -132,44 +127,26 @@ export function MetalPlateTexture({
         end={{ x: 1, y: drift.shear > 0 ? 0.55 : 0.2 }}
         style={StyleSheet.absoluteFill}
       />
-      {size.w > 0 && size.h > 0
-        ? Array.from({ length: stripCount }, (_, row) => (
-            <Image
-              key={row}
-              source={METAL_GRAIN}
-              resizeMode="cover"
-              style={[
-                styles.grainStrip,
-                {
-                  top: row * stripH - 12,
-                  height: stripH + 28,
-                  opacity: drift.opacity,
-                  transform: [
-                    { translateX: drift.tx + (row % 3) * 11 - 11 },
-                    { translateY: drift.ty * ((row % 2) * 2 - 1) * 0.35 },
-                    { scale: drift.scale },
-                  ],
-                },
-              ]}
-            />
-          ))
-        : (
-            <Image
-              source={METAL_GRAIN}
-              resizeMode="cover"
-              style={[
-                styles.grainFallback,
-                {
-                  opacity: drift.opacity,
-                  transform: [
-                    { translateX: drift.tx },
-                    { translateY: drift.ty },
-                    { scale: drift.scale },
-                  ],
-                },
-              ]}
-            />
-          )}
+      {size.w > 0 && size.h > 0 ? (
+        <Image
+          source={METAL_GRAIN}
+          resizeMode="repeat"
+          style={{
+            position: 'absolute',
+            width: grainW,
+            height: grainH,
+            left: -pad + drift.tx,
+            top: -pad + drift.ty,
+            opacity: drift.opacity,
+          }}
+        />
+      ) : (
+        <Image
+          source={METAL_GRAIN}
+          resizeMode="cover"
+          style={[styles.grainFallback, { opacity: drift.opacity }]}
+        />
+      )}
       {specks.map((s, i) => (
         <View
           key={i}
@@ -196,11 +173,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     overflow: 'hidden',
-  },
-  grainStrip: {
-    position: 'absolute',
-    left: '-18%',
-    width: '136%',
   },
   grainFallback: {
     position: 'absolute',
