@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   // Clip to the same content width as HUD panels above — overflow:visible
   // let pods paint into screenPad and look wider while scrolling.
   railScroll: { overflow: 'hidden' },
-  rail: { gap: 10, paddingRight: 0, paddingVertical: 2, flexGrow: 0 },
+  rail: { gap: 12, paddingRight: 0, paddingVertical: 2, flexGrow: 0 },
   recentBlock: { gap: hud.gap },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   stickyCta: {

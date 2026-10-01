@@ -376,7 +376,7 @@ export function CategoryCell({
     <View style={[styles.amountRow, isRail && styles.amountRowRail]}>
       <Text
         style={[styles.amountLeft, muted && { color: colors.textDim }]}
-        numberOfLines={1}
+        numberOfLines={isRail ? 2 : 1}
       >
         {formatMoney(used, currencyCode)}
       </Text>
@@ -402,16 +402,14 @@ export function CategoryCell({
     >
       {isRail ? (
         <>
-          <View style={styles.cellRailHead}>
-            <View style={styles.cellIconWrap}>
-              <Ionicons
-                name={iconName}
-                size={18}
-                color={muted ? colors.textDim : colors.resource}
-              />
-            </View>
-            {amountLine}
+          <View style={styles.cellIconWrap}>
+            <Ionicons
+              name={iconName}
+              size={18}
+              color={muted ? colors.textDim : colors.resource}
+            />
           </View>
+          {amountLine}
           {meter}
         </>
       ) : (
@@ -730,20 +728,15 @@ const styles = StyleSheet.create({
   },
   barSeg: { flex: 1, borderRadius: 0 },
   cell: { flex: 1 },
-  cellRail: { width: 148 },
-  railItem: { width: 148 },
+  cellRail: { width: 152 },
+  railItem: { width: 152 },
   cellRailInner: {
+    alignItems: 'flex-start',
     gap: 8,
-  },
-  cellRailHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    alignSelf: 'stretch',
   },
   cellIconWrap: {
-    width: 30,
-    height: 30,
+    width: 32,
+    height: 32,
     borderWidth: hud.stroke,
     borderColor: colors.borderBright,
     backgroundColor: colors.resourceSoft,
@@ -757,11 +750,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'baseline',
   },
-  /** Spent/planned beside the icon — roomy enough for zł amounts. */
+  /** Full-width under the icon so zł amounts aren't crushed beside it. */
   amountRowRail: {
-    flex: 1,
-    flexWrap: 'nowrap',
-    minWidth: 0,
+    alignSelf: 'stretch',
+    minHeight: 32,
+    justifyContent: 'center',
   },
   amountLeft: {
     ...hudType.valueCompact,
