@@ -389,12 +389,7 @@ export function CategoryCell({
 
   const meter = (
     <View style={isRail ? { alignSelf: 'stretch' as const } : undefined}>
-      <SegmentedBar
-        ratio={spentRatio}
-        mode="spent"
-        tipAmber={tipAmber}
-        height={isRail ? 10 : undefined}
-      />
+      <SegmentedBar ratio={spentRatio} mode="spent" tipAmber={tipAmber} />
     </View>
   );
 
@@ -402,7 +397,6 @@ export function CategoryCell({
     <HUDPanel
       variant="compact"
       label={title}
-      dense={isRail}
       style={isRail ? styles.cellRail : styles.cell}
       contentStyle={isRail ? styles.cellRailInner : undefined}
     >
@@ -412,7 +406,7 @@ export function CategoryCell({
             <View style={styles.cellIconWrap}>
               <Ionicons
                 name={iconName}
-                size={14}
+                size={18}
                 color={muted ? colors.textDim : colors.resource}
               />
             </View>
@@ -736,20 +730,20 @@ const styles = StyleSheet.create({
   },
   barSeg: { flex: 1, borderRadius: 0 },
   cell: { flex: 1 },
-  cellRail: { width: 108 },
-  railItem: { width: 108 },
+  cellRail: { width: 148 },
+  railItem: { width: 148 },
   cellRailInner: {
-    gap: 5,
+    gap: 8,
   },
   cellRailHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     alignSelf: 'stretch',
   },
   cellIconWrap: {
-    width: 24,
-    height: 24,
+    width: 30,
+    height: 30,
     borderWidth: hud.stroke,
     borderColor: colors.borderBright,
     backgroundColor: colors.resourceSoft,
@@ -763,7 +757,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'baseline',
   },
-  /** Single-line spent/planned beside the icon on the home rail. */
+  /** Spent/planned beside the icon — roomy enough for zł amounts. */
   amountRowRail: {
     flex: 1,
     flexWrap: 'nowrap',

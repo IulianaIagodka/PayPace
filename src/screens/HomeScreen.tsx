@@ -307,8 +307,10 @@ const styles = StyleSheet.create({
     color: colors.ammo,
   },
   railBlock: { gap: hud.gap },
-  railScroll: { overflow: 'visible' },
-  rail: { gap: 6, paddingRight: 8, paddingVertical: 0, flexGrow: 0 },
+  // Clip to the same content width as HUD panels above — overflow:visible
+  // let pods paint into screenPad and look wider while scrolling.
+  railScroll: { overflow: 'hidden' },
+  rail: { gap: 10, paddingRight: 0, paddingVertical: 2, flexGrow: 0 },
   recentBlock: { gap: hud.gap },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   stickyCta: {

@@ -18,7 +18,6 @@ export function HUDPanel({
   children,
   style,
   contentStyle,
-  dense = false,
   /** Override grit seed so adjacent same-variant cards stay unique */
   seed,
 }: {
@@ -30,8 +29,6 @@ export function HUDPanel({
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
-  /** Tighter padding/gap — home category rail pods */
-  dense?: boolean;
   seed?: string;
 }) {
   const isPrimary = variant === 'primary';
@@ -49,8 +46,7 @@ export function HUDPanel({
         style={[
           styles.shell,
           { borderColor: border },
-          isCompact ? (dense ? styles.padDense : styles.padCompact) : styles.pad,
-          dense && styles.shellDense,
+          isCompact ? styles.padCompact : styles.pad,
         ]}
       >
         {/* One plate fill everywhere — variants only change border/label/padding */}
@@ -158,13 +154,6 @@ const styles = StyleSheet.create({
   },
   padCompact: {
     padding: hud.padCompact,
-  },
-  padDense: {
-    paddingVertical: 7,
-    paddingHorizontal: 8,
-  },
-  shellDense: {
-    gap: 4,
   },
   fg: {
     zIndex: 1,
