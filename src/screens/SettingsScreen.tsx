@@ -203,7 +203,7 @@ export function SettingsScreen({ navigation }: Props) {
                 compact
                 title={adding ? 'ADDING…' : 'ADD CATEGORY'}
                 onPress={onAddCategory}
-                disabled={!newCategory.trim() || adding}
+                disabled={adding}
                 variant="secondary"
               />
             </HUDPanel>

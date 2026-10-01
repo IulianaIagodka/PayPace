@@ -351,7 +351,7 @@ export function CategoryCell({
   // Fill meter with spend progress; empty when nothing allocated yet.
   const spentRatio = hasBudget ? Math.min(used / planned, 1) : 0;
   const enter = useRef(new Animated.Value(0)).current;
-  // No budget yet: still highlight when there is spend (don't look "empty").
+  // Soften empty/depleted — never wash the whole card out to ~50% opacity.
   const muted = hasBudget ? depleted || remainingRatio <= 0 : spent <= 0;
   const tipAmber =
     hasBudget && tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
@@ -371,11 +371,12 @@ export function CategoryCell({
 
   const iconName = (ENVELOPE_ICON_NAMES[iconKey] ??
     ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
+  const iconColor = muted ? colors.textSecondary : colors.resource;
 
   const amountLine = (
     <View style={[styles.amountRow, isRail && styles.amountRowRail]}>
       <Text
-        style={[styles.amountLeft, muted && { color: colors.textDim }]}
+        style={[styles.amountLeft, muted && { color: colors.textSecondary }]}
         numberOfLines={1}
       >
         {formatMoney(used, currencyCode)}
@@ -403,18 +404,15 @@ export function CategoryCell({
       variant="compact"
       label={title}
       dense={isRail}
+      seed={`category:${iconKey}:${title}`}
       style={isRail ? styles.cellRail : styles.cell}
       contentStyle={isRail ? styles.cellRailInner : undefined}
     >
       {isRail ? (
         <>
           <View style={styles.cellRailHead}>
-            <View style={styles.cellIconWrap}>
-              <Ionicons
-                name={iconName}
-                size={14}
-                color={muted ? colors.textDim : colors.resource}
-              />
+            <View style={[styles.cellIconWrap, muted && styles.cellIconWrapMuted]}>
+              <Ionicons name={iconName} size={14} color={iconColor} />
             </View>
             {amountLine}
           </View>
@@ -423,11 +421,7 @@ export function CategoryCell({
       ) : (
         <>
           <View style={styles.cellTitleRow}>
-            <Ionicons
-              name={iconName}
-              size={15}
-              color={muted ? colors.textDim : colors.textSecondary}
-            />
+            <Ionicons name={iconName} size={15} color={iconColor} />
             <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
           </View>
           {amountLine}
@@ -440,11 +434,7 @@ export function CategoryCell({
   if (isRail) {
     return (
       <View style={styles.railItem}>
-        <Pressable
-          onPress={onPress}
-          disabled={!onPress}
-          style={{ opacity: muted ? 0.48 : 1 }}
-        >
+        <Pressable onPress={onPress} disabled={!onPress} style={{ opacity: muted ? 0.82 : 1 }}>
           {panel}
         </Pressable>
       </View>
@@ -469,7 +459,7 @@ export function CategoryCell({
       <Pressable
         onPress={onPress}
         disabled={!onPress}
-        style={{ flex: 1, opacity: muted ? 0.48 : 1 }}
+        style={{ flex: 1, opacity: muted ? 0.82 : 1 }}
       >
         {panel}
       </Pressable>
@@ -736,10 +726,10 @@ const styles = StyleSheet.create({
   },
   barSeg: { flex: 1, borderRadius: 0 },
   cell: { flex: 1 },
-  cellRail: { width: 108 },
-  railItem: { width: 108 },
+  cellRail: { width: 118 },
+  railItem: { width: 118 },
   cellRailInner: {
-    gap: 5,
+    gap: 6,
   },
   cellRailHead: {
     flexDirection: 'row',
@@ -748,14 +738,18 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   cellIconWrap: {
-    width: 24,
-    height: 24,
+    width: 26,
+    height: 26,
     borderWidth: hud.stroke,
     borderColor: colors.borderBright,
     backgroundColor: colors.resourceSoft,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+  },
+  cellIconWrapMuted: {
+    borderColor: colors.border,
+    backgroundColor: 'rgba(90, 80, 64, 0.12)',
   },
   cellTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   amountRow: {
