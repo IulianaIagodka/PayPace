@@ -4,8 +4,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const METAL_GRAIN = require('../../assets/metal-grain.png');
 
-/** Reference card (~TOTAL SPENT) — fleck density target */
-const REF_AREA = 340 * 120;
+/** Height of a TOTAL SPENT–sized plate strip — keeps grit zoom constant when tall */
+const STRIP_H = 128;
+const REF_AREA = 340 * STRIP_H;
 const REF_SPECKS_PANEL = 96;
 const REF_SPECKS_SCREEN = 200;
 const MAX_SPECKS_PANEL = 280;
@@ -48,9 +49,10 @@ function buildSpecks(seed: string, count: number): Speck[] {
     out.push({
       left,
       top,
-      size: rand() < 0.15 ? 2 : 1,
-      opacity: 0.08 + rand() * 0.28,
-      light: rand() > 0.42,
+      size: rand() < 0.18 ? 2 : 1,
+      // Brighter flecks — TOTAL SPENT “starfield” cue
+      opacity: 0.14 + rand() * 0.36,
+      light: rand() > 0.35,
     });
   }
   return out;
@@ -60,18 +62,16 @@ function speckCountForArea(area: number, isScreen: boolean): number {
   const ref = isScreen ? REF_SPECKS_SCREEN : REF_SPECKS_PANEL;
   const cap = isScreen ? MAX_SPECKS_SCREEN : MAX_SPECKS_PANEL;
   if (area <= 0) return ref;
-  // Keep fleck density close to TOTAL SPENT so tall day plates don't look flat.
   const scaled = Math.round((area / REF_AREA) * ref);
   return Math.min(cap, Math.max(ref, scaled));
 }
 
 /**
- * Plate grit: one tiled grain layer + seeded flecks.
- * Speck count scales with panel area so expanded Spend day lists keep the
- * same metal density as short modules like TOTAL SPENT. Grain uses a single
- * `repeat` layer (no stacked strips) so tall plates don't lighten.
+ * TOTAL SPENT plate grit: cover-zoomed grain + seeded star flecks.
+ * Tall panels tile the same short-card strip (no stretch, no overlap) so
+ * expanded Spend day lists match the TOTAL SPENT card background.
  *
- * One plate look everywhere — `compact` is ignored (kept for call-site compat).
+ * `compact` is ignored (kept for call-site compat).
  */
 export function MetalPlateTexture({
   seed,
@@ -102,16 +102,18 @@ export function MetalPlateTexture({
   const drift = useMemo(() => {
     const rand = mulberry32(hashSeed(`drift:${seed}`));
     return {
-      tx: Math.round((rand() - 0.5) * (isScreen ? 96 : 56)),
-      ty: Math.round((rand() - 0.5) * (isScreen ? 72 : 40)),
-      opacity: isScreen ? 0.52 : 0.5,
+      tx: Math.round((rand() - 0.5) * (isScreen ? 80 : 48)),
+      ty: Math.round((rand() - 0.5) * (isScreen ? 64 : 36)),
+      // Match classic TOTAL SPENT zoom — fixed range, not stretched with height
+      scale: (isScreen ? 1.45 : 1.32) + rand() * 0.18,
+      // Keep grain subtle so flecks read as the TOTAL SPENT “starfield”
+      opacity: isScreen ? 0.4 : 0.28,
       shear: (rand() - 0.5) * 0.04,
     };
   }, [seed, isScreen]);
 
-  const pad = isScreen ? 120 : 80;
-  const grainW = Math.max(size.w + pad * 2, 1);
-  const grainH = Math.max(size.h + pad * 2, 1);
+  const stripH = isScreen ? 180 : STRIP_H;
+  const stripCount = size.h > 0 ? Math.max(1, Math.ceil(size.h / stripH)) : 1;
 
   return (
     <View pointerEvents="none" style={styles.wrap} onLayout={onLayout}>
@@ -127,26 +129,48 @@ export function MetalPlateTexture({
         end={{ x: 1, y: drift.shear > 0 ? 0.55 : 0.2 }}
         style={StyleSheet.absoluteFill}
       />
-      {size.w > 0 && size.h > 0 ? (
-        <Image
-          source={METAL_GRAIN}
-          resizeMode="repeat"
-          style={{
-            position: 'absolute',
-            width: grainW,
-            height: grainH,
-            left: -pad + drift.tx,
-            top: -pad + drift.ty,
-            opacity: drift.opacity,
-          }}
-        />
-      ) : (
-        <Image
-          source={METAL_GRAIN}
-          resizeMode="cover"
-          style={[styles.grainFallback, { opacity: drift.opacity }]}
-        />
-      )}
+      {size.w > 0 && size.h > 0
+        ? Array.from({ length: stripCount }, (_, row) => (
+            // Clip each strip so scale/cover can't stack opacity on tall day lists
+            <View
+              key={row}
+              style={[styles.grainClip, { top: row * stripH, height: stripH }]}
+            >
+              <Image
+                source={METAL_GRAIN}
+                resizeMode="cover"
+                style={[
+                  styles.grainStrip,
+                  {
+                    height: stripH,
+                    opacity: drift.opacity,
+                    transform: [
+                      { translateX: drift.tx + (row % 5) * 9 - 18 },
+                      { translateY: drift.ty * ((row % 2) * 2 - 1) * 0.25 },
+                      { scale: drift.scale },
+                    ],
+                  },
+                ]}
+              />
+            </View>
+          ))
+        : (
+            <Image
+              source={METAL_GRAIN}
+              resizeMode="cover"
+              style={[
+                styles.grainFallback,
+                {
+                  opacity: drift.opacity,
+                  transform: [
+                    { translateX: drift.tx },
+                    { translateY: drift.ty },
+                    { scale: drift.scale },
+                  ],
+                },
+              ]}
+            />
+          )}
       {specks.map((s, i) => (
         <View
           key={i}
@@ -173,6 +197,18 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     overflow: 'hidden',
+  },
+  grainClip: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    overflow: 'hidden',
+  },
+  grainStrip: {
+    position: 'absolute',
+    left: '-22%',
+    width: '144%',
+    top: 0,
   },
   grainFallback: {
     position: 'absolute',

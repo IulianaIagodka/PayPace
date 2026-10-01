@@ -44,7 +44,7 @@ export function HUDPanel({
   const grainSeed = seed ?? `${variant}:${label ?? 'panel'}`;
 
   return (
-    <View style={style}>
+    <View style={[isPrimary && styles.glow, style]}>
       <View
         style={[
           styles.shell,
@@ -53,12 +53,19 @@ export function HUDPanel({
           dense && styles.shellDense,
         ]}
       >
-        {/* Uniform plate fill — no height-stretched gradient (tall Spend days
-            used to look like a lighter/different background than TOTAL SPENT). */}
+        {/* TOTAL SPENT plate recipe for every module:
+            solid base + fixed-height wash (never stretched by panel height)
+            + metal grit. Tall BY DAY lists keep the same tone as TOTAL SPENT. */}
         <View pointerEvents="none" style={styles.plate}>
           <View style={[StyleSheet.absoluteFill, styles.plateBase]} />
+          <LinearGradient
+            colors={['#1A1612', '#12100C', 'transparent']}
+            locations={[0, 0.55, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.1, y: 1 }}
+            style={styles.plateWash}
+          />
           <MetalPlateTexture seed={grainSeed} />
-          {/* Fixed-height sheen so short and tall modules share the same tone */}
           <LinearGradient
             colors={['rgba(255,245,220,0.05)', 'transparent']}
             locations={[0, 1]}
@@ -134,12 +141,19 @@ export function HudBody({
 }
 
 const styles = StyleSheet.create({
+  glow: {
+    shadowColor: colors.resource,
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 5,
+  },
   shell: {
     borderRadius: 0,
     borderWidth: hud.stroke,
     overflow: 'hidden',
     gap: hud.gap,
-    backgroundColor: colors.panel,
+    backgroundColor: '#0E0C0A',
   },
   plate: {
     position: 'absolute',
@@ -150,7 +164,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   plateBase: {
-    backgroundColor: '#1A1612',
+    // Near-black charcoal — TOTAL SPENT starfield base
+    backgroundColor: '#0E0C0A',
+  },
+  /** Soft top wash only — fixed height so tall lists stay as dark as TOTAL SPENT */
+  plateWash: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 96,
   },
   plateSheen: {
     position: 'absolute',
