@@ -90,7 +90,9 @@ export function ActivityScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={[tabScreen.pad, { paddingBottom: tabClearance }]}>
-        <Text style={hudType.brand}>{copy.title}</Text>
+        <Text style={hudType.brand}>
+          PAY<Text style={hudType.brandAccent}>PACE</Text>
+        </Text>
         <Text style={hudType.meta}>{copy.sysTag}</Text>
 
         <HUDPanel variant="primary" label={copy.totalLabel}>
