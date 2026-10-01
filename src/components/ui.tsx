@@ -215,6 +215,8 @@ export function SegmentedBar({
   tipAmber = true,
   /** `remaining` = depleting reserve; `spent` = fill-up usage (colors still from leftover). */
   mode = 'remaining',
+  /** Force one tone for all lit segments (category rail — no red/amber mix). */
+  lockTone,
 }: {
   ratio: number;
   /** @deprecated ignored — meter segment count is unified via hud.meterSegments */
@@ -226,6 +228,7 @@ export function SegmentedBar({
   compact?: boolean;
   tipAmber?: boolean;
   mode?: 'remaining' | 'spent';
+  lockTone?: ResourceTone;
 }) {
   const segments = hud.meterSegments;
   const clamped = Math.max(0, Math.min(ratio, 1));
@@ -239,15 +242,16 @@ export function SegmentedBar({
     }).start();
   }, [clamped, anim]);
 
-  // Fill amount follows `ratio`; tone always reflects how much budget is left.
-  const tone = toneForRatio(mode === 'spent' ? 1 - clamped : clamped);
+  // Fill amount follows `ratio`; tone reflects leftover unless locked.
+  const tone = lockTone ?? toneForRatio(mode === 'spent' ? 1 - clamped : clamped);
+  const useTipAmber = tipAmber && !lockTone;
   const lit = Math.round(clamped * segments);
 
   return (
     <View style={styles.barTrack}>
       {Array.from({ length: segments }).map((_, i) => {
         const bg =
-          tipAmber && tone === 'healthy'
+          useTipAmber && tone === 'healthy'
             ? segmentColor(i, lit, tone)
             : i < lit
               ? colorForTone(tone)
@@ -321,7 +325,7 @@ export function CategoryCell({
   spent,
   allocated,
   currencyCode,
-  tone,
+  tone: _tone,
   index = 0,
   onPress,
   periodShare: _periodShare = 1,
@@ -334,6 +338,7 @@ export function CategoryCell({
   spent: number;
   allocated: number;
   currencyCode: string;
+  /** Kept for call-site compat — category rail uses one resource green accent. */
   tone: ResourceTone;
   index?: number;
   onPress?: () => void;
@@ -347,15 +352,15 @@ export function CategoryCell({
   const used = Math.max(spent, 0);
   const planned = Math.max(allocated, 0);
   const hasBudget = planned > 0;
-  const remainingRatio = hasBudget ? Math.max(planned - used, 0) / planned : 0;
-  // Fill meter with spend progress; empty when nothing allocated yet.
-  const spentRatio = hasBudget ? Math.min(used / planned, 1) : 0;
+  const left = Math.max(planned - used, 0);
+  const remainingRatio = hasBudget ? left / planned : 0;
+  // Budgeted: meter = remaining. Unbudgeted with spend: full spent cue.
+  const meterRatio = hasBudget ? remainingRatio : used > 0 ? 1 : 0;
   const enter = useRef(new Animated.Value(0)).current;
-  // No budget yet: still highlight when there is spend (don't look "empty").
-  const muted = hasBudget ? depleted || remainingRatio <= 0 : spent <= 0;
-  const tipAmber =
-    hasBudget && tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
+  const muted = hasBudget ? depleted || remainingRatio <= 0 : false;
   const isRail = layout === 'rail';
+  // One accent for every category pod — no red/amber/green mix across the rail.
+  const accent = muted ? colors.textSecondary : colors.resource;
 
   useEffect(() => {
     // Rail sits inside a nested horizontal ScrollView — native-driven Animated
@@ -372,71 +377,78 @@ export function CategoryCell({
   const iconName = (ENVELOPE_ICON_NAMES[iconKey] ??
     ENVELOPE_ICON_NAMES.other) as keyof typeof Ionicons.glyphMap;
 
-  const amountLine = (
-    <View style={[styles.amountRow, isRail && styles.amountRowRail]}>
-      <Text
-        style={[styles.amountLeft, muted && { color: colors.textDim }]}
-        numberOfLines={isRail ? 2 : 1}
-      >
-        {formatMoney(used, currencyCode)}
-      </Text>
-      <Text style={styles.amountSep}> / </Text>
-      <Text style={styles.amountPlanned} numberOfLines={1}>
-        {hasBudget ? formatMoney(planned, currencyCode) : '—'}
-      </Text>
-    </View>
-  );
-
   const meter = (
-    <View style={isRail ? { alignSelf: 'stretch' as const } : undefined}>
-      <SegmentedBar ratio={spentRatio} mode="spent" tipAmber={tipAmber} />
+    <View style={isRail ? styles.railMeter : undefined}>
+      <SegmentedBar
+        ratio={meterRatio}
+        mode={hasBudget ? 'remaining' : 'spent'}
+        tipAmber={false}
+        lockTone="healthy"
+      />
     </View>
   );
 
-  const panel = (
+  const panel = isRail ? (
+    <HUDPanel
+      variant="compact"
+      seed={`category:${iconKey}:${title}`}
+      style={styles.cellRail}
+      contentStyle={styles.cellRailInner}
+    >
+      <View style={styles.railTop}>
+        <View style={[styles.cellIconWrap, muted && styles.cellIconWrapMuted]}>
+          <Ionicons name={iconName} size={16} color={accent} />
+        </View>
+        <Text style={styles.railTitle} numberOfLines={1}>
+          {title}
+        </Text>
+      </View>
+      <Text style={[styles.railValue, muted && { color: colors.textSecondary }]} numberOfLines={1}>
+        {hasBudget ? formatMoney(left, currencyCode) : formatMoney(used, currencyCode)}
+      </Text>
+      <Text style={styles.railMeta} numberOfLines={1}>
+        {hasBudget
+          ? muted
+            ? 'DEPLETED'
+            : `LEFT · ${formatMoney(planned, currencyCode)} PLAN`
+          : used > 0
+            ? 'SPENT · NO PLAN'
+            : 'TAP TO LOG'}
+      </Text>
+      {meter}
+    </HUDPanel>
+  ) : (
     <HUDPanel
       variant="compact"
       label={title}
-      style={isRail ? styles.cellRail : styles.cell}
-      contentStyle={isRail ? styles.cellRailInner : undefined}
+      seed={`category:${iconKey}:${title}`}
+      style={styles.cell}
     >
-      {isRail ? (
-        <>
-          <View style={styles.cellIconWrap}>
-            <Ionicons
-              name={iconName}
-              size={18}
-              color={muted ? colors.textDim : colors.resource}
-            />
-          </View>
-          {amountLine}
-          {meter}
-        </>
-      ) : (
-        <>
-          <View style={styles.cellTitleRow}>
-            <Ionicons
-              name={iconName}
-              size={15}
-              color={muted ? colors.textDim : colors.textSecondary}
-            />
-            <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
-          </View>
-          {amountLine}
-          {meter}
-        </>
-      )}
+      <View style={styles.cellTitleRow}>
+        <Ionicons name={iconName} size={15} color={accent} />
+        <HudMeta style={{ flex: 1 }}>{muted ? 'EMPTY' : horizonLabel}</HudMeta>
+      </View>
+      <View style={styles.amountRow}>
+        <Text style={[styles.amountLeft, muted && { color: colors.textSecondary }]} numberOfLines={1}>
+          {formatMoney(used, currencyCode)}
+        </Text>
+        {hasBudget ? (
+          <>
+            <Text style={styles.amountSep}> / </Text>
+            <Text style={styles.amountPlanned} numberOfLines={1}>
+              {formatMoney(planned, currencyCode)}
+            </Text>
+          </>
+        ) : null}
+      </View>
+      {meter}
     </HUDPanel>
   );
 
   if (isRail) {
     return (
       <View style={styles.railItem}>
-        <Pressable
-          onPress={onPress}
-          disabled={!onPress}
-          style={{ opacity: muted ? 0.48 : 1 }}
-        >
+        <Pressable onPress={onPress} disabled={!onPress}>
           {panel}
         </Pressable>
       </View>
@@ -458,11 +470,7 @@ export function CategoryCell({
         ],
       }}
     >
-      <Pressable
-        onPress={onPress}
-        disabled={!onPress}
-        style={{ flex: 1, opacity: muted ? 0.48 : 1 }}
-      >
+      <Pressable onPress={onPress} disabled={!onPress} style={{ flex: 1 }}>
         {panel}
       </Pressable>
     </Animated.View>
@@ -731,30 +739,55 @@ const styles = StyleSheet.create({
   cellRail: { width: 152 },
   railItem: { width: 152 },
   cellRailInner: {
-    alignItems: 'flex-start',
     gap: 8,
+    minHeight: 108,
+  },
+  railTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'stretch',
+  },
+  railTitle: {
+    ...hudType.label,
+    color: colors.text,
+    flex: 1,
+    letterSpacing: 1.6,
+  },
+  railValue: {
+    ...hudType.valueMid,
+    fontSize: 18,
+    letterSpacing: -0.3,
+  },
+  railMeta: {
+    ...hudType.meta,
+    color: colors.textSecondary,
+    fontSize: 10,
+    letterSpacing: 1.1,
+  },
+  railMeter: {
+    alignSelf: 'stretch',
+    marginTop: 2,
   },
   cellIconWrap: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     borderWidth: hud.stroke,
-    borderColor: colors.borderBright,
+    borderColor: colors.resource,
     backgroundColor: colors.resourceSoft,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+  },
+  cellIconWrapMuted: {
+    borderColor: colors.border,
+    backgroundColor: 'rgba(90, 80, 64, 0.14)',
   },
   cellTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   amountRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'baseline',
-  },
-  /** Full-width under the icon so zł amounts aren't crushed beside it. */
-  amountRowRail: {
-    alignSelf: 'stretch',
-    minHeight: 32,
-    justifyContent: 'center',
   },
   amountLeft: {
     ...hudType.valueCompact,

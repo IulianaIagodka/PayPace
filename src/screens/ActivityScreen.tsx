@@ -90,10 +90,12 @@ export function ActivityScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={[tabScreen.pad, { paddingBottom: tabClearance }]}>
-        <Text style={hudType.brand}>{copy.title}</Text>
+        <Text style={hudType.brand}>
+          PAY<Text style={hudType.brandAccent}>PACE</Text>
+        </Text>
         <Text style={hudType.meta}>{copy.sysTag}</Text>
 
-        <HUDPanel variant="standard" label={copy.totalLabel}>
+        <HUDPanel variant="primary" label={copy.totalLabel}>
           <HudValue>{formatMoney(snapshot.spentThisCycle, currency)}</HudValue>
           <HudMeta>
             {count === 0
@@ -142,9 +144,9 @@ export function ActivityScreen({ navigation }: Props) {
           grouped.map(([date, items]) => {
             const dayTotal = items.reduce((sum, e) => sum + e.amount, 0);
             const expanded = expandedDates.has(date);
+            // Same plate seed as TOTAL SPENT so grit/stars match exactly
             return (
-              // Same standard plate as TOTAL SPENT — compact looks flat when tall
-              <HUDPanel key={date} variant="standard" seed={`spend-day:${date}`}>
+              <HUDPanel key={date} variant="standard" seed={`primary:${copy.totalLabel}`}>
                 <Pressable
                   onPress={() => toggleDay(date)}
                   style={styles.dayHeader}

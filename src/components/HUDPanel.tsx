@@ -41,7 +41,7 @@ export function HUDPanel({
   const grainSeed = seed ?? `${variant}:${label ?? 'panel'}`;
 
   return (
-    <View style={style}>
+    <View style={[isPrimary && styles.glow, style]}>
       <View
         style={[
           styles.shell,
@@ -49,20 +49,35 @@ export function HUDPanel({
           isCompact ? styles.padCompact : styles.pad,
         ]}
       >
-        {/* One plate fill everywhere — variants only change border/label/padding */}
+        {/* Plate fill shared by all modules; primary adds green wash + outer glow. */}
         <View pointerEvents="none" style={styles.plate}>
+          <View style={[StyleSheet.absoluteFill, styles.plateBase]} />
           <LinearGradient
-            colors={['#2A241C', '#1A1612', '#12100C']}
+            colors={['#1A1612', '#12100C', 'transparent']}
             locations={[0, 0.55, 1]}
             start={{ x: 0, y: 0 }}
-            end={{ x: 0.15, y: 1 }}
-            style={StyleSheet.absoluteFill}
+            end={{ x: 0.1, y: 1 }}
+            style={styles.plateWash}
           />
           <MetalPlateTexture seed={grainSeed} />
+          {/* Hero-only soft green backlight — matches earlier primary modules */}
+          {isPrimary ? (
+            <LinearGradient
+              colors={['rgba(111, 175, 69, 0.16)', 'rgba(111, 175, 69, 0.05)', 'transparent']}
+              locations={[0, 0.45, 1]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0.2, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+          ) : null}
           <LinearGradient
-            colors={['rgba(255,245,220,0.05)', 'transparent']}
-            locations={[0, 0.5]}
-            style={StyleSheet.absoluteFill}
+            colors={
+              isPrimary
+                ? ['rgba(154, 220, 110, 0.08)', 'transparent']
+                : ['rgba(255,245,220,0.05)', 'transparent']
+            }
+            locations={[0, 1]}
+            style={styles.plateSheen}
           />
         </View>
 
@@ -134,12 +149,19 @@ export function HudBody({
 }
 
 const styles = StyleSheet.create({
+  glow: {
+    shadowColor: colors.resource,
+    shadowOpacity: 0.38,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
+  },
   shell: {
     borderRadius: 0,
     borderWidth: hud.stroke,
     overflow: 'hidden',
     gap: hud.gap,
-    backgroundColor: colors.panel,
+    backgroundColor: '#0E0C0A',
   },
   plate: {
     position: 'absolute',
@@ -148,6 +170,25 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     overflow: 'hidden',
+  },
+  plateBase: {
+    // Near-black charcoal — TOTAL SPENT starfield base
+    backgroundColor: '#0E0C0A',
+  },
+  /** Soft top wash only — fixed height so tall lists stay as dark as TOTAL SPENT */
+  plateWash: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 96,
+  },
+  plateSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 72,
   },
   pad: {
     padding: hud.pad,

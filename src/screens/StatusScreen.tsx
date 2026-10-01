@@ -67,7 +67,9 @@ export function StatusScreen({}: Props) {
     return (
       <ScreenBackground>
         <View style={tabScreen.pad}>
-          <Text style={hudType.brand}>PACE</Text>
+          <Text style={hudType.brand}>
+            PAY<Text style={hudType.brandAccent}>PACE</Text>
+          </Text>
           <Text style={hudType.body}>No active cycle.</Text>
         </View>
       </ScreenBackground>
@@ -83,7 +85,9 @@ export function StatusScreen({}: Props) {
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={[tabScreen.pad, { paddingBottom: tabClearance }]}>
-        <Text style={hudType.brand}>PACE</Text>
+        <Text style={hudType.brand}>
+          PAY<Text style={hudType.brandAccent}>PACE</Text>
+        </Text>
 
         {/* 1 · Status first */}
         <Panel glow>
