@@ -215,6 +215,8 @@ export function SegmentedBar({
   tipAmber = true,
   /** `remaining` = depleting reserve; `spent` = fill-up usage (colors still from leftover). */
   mode = 'remaining',
+  /** Force one tone for all lit segments (category rail — no red/amber mix). */
+  lockTone,
 }: {
   ratio: number;
   /** @deprecated ignored — meter segment count is unified via hud.meterSegments */
@@ -226,6 +228,7 @@ export function SegmentedBar({
   compact?: boolean;
   tipAmber?: boolean;
   mode?: 'remaining' | 'spent';
+  lockTone?: ResourceTone;
 }) {
   const segments = hud.meterSegments;
   const clamped = Math.max(0, Math.min(ratio, 1));
@@ -239,15 +242,16 @@ export function SegmentedBar({
     }).start();
   }, [clamped, anim]);
 
-  // Fill amount follows `ratio`; tone always reflects how much budget is left.
-  const tone = toneForRatio(mode === 'spent' ? 1 - clamped : clamped);
+  // Fill amount follows `ratio`; tone reflects leftover unless locked.
+  const tone = lockTone ?? toneForRatio(mode === 'spent' ? 1 - clamped : clamped);
+  const useTipAmber = tipAmber && !lockTone;
   const lit = Math.round(clamped * segments);
 
   return (
     <View style={styles.barTrack}>
       {Array.from({ length: segments }).map((_, i) => {
         const bg =
-          tipAmber && tone === 'healthy'
+          useTipAmber && tone === 'healthy'
             ? segmentColor(i, lit, tone)
             : i < lit
               ? colorForTone(tone)
@@ -321,7 +325,7 @@ export function CategoryCell({
   spent,
   allocated,
   currencyCode,
-  tone,
+  tone: _tone,
   index = 0,
   onPress,
   periodShare: _periodShare = 1,
@@ -334,6 +338,7 @@ export function CategoryCell({
   spent: number;
   allocated: number;
   currencyCode: string;
+  /** Kept for call-site compat — category rail uses one resource green accent. */
   tone: ResourceTone;
   index?: number;
   onPress?: () => void;
@@ -353,10 +358,9 @@ export function CategoryCell({
   const meterRatio = hasBudget ? remainingRatio : used > 0 ? 1 : 0;
   const enter = useRef(new Animated.Value(0)).current;
   const muted = hasBudget ? depleted || remainingRatio <= 0 : false;
-  const tipAmber =
-    hasBudget && tone === 'healthy' && remainingRatio < 0.85 && remainingRatio >= 0.4;
   const isRail = layout === 'rail';
-  const accent = muted ? colors.textSecondary : colorForTone(tone === 'empty' ? 'healthy' : tone);
+  // One accent for every category pod — no red/amber/green mix across the rail.
+  const accent = muted ? colors.textSecondary : colors.resource;
 
   useEffect(() => {
     // Rail sits inside a nested horizontal ScrollView — native-driven Animated
@@ -378,7 +382,8 @@ export function CategoryCell({
       <SegmentedBar
         ratio={meterRatio}
         mode={hasBudget ? 'remaining' : 'spent'}
-        tipAmber={tipAmber}
+        tipAmber={false}
+        lockTone="healthy"
       />
     </View>
   );
@@ -394,10 +399,7 @@ export function CategoryCell({
         <View
           style={[
             styles.cellIconWrap,
-            {
-              borderColor: accent,
-              backgroundColor: muted ? 'rgba(90, 80, 64, 0.14)' : colors.resourceSoft,
-            },
+            muted && styles.cellIconWrapMuted,
           ]}
         >
           <Ionicons name={iconName} size={16} color={accent} />
@@ -781,6 +783,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+  },
+  cellIconWrapMuted: {
+    borderColor: colors.border,
+    backgroundColor: 'rgba(90, 80, 64, 0.14)',
   },
   cellTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   amountRow: {
