@@ -22,7 +22,6 @@ import {
 } from '../services/statementAnalyzer';
 import {
   groupByDate,
-  hasItemsOutsideWindow,
   summarizeByCategory,
 } from '../services/statementGrouping';
 import { categoryToEnvelopeKey } from '../services/envelopes';
@@ -64,6 +63,15 @@ export function StatementImportScreen({ navigation, route }: Props) {
       return dateInHorizon(date, horizon, weekStartsOn, new Date(), paydayKey);
     });
   }, [result, filterToHorizon, horizon, weekStartsOn, paydayKey]);
+
+  const outsideCount = useMemo(() => {
+    const items = result?.items ?? [];
+    if (!items.length) return 0;
+    return items.filter((item) => {
+      const date = item.date ?? toDateKey(new Date());
+      return !dateInHorizon(date, horizon, weekStartsOn, new Date(), paydayKey);
+    }).length;
+  }, [result, horizon, weekStartsOn, paydayKey]);
 
   const categorySummary = useMemo(
     () => summarizeByCategory(visibleItems),
@@ -145,16 +153,11 @@ export function StatementImportScreen({ navigation, route }: Props) {
       setBusy(true);
       setFileLabel(asset.name);
       setResult(null);
+      // Always keep the selected period filter on — bank exports often span more days.
+      setFilterToHorizon(true);
       try {
         const scanned = await analyzeStatementFile(asset.uri, asset.name, asset.mimeType);
         setResult(scanned);
-        // Multi-day exports often sit outside the week filter — show everything first.
-        if (
-          hasItemsOutsideWindow(scanned.items, window.startKey, window.endKey) ||
-          new Set(scanned.items.map((i) => i.date).filter(Boolean)).size > 1
-        ) {
-          setFilterToHorizon(false);
-        }
       } catch (error) {
         Alert.alert('Import failed', error instanceof Error ? error.message : 'Try another file.');
       } finally {
@@ -193,8 +196,8 @@ export function StatementImportScreen({ navigation, route }: Props) {
       <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.title}>UPLOAD STATEMENT</Text>
         <Text style={styles.sub}>
-          Each row keeps its bank date and a guessed category. Tap a row to change category. Import
-          places every expense on its own day in the matching pay cycle.
+          Import only rows in the date window below (toggle off to include the whole file). Each
+          row keeps its bank date and category — tap a row to change category.
         </Text>
 
         <Panel>
@@ -212,6 +215,13 @@ export function StatementImportScreen({ navigation, route }: Props) {
               {horizon === 'week' ? 'week' : 'payday window'}
             </Text>
           </Pressable>
+          {result && outsideCount > 0 ? (
+            <Text style={styles.meta}>
+              {filterToHorizon
+                ? `${outsideCount} row${outsideCount === 1 ? '' : 's'} outside this window (hidden)`
+                : `${outsideCount} row${outsideCount === 1 ? '' : 's'} outside this window (included)`}
+            </Text>
+          ) : null}
         </Panel>
 
         <HudButton title="CHOOSE FILE" onPress={pickFile} disabled={busy} />
