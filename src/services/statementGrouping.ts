@@ -92,3 +92,24 @@ export function hasItemsOutsideWindow<T extends StatementGroupItem>(
     return d < startKey || d > endKey;
   });
 }
+
+/**
+ * Statement import filter: when enabled, keep only rows whose bank date
+ * falls in the inclusive [startKey, endKey] window (week / payday range).
+ */
+export function filterItemsToWindow<T extends StatementGroupItem>(
+  items: T[],
+  opts: {
+    filterToWindow: boolean;
+    startKey: string;
+    endKey: string;
+    now?: Date;
+  },
+): T[] {
+  if (!opts.filterToWindow) return items;
+  const fallback = toDateKey(opts.now ?? new Date());
+  return items.filter((item) => {
+    const d = item.date ?? fallback;
+    return d >= opts.startKey && d <= opts.endKey;
+  });
+}

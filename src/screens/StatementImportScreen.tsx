@@ -21,11 +21,12 @@ import {
   type StatementLineItem,
 } from '../services/statementAnalyzer';
 import {
+  filterItemsToWindow,
   groupByDate,
   summarizeByCategory,
 } from '../services/statementGrouping';
 import { categoryToEnvelopeKey } from '../services/envelopes';
-import { dateInHorizon, findCycleForDate, horizonWindow } from '../services/cycleMatching';
+import { findCycleForDate, horizonWindow } from '../services/cycleMatching';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { hudType } from '../theme/hud';
@@ -56,22 +57,25 @@ export function StatementImportScreen({ navigation, route }: Props) {
   const window = horizonWindow(horizon, weekStartsOn, new Date(), paydayKey);
 
   const visibleItems = useMemo(() => {
-    const items = result?.items ?? [];
-    if (!filterToHorizon) return items;
-    return items.filter((item) => {
-      const date = item.date ?? toDateKey(new Date());
-      return dateInHorizon(date, horizon, weekStartsOn, new Date(), paydayKey);
+    return filterItemsToWindow(result?.items ?? [], {
+      filterToWindow: filterToHorizon,
+      startKey: window.startKey,
+      endKey: window.endKey,
     });
-  }, [result, filterToHorizon, horizon, weekStartsOn, paydayKey]);
+  }, [result, filterToHorizon, window.startKey, window.endKey]);
 
   const outsideCount = useMemo(() => {
     const items = result?.items ?? [];
     if (!items.length) return 0;
-    return items.filter((item) => {
-      const date = item.date ?? toDateKey(new Date());
-      return !dateInHorizon(date, horizon, weekStartsOn, new Date(), paydayKey);
-    }).length;
-  }, [result, horizon, weekStartsOn, paydayKey]);
+    return (
+      items.length -
+      filterItemsToWindow(items, {
+        filterToWindow: true,
+        startKey: window.startKey,
+        endKey: window.endKey,
+      }).length
+    );
+  }, [result, window.startKey, window.endKey]);
 
   const categorySummary = useMemo(
     () => summarizeByCategory(visibleItems),
