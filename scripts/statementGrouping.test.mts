@@ -4,6 +4,7 @@
  */
 import { guessCategory } from '../src/services/categories.ts';
 import {
+  filterItemsToWindow,
   groupByDate,
   hasItemsOutsideWindow,
   sortStatementItems,
@@ -65,6 +66,23 @@ assert(
 assert(
   !hasItemsOutsideWindow(items, '2026-09-25', '2026-09-26'),
   'inside window ok',
+);
+
+const onlyWindow = filterItemsToWindow(items, {
+  filterToWindow: true,
+  startKey: '2026-09-26',
+  endKey: '2026-09-26',
+});
+assertEq(onlyWindow.length, 1, 'filter keeps only in-window day');
+assertEq(onlyWindow[0]!.id, '2', 'kept the 26th row');
+assertEq(
+  filterItemsToWindow(items, {
+    filterToWindow: false,
+    startKey: '2026-09-26',
+    endKey: '2026-09-26',
+  }).length,
+  3,
+  'filter off keeps all statement rows',
 );
 
 console.log(`statementGrouping.test.mts: ok (${passed} asserts)`);
