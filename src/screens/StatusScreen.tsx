@@ -55,10 +55,16 @@ export function StatusScreen({}: Props) {
 
   const timeline = useMemo(() => {
     if (!activeCycle) return [];
-    const total = snapshot.totalDaysInCycle;
-    return Array.from({ length: Math.min(total, 31) }).map((_, i) => {
-      const isToday = i === Math.min(snapshot.daysElapsed, Math.max(total - 1, 0));
-      const passed = i < snapshot.daysElapsed;
+    const total = Math.max(snapshot.totalDaysInCycle, 1);
+    const elapsed = Math.min(Math.max(snapshot.daysElapsed, 0), total);
+    // Cap ticks for layout, but map them across the full cycle so a long
+    // payday window does not look “finished” on day 31 of 53.
+    const tickCount = Math.min(total, 42);
+    return Array.from({ length: tickCount }).map((_, i) => {
+      const dayIndex =
+        tickCount <= 1 ? 0 : Math.round((i * (total - 1)) / (tickCount - 1));
+      const isToday = dayIndex === Math.min(elapsed, total - 1);
+      const passed = dayIndex < elapsed;
       return { i, isToday, passed };
     });
   }, [activeCycle, snapshot.daysElapsed, snapshot.totalDaysInCycle]);
@@ -94,7 +100,7 @@ export function StatusScreen({}: Props) {
           <Text style={hudType.labelPrimary}>STATUS</Text>
           <HudValue style={{ color: colorForTone(trajTone) }}>{snapshot.trajectory}</HudValue>
           <HudBody>{trajectoryHint(snapshot.trajectory)}</HudBody>
-          <SegmentedBar ratio={snapshot.resourcesRemainingRatio} />
+          <SegmentedBar ratio={1 - snapshot.cycleProgress} />
           <HudMeta>
             Day {dayNum} of {snapshot.totalDaysInCycle} · {snapshot.daysUntilPayday} left to payday
           </HudMeta>

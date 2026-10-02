@@ -117,6 +117,45 @@ function dayMetrics(startDate: string, nextPayday: string, now: Date) {
   assertEq(m.daysUntilPayday, 26, '26 left to payday unchanged');
 }
 
+// Statement import must not stretch a historical start to older bank rows.
+{
+  const now = startOfDay(new Date(2026, 9, 2)); // Oct 2
+  const healed = effectiveCycleStartDate(
+    {
+      startDate: '2026-09-10',
+      nextPayday: '2026-10-10',
+      createdAt: '2026-09-10T10:00:00.000Z',
+      expenses: [
+        { date: '2026-08-15' },
+        { date: '2026-08-20' },
+        { date: '2026-09-12' },
+      ],
+    },
+    now,
+  );
+  assertEq(healed, '2026-09-10', 'keep historical start after multi-day statement');
+  const m = dayMetrics(healed, '2026-10-10', now);
+  assertEq(m.totalDaysInCycle, 30, 'total days stay start→payday (not earliest import)');
+  assertEq(m.daysElapsed + 1, 23, 'Day 23 — not Day 30+ from August rows');
+  assertEq(m.daysUntilPayday, 8, '8 left to payday');
+}
+
+// Past bad heal (start pulled to August) clamps to payday − max timeline days.
+{
+  const now = startOfDay(new Date(2026, 9, 2));
+  const healed = effectiveCycleStartDate(
+    {
+      startDate: '2026-08-10',
+      nextPayday: '2026-10-25',
+      expenses: [{ date: '2026-08-10' }, { date: '2026-09-01' }],
+    },
+    now,
+  );
+  assertEq(healed, '2026-09-15', 'clamp bloated start to payday − 40 days');
+  const m = dayMetrics(healed, '2026-10-25', now);
+  assertEq(m.totalDaysInCycle, 40, 'timeline max 40 days after clamp');
+}
+
 // resolveCycleDatesOnSave also heals via earliestActivityDate.
 {
   const now = startOfDay(new Date(2026, 8, 29));

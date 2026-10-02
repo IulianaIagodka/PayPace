@@ -387,14 +387,15 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     });
   }, [ready, activeCycle, commit, todayKey]);
 
-  // Heal startDate if it was reset to “today” while older expenses still exist.
+  // Heal startDate: pull back after a “today” reset, or clamp a start that was
+  // stretched too far by a full statement import (Day N of 50+).
   useEffect(() => {
     if (!ready || !activeCycle) return;
     const current = storeRef.current;
     const cycle = current.cycles.find((c) => c.id === activeCycle.id);
     if (!cycle) return;
     const healed = effectiveCycleStartDate(cycle);
-    if (healed >= cycle.startDate.slice(0, 10)) return;
+    if (healed === cycle.startDate.slice(0, 10)) return;
     void commit({
       ...current,
       cycles: current.cycles.map((c) =>

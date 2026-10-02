@@ -25,30 +25,54 @@ function fromDateKey(value: string): Date {
   return startOfDay(new Date(value));
 }
 
+/** Longest payday window we treat as one cycle for Day N (monthly + slack). */
+export const MAX_CYCLE_TIMELINE_DAYS = 40;
+
 /**
  * Anchor used for CYCLE TIMELINE day count.
  * If Edit Budget (or sync) pushed startDate forward to “today” while older
  * expenses remain, pull the start back to the earliest spend/created day so
  * Day N keeps advancing.
+ *
+ * Do NOT stretch a normal historical start when a bank statement dumps older
+ * rows into the cycle — that inflated “Day 31 of 53” after import.
+ * Also clamp to [payday − MAX_CYCLE_TIMELINE_DAYS] so a past bad heal can recover.
  */
 export function effectiveCycleStartDate(
-  cycle: { startDate: string; createdAt?: string; expenses?: Array<{ date?: string }> },
+  cycle: {
+    startDate: string;
+    nextPayday?: string;
+    createdAt?: string;
+    expenses?: Array<{ date?: string }>;
+  },
   now = new Date(),
 ): string {
   const todayKey = toDateKey(startOfDay(now));
   let start = (cycle.startDate || todayKey).slice(0, 10);
+  if (start > todayKey) start = todayKey;
 
-  const consider = (raw?: string) => {
-    const key = (raw ?? '').slice(0, 10);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(key) && key < start) start = key;
-  };
+  // Historical start is authoritative for expense pull-back. Only heal a
+  // forward-reset to today.
+  if (start >= todayKey) {
+    const consider = (raw?: string) => {
+      const key = (raw ?? '').slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(key) && key < start) start = key;
+    };
 
-  consider(cycle.createdAt);
-  for (const expense of cycle.expenses ?? []) {
-    consider(expense.date);
+    consider(cycle.createdAt);
+    for (const expense of cycle.expenses ?? []) {
+      consider(expense.date);
+    }
   }
 
   if (start > todayKey) start = todayKey;
+
+  const payday = (cycle.nextPayday ?? '').slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(payday)) {
+    const minStart = toDateKey(addDays(fromDateKey(payday), -MAX_CYCLE_TIMELINE_DAYS));
+    if (start < minStart) start = minStart;
+  }
+
   return start;
 }
 
@@ -75,16 +99,26 @@ export function resolveCycleDatesOnSave(opts: {
   );
 
   let startKey = (opts.existingStartDate || todayKey).slice(0, 10);
-  const activity = (opts.earliestActivityDate ?? '').slice(0, 10);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(activity) && activity < startKey) {
-    startKey = activity;
+  if (startKey > todayKey) startKey = todayKey;
+  // Same rule as effectiveCycleStartDate: only heal a start pinned to today.
+  if (startKey >= todayKey) {
+    const activity = (opts.earliestActivityDate ?? '').slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(activity) && activity < startKey) {
+      startKey = activity;
+    }
   }
   if (startKey > todayKey) startKey = todayKey;
 
+  const clampStartToPayday = (paydayKey: string, start: string) => {
+    const minStart = toDateKey(addDays(fromDateKey(paydayKey), -MAX_CYCLE_TIMELINE_DAYS));
+    return start < minStart ? minStart : start;
+  };
+
   if (days === currentDaysUntil) {
+    const payday = opts.existingNextPayday;
     return {
-      startDate: startKey,
-      nextPayday: opts.existingNextPayday,
+      startDate: clampStartToPayday(payday, startKey),
+      nextPayday: payday,
       resetDayLock: false,
     };
   }
@@ -96,7 +130,7 @@ export function resolveCycleDatesOnSave(opts: {
   }
 
   return {
-    startDate: startKey,
+    startDate: clampStartToPayday(nextPayday, startKey),
     nextPayday,
     resetDayLock: true,
   };
