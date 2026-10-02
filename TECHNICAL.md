@@ -123,6 +123,8 @@ npm run typecheck
 
 Leaf services are tested with `node --experimental-strip-types` (no Expo runtime). Prefer keeping domain logic in `services/` so tests stay importable.
 
+**UI / device E2E plan** (journeys, Maestro, Free/Plus, shared, StoreKit): [E2E-TESTING-PLAN.md](./E2E-TESTING-PLAN.md).
+
 ## Build / ship
 
 | Path | Command |
