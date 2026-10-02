@@ -122,6 +122,7 @@ function MainTabs() {
         component={HomeScreen}
         options={{
           title: 'HOME',
+          tabBarButtonTestID: 'tabs.home',
           tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
         }}
       />
@@ -130,6 +131,7 @@ function MainTabs() {
         component={ActivityScreen}
         options={{
           title: 'SPEND',
+          tabBarButtonTestID: 'tabs.activity',
           tabBarIcon: ({ focused }) => <TabIcon name="receipt-outline" focused={focused} />,
         }}
       />
@@ -138,6 +140,7 @@ function MainTabs() {
         component={StatusScreen}
         options={{
           title: 'PACE',
+          tabBarButtonTestID: 'tabs.status',
           tabBarIcon: ({ focused }) => <TabIcon name="stats-chart" focused={focused} />,
         }}
       />
@@ -146,6 +149,7 @@ function MainTabs() {
         component={SettingsScreen}
         options={{
           title: 'SETTINGS',
+          tabBarButtonTestID: 'tabs.settings',
           tabBarIcon: ({ focused }) => <TabIcon name="settings-sharp" focused={focused} />,
         }}
       />

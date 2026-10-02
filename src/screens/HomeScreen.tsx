@@ -145,10 +145,10 @@ export function HomeScreen({ navigation }: Props) {
 
           {/* 1 · Primary: today’s safe spend — the only hero number */}
           <HUDPanel variant="primary" label="SAFE TO SPEND TODAY">
-            <HudValue size="hero" style={{ color: safeColor }}>
+            <HudValue testID="home.safeToday" size="hero" style={{ color: safeColor }}>
               {formatMoney(safe, currency)}
             </HudValue>
-            <HudMeta>
+            <HudMeta testID="home.daysToPayday">
               Your daily limit · {formatDays(snapshot.daysUntilPayday)} to payday
             </HudMeta>
           </HUDPanel>
@@ -263,7 +263,11 @@ export function HomeScreen({ navigation }: Props) {
         </ScrollView>
 
         <View style={[styles.stickyCta, { bottom: tabClearance + 8 }]} pointerEvents="box-none">
-          <HudButton title="+ ADD EXPENSE" onPress={() => openAddExpense()} />
+          <HudButton
+            testID="home.addExpense"
+            title="+ ADD EXPENSE"
+            onPress={() => openAddExpense()}
+          />
         </View>
       </View>
     </ScreenBackground>

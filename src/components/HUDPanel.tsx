@@ -118,24 +118,36 @@ export function HudValue({
   children,
   size = 'default',
   style,
+  testID,
 }: {
   children: React.ReactNode;
   size?: 'hero' | 'default' | 'compact';
   style?: StyleProp<TextStyle>;
+  testID?: string;
 }) {
   const base =
     size === 'hero' ? hudType.valueHero : size === 'compact' ? hudType.valueCompact : hudType.value;
-  return <Text style={[base, style]}>{children}</Text>;
+  return (
+    <Text testID={testID} style={[base, style]}>
+      {children}
+    </Text>
+  );
 }
 
 export function HudMeta({
   children,
   style,
+  testID,
 }: {
   children: React.ReactNode;
   style?: StyleProp<TextStyle>;
+  testID?: string;
 }) {
-  return <Text style={[hudType.meta, style]}>{children}</Text>;
+  return (
+    <Text testID={testID} style={[hudType.meta, style]}>
+      {children}
+    </Text>
+  );
 }
 
 export function HudBody({

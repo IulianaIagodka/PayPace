@@ -103,7 +103,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
             Plus imports a bank statement, sorts by day and category, and puts each row in the right
             pay cycle.
           </Text>
-          <PlusUnlockButton />
+          <PlusUnlockButton testID="plus.unlock" />
           <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
         </ScrollView>
       </ScreenBackground>
@@ -300,6 +300,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
 
         {visibleItems.length ? (
           <HudButton
+            testID="statement.confirm"
             title={saving ? 'IMPORTING…' : `IMPORT ${visibleItems.length} EXPENSES`}
             onPress={saveAll}
             disabled={saving}

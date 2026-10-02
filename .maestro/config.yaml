@@ -1,0 +1,5 @@
+# PayPace Maestro workspace — iOS shipping target.
+# Needs a native build (dev client / local IPA / TestFlight), not Expo Go.
+appId: app.paypace.PayPace
+flows:
+  - "flows/*"

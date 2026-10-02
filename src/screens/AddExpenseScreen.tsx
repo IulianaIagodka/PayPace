@@ -99,15 +99,22 @@ export function AddExpenseScreen({ navigation, route }: Props) {
 
         <Text style={styles.or}>OR LOG MANUALLY</Text>
 
-        <AmountField label="AMOUNT" value={amount} onChangeText={setAmount} suffix={suffix} />
+        <AmountField
+          testID="expense.amount"
+          label="AMOUNT"
+          value={amount}
+          onChangeText={setAmount}
+          suffix={suffix}
+        />
 
         <Text style={styles.label}>CATEGORY</Text>
-        <View style={styles.grid}>
+        <View style={styles.grid} testID="expense.categoryGrid">
           {envelopes.map((env) => {
             const on = env.key === envelopeKey;
             return (
               <Pressable
                 key={env.id}
+                testID={`expense.category.${env.key}`}
                 onPress={() => setEnvelopeKey(env.key)}
                 style={[styles.cat, on && styles.catOn]}
               >
@@ -120,6 +127,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
         <Panel>
           <Text style={styles.label}>NOTE (OPTIONAL)</Text>
           <TextInput
+            testID="expense.note"
             value={note}
             onChangeText={setNote}
             placeholder="Coffee, groceries…"
@@ -132,11 +140,17 @@ export function AddExpenseScreen({ navigation, route }: Props) {
         </Panel>
 
         <HudButton
+          testID="expense.save"
           title={busy ? 'LOGGING…' : 'LOG EXPENSE'}
           onPress={onAdd}
           disabled={parsePositiveAmount(amount) == null || busy}
         />
-        <HudButton title="CANCEL" onPress={() => navigation.goBack()} variant="secondary" />
+        <HudButton
+          testID="expense.cancel"
+          title="CANCEL"
+          onPress={() => navigation.goBack()}
+          variant="secondary"
+        />
       </FormScroll>
     </ScreenBackground>
   );

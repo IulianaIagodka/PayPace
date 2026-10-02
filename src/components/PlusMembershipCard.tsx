@@ -71,6 +71,7 @@ export function PlusMembershipCard({
         </Pressable>
         {allowDemoPremiumUnlock() && onDemoDowngrade ? (
           <HudButton
+            testID="settings.plusDemoDowngrade"
             compact
             title="BACK TO FREE (DEMO)"
             onPress={onDemoDowngrade}

@@ -129,6 +129,7 @@ export function HudButton({
   disabled,
   variant = 'primary',
   compact = false,
+  testID,
 }: {
   title: string;
   onPress: () => void;
@@ -136,9 +137,12 @@ export function HudButton({
   variant?: 'primary' | 'secondary' | 'danger';
   /** Tighter padding — Settings lists and dense stacks. */
   compact?: boolean;
+  testID?: string;
 }) {
   return (
     <Pressable
+      testID={testID}
+      accessibilityLabel={title}
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
@@ -506,18 +510,21 @@ export function AmountField({
   value,
   onChangeText,
   suffix = 'USD',
+  testID,
   ...rest
 }: {
   label: string;
   value: string;
   onChangeText: (t: string) => void;
   suffix?: string;
+  testID?: string;
 } & TextInputProps) {
   return (
     <View style={{ gap: hud.gap }}>
       <Text style={hudType.label}>{label}</Text>
       <View style={styles.fieldBox}>
         <TextInput
+          testID={testID}
           value={value}
           onChangeText={onChangeText}
           keyboardType="decimal-pad"

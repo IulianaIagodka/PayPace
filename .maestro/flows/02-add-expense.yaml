@@ -1,0 +1,34 @@
+# J2 — Seed demo → add manual expense → Home shows recent spend
+appId: app.paypace.PayPace
+tags:
+  - smoke
+  - j2
+---
+- launchApp:
+    clearState: true
+- runFlow: ../helpers/seed-demo.yaml
+- tapOn:
+    id: "tabs.home"
+- assertVisible:
+    id: "home.safeToday"
+- tapOn:
+    id: "home.addExpense"
+- assertVisible:
+    id: "expense.amount"
+- tapOn:
+    id: "expense.amount"
+- inputText: "50"
+- tapOn:
+    id: "expense.category.groceries"
+- tapOn:
+    id: "expense.note"
+- inputText: "E2E coffee"
+- tapOn:
+    id: "expense.save"
+- extendedWaitUntil:
+    visible:
+      id: "home.safeToday"
+    timeout: 15000
+- assertVisible: "E2E coffee"
+- assertVisible:
+    id: "home.addExpense"

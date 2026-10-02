@@ -49,6 +49,7 @@ import {
   mergePeriodReports,
   nextAwaitingPromptReport,
 } from '../services/periodReports';
+import { buildE2eDemoStore } from '../services/e2eSeed';
 
 /** Background reconcile while the app is open. Live partner edits use Realtime. */
 
@@ -103,6 +104,8 @@ type BudgetContextValue = {
   deleteExpense: (id: string) => Promise<void>;
   replaceActiveCycle: (cycle: PayCycle) => Promise<void>;
   resetAll: () => Promise<void>;
+  /** Debug / Maestro: load a known cycle (balance 3000 · 15 days · free). */
+  seedDemoCycle: () => Promise<void>;
   setPremium: (enabled: boolean) => Promise<void>;
   /** Count one free-tier receipt scan after a successful photo analyze. No-op for Plus. */
   recordReceiptScan: () => Promise<void>;
@@ -667,6 +670,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       });
     },
     resetAll: async () => commit(emptyStore, { skipPush: true }),
+    seedDemoCycle: async () => commit(buildE2eDemoStore(), { skipPush: true }),
     setPremium: async (enabled) => {
       await commit({ ...store, settings: { ...store.settings, isPremium: enabled } });
     },

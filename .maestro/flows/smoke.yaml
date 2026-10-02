@@ -1,0 +1,42 @@
+# Full smoke: J1 onboarding → J2 expense → J3 Pace numbers (one session).
+appId: app.paypace.PayPace
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+- runFlow: ../helpers/seed-demo.yaml
+- assertVisible:
+    id: "home.safeToday"
+- assertVisible:
+    id: "home.addExpense"
+- tapOn:
+    id: "home.addExpense"
+- tapOn:
+    id: "expense.amount"
+- inputText: "50"
+- tapOn:
+    id: "expense.category.groceries"
+- tapOn:
+    id: "expense.note"
+- inputText: "E2E coffee"
+- tapOn:
+    id: "expense.save"
+- extendedWaitUntil:
+    visible:
+      id: "home.safeToday"
+    timeout: 15000
+- assertVisible: "E2E coffee"
+- tapOn:
+    id: "tabs.status"
+- extendedWaitUntil:
+    visible:
+      id: "pace.dayLabel"
+    timeout: 10000
+- assertVisible:
+    id: "pace.status"
+- assertVisible:
+    id: "pace.leftToSpend"
+- assertVisible:
+    id: "pace.safeToday"
+- assertVisible: "Day 1 of"

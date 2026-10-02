@@ -119,7 +119,11 @@ export function OnboardingScreen() {
               No monthly spreadsheet. Just a clear number for today — and peace of mind until payday.
             </Text>
           </View>
-          <PrimaryButton title="Get started" onPress={() => setStep('balance')} />
+          <PrimaryButton
+            testID="onboarding.getStarted"
+            title="Get started"
+            onPress={() => setStep('balance')}
+          />
         </View>
       </ScreenBackground>
     );
@@ -128,7 +132,7 @@ export function OnboardingScreen() {
   if (step === 'result') {
     return (
       <ScreenBackground>
-        <View style={[styles.pad, { justifyContent: 'space-between' }]}>
+        <View style={[styles.pad, { justifyContent: 'space-between' }]} testID="onboarding.result">
           <View style={{ gap: 22, paddingTop: 60 }}>
             <Text style={styles.sub}>You’re set</Text>
             <SafeSpendHero
@@ -144,7 +148,11 @@ export function OnboardingScreen() {
               totalDays={snap.totalDaysInCycle}
             />
           </View>
-          <PrimaryButton title="Go to home" onPress={() => completeOnboarding(draftCycle)} />
+          <PrimaryButton
+            testID="onboarding.goHome"
+            title="Go to home"
+            onPress={() => completeOnboarding(draftCycle)}
+          />
         </View>
       </ScreenBackground>
     );
@@ -159,11 +167,18 @@ export function OnboardingScreen() {
         <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}>
           <Dots step={step} />
           {step === 'balance' && (
-            <View style={{ gap: 20 }}>
+            <View style={{ gap: 20 }} testID="onboarding.balance">
               <Text style={styles.title}>How much money do you have right now?</Text>
               <Text style={styles.sub}>Your available balance — what you can actually use.</Text>
-              <AmountField label="Available balance" value={balance} onChangeText={setBalance} suffix={suffix} />
+              <AmountField
+                testID="onboarding.balanceInput"
+                label="Available balance"
+                value={balance}
+                onChangeText={setBalance}
+                suffix={suffix}
+              />
               <PrimaryButton
+                testID="onboarding.continue"
                 title="Continue"
                 disabled={parseAmount(balance) == null}
                 onPress={() => setStep('payday')}
@@ -172,10 +187,11 @@ export function OnboardingScreen() {
           )}
 
           {step === 'payday' && (
-            <View style={{ gap: 16 }}>
+            <View style={{ gap: 16 }} testID="onboarding.payday">
               <Text style={styles.title}>When is your next payday?</Text>
               <Text style={styles.sub}>PayPace budgets from now until that day — not by calendar month.</Text>
               <AmountField
+                testID="onboarding.daysUntil"
                 label="Days until payday"
                 value={daysUntil}
                 onChangeText={setDaysUntil}
@@ -183,6 +199,7 @@ export function OnboardingScreen() {
                 keyboardType="number-pad"
               />
               <AmountField
+                testID="onboarding.paycheck"
                 label="Expected paycheck (optional)"
                 value={paycheck}
                 onChangeText={setPaycheck}
@@ -194,12 +211,16 @@ export function OnboardingScreen() {
                 options={scheduleOptions.map((item) => ({ value: item.id, label: item.title }))}
                 onChange={setSchedule}
               />
-              <PrimaryButton title="Continue" onPress={() => setStep('bills')} />
+              <PrimaryButton
+                testID="onboarding.continue"
+                title="Continue"
+                onPress={() => setStep('bills')}
+              />
             </View>
           )}
 
           {step === 'bills' && (
-            <View style={{ gap: 16 }}>
+            <View style={{ gap: 16 }} testID="onboarding.bills">
               <Text style={styles.title}>What needs to be paid before then?</Text>
               <Text style={styles.sub}>Add rent, bills, and anything that must be covered before payday.</Text>
 
@@ -243,6 +264,7 @@ export function OnboardingScreen() {
               <AmountField label="Spending buffer (optional)" value={buffer} onChangeText={setBuffer} suffix={suffix} />
 
               <PrimaryButton
+                testID="onboarding.seeSafeSpend"
                 title={bills.length ? 'Calculate safe spend' : 'See my safe spend'}
                 onPress={() => setStep('result')}
               />

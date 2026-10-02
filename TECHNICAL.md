@@ -113,17 +113,19 @@ No RevenueCat. No `aps-environment` — partner metric alerts are **local** (`ex
 ## Tests
 
 ```bash
-npm test                 # shared + control + sync + status + pace + range + notify + scans
+npm test                 # shared + control + sync + status + pace + range + notify + scans + e2e-seed
 npm run test:control     # Pace labels / control panel
 npm run test:pace        # dayPace lock math
+npm run test:e2e-seed    # demo seed math (safe today = 200)
 npm run test:receipt-category
 npm run test:categories
 npm run typecheck
+npm run test:e2e:smoke   # Maestro UI smoke (needs iOS sim + native build)
 ```
 
 Leaf services are tested with `node --experimental-strip-types` (no Expo runtime). Prefer keeping domain logic in `services/` so tests stay importable.
 
-**UI / device E2E plan** (journeys, Maestro, Free/Plus, shared, StoreKit): [E2E-TESTING-PLAN.md](./E2E-TESTING-PLAN.md).
+**UI / device E2E:** plan + Maestro flows in [E2E-TESTING-PLAN.md](./E2E-TESTING-PLAN.md) and [.maestro/README.md](./.maestro/README.md). Debug Settings: **SEED DEMO CYCLE** / **RESET APP DATA** (`__DEV__` only). Stable `testID`s: `onboarding.*`, `tabs.*`, `home.*`, `pace.*`, `expense.*`, `settings.*`, `plus.*`, `receipt.save`, `statement.confirm`.
 
 ## Build / ship
 

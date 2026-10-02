@@ -94,8 +94,10 @@ npm run build:ios:submit         # cloud build + auto-submit (uses EAS minutes)
 |---------|------|
 | `npm start` | Expo dev server |
 | `npm run typecheck` | TypeScript |
-| `npm test` | All unit/E2E scripts (shared budget + control panel + sync + status) |
+| `npm test` | All unit/E2E scripts (shared budget + control panel + sync + status + e2e-seed) |
 | `npm run test:shared` | Shared-budget E2E simulation |
+| `npm run test:e2e-seed` | Demo-seed math for Maestro (safe today = 200) |
+| `npm run test:e2e:smoke` | Maestro UI smoke J1–J3 (iOS sim + native build) |
 | `npm run test:control` | Control-panel helper unit tests |
 | `npm run test:sync` | Shared-household sync policy tests |
 | `npm run test:status` | Money status chip tests |

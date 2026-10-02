@@ -39,7 +39,7 @@ export function AllocateScreen({ navigation }: Props) {
           <Text style={styles.sub}>
             Plus lets you split spending across categories and see what’s left in each one.
           </Text>
-          <PlusUnlockButton />
+          <PlusUnlockButton testID="plus.unlock" />
           <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
         </FormScroll>
       </ScreenBackground>

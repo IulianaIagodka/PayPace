@@ -70,7 +70,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
             You’ve used your {FREE_RECEIPT_SCAN_LIMIT} free receipt scans. Plus unlocks unlimited
             scans, plus statements and category tools.
           </Text>
-          <PlusUnlockButton />
+          <PlusUnlockButton testID="plus.unlock" />
           <SecondaryButton title="Back" onPress={() => navigation.goBack()} />
         </ScrollView>
       </ScreenBackground>
@@ -211,6 +211,7 @@ export function ReceiptScanScreen({ navigation }: Props) {
             </SoftCard>
 
             <PrimaryButton
+              testID="receipt.save"
               title={saving ? 'Adding…' : 'Add everything'}
               onPress={saveReceipt}
               disabled={saving}

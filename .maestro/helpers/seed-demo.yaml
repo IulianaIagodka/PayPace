@@ -1,0 +1,30 @@
+# After clearState the app opens on onboarding. Finish with E2E numbers
+# (balance 3000 · 15 days) — same as src/services/e2eSeed.ts.
+appId: app.paypace.PayPace
+---
+- extendedWaitUntil:
+    visible:
+      id: "onboarding.getStarted"
+    timeout: 30000
+- tapOn:
+    id: "onboarding.getStarted"
+- tapOn:
+    id: "onboarding.balanceInput"
+- eraseText
+- inputText: "3000"
+- tapOn:
+    id: "onboarding.continue"
+- tapOn:
+    id: "onboarding.daysUntil"
+- eraseText
+- inputText: "15"
+- tapOn:
+    id: "onboarding.continue"
+- tapOn:
+    id: "onboarding.seeSafeSpend"
+- tapOn:
+    id: "onboarding.goHome"
+- extendedWaitUntil:
+    visible:
+      id: "home.safeToday"
+    timeout: 15000

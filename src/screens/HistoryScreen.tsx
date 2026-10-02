@@ -22,7 +22,7 @@ export function HistoryScreen({ navigation }: Props) {
           <Text style={styles.sub}>
             Look back across finished pay cycles and how your safe-to-spend held up.
           </Text>
-          <PlusUnlockButton />
+          <PlusUnlockButton testID="plus.unlock" />
           <PrimaryButton title="Back" onPress={() => navigation.goBack()} />
         </ScrollView>
       </ScreenBackground>

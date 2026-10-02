@@ -23,7 +23,7 @@ export function CategoryBalancesScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>BY CATEGORY</Text>
           <Text style={styles.sub}>Plus shows how much you’ve spent in each category.</Text>
-          <PlusUnlockButton />
+          <PlusUnlockButton testID="plus.unlock" />
           <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
         </ScrollView>
       </ScreenBackground>

@@ -92,10 +92,12 @@ export function StatusScreen({}: Props) {
         {/* 1 · Status first */}
         <Panel glow>
           <Text style={hudType.labelPrimary}>STATUS</Text>
-          <HudValue style={{ color: colorForTone(trajTone) }}>{snapshot.trajectory}</HudValue>
+          <HudValue testID="pace.status" style={{ color: colorForTone(trajTone) }}>
+            {snapshot.trajectory}
+          </HudValue>
           <HudBody>{trajectoryHint(snapshot.trajectory)}</HudBody>
           <SegmentedBar ratio={snapshot.resourcesRemainingRatio} />
-          <HudMeta>
+          <HudMeta testID="pace.dayLabel">
             Day {dayNum} of {snapshot.totalDaysInCycle} · {snapshot.daysUntilPayday} left to payday
           </HudMeta>
         </Panel>
@@ -104,17 +106,20 @@ export function StatusScreen({}: Props) {
         <Panel>
           <Text style={hudType.label}>KEY NUMBERS</Text>
           <KeyRow
+            testID="pace.leftToSpend"
             label="LEFT TO SPEND"
             hint="Until payday"
             value={formatMoney(Math.max(remaining, 0), currency)}
             emphasize
           />
           <KeyRow
+            testID="pace.safeToday"
             label="SAFE TODAY"
             hint="Daily limit"
             value={formatMoney(Math.max(snapshot.safeToSpendToday, 0), currency)}
           />
           <KeyRow
+            testID="pace.projectedPayday"
             label="AT THIS PACE → PAYDAY"
             hint="Projected leftover"
             value={formatMoney(snapshot.projectedEndBalance, currency)}
@@ -198,20 +203,23 @@ function KeyRow({
   value,
   emphasize,
   warn,
+  testID,
 }: {
   label: string;
   hint: string;
   value: string;
   emphasize?: boolean;
   warn?: boolean;
+  testID?: string;
 }) {
   return (
-    <View style={styles.keyRow}>
+    <View style={styles.keyRow} testID={testID}>
       <View style={styles.keyText}>
         <Text style={hudType.label}>{label}</Text>
         <HudMeta style={styles.keyHint}>{hint}</HudMeta>
       </View>
       <Text
+        testID={testID ? `${testID}.value` : undefined}
         style={[
           styles.keyValue,
           emphasize && styles.keyValueStrong,

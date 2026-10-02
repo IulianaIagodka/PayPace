@@ -28,6 +28,8 @@ type Props = {
   layout?: 'row' | 'stack';
   /** Tighter chips / buttons for Settings. */
   compact?: boolean;
+  /** Override testID for the primary unlock control (demo / single-plan). */
+  testID?: string;
 };
 
 /**
@@ -41,6 +43,7 @@ export function PlusUnlockButton({
   plan,
   layout = 'row',
   compact = false,
+  testID,
 }: Props) {
   const { setPremium } = useBudget();
   const [busy, setBusy] = useState<PlusPlan | 'restore' | 'demo' | null>(null);
@@ -81,6 +84,7 @@ export function PlusUnlockButton({
   if (preferRestore) {
     return (
       <HudButton
+        testID={testID ?? 'plus.restore'}
         compact={compact}
         title={busy ? '…' : title ?? 'RESTORE PURCHASES'}
         variant={variant}
@@ -93,6 +97,7 @@ export function PlusUnlockButton({
   if (demo) {
     return (
       <HudButton
+        testID={testID ?? 'settings.plusDemo'}
         compact={compact}
         title={busy ? '…' : title ?? 'TRY PLUS (DEMO)'}
         variant={variant}
@@ -114,6 +119,7 @@ export function PlusUnlockButton({
           : 'PLUS MONTHLY';
     return (
       <HudButton
+        testID={plan === 'yearly' ? 'plus.yearly' : 'plus.monthly'}
         compact={compact}
         title={busy ? '…' : title ?? defaultTitle}
         variant={variant}
@@ -193,6 +199,7 @@ function PlanChip({
 }) {
   return (
     <Pressable
+      testID={emphasized ? 'plus.yearly' : 'plus.monthly'}
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [

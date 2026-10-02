@@ -1,0 +1,40 @@
+# J3 — After spend, Pace shows Day 1 + key numbers (safe today burned)
+appId: app.paypace.PayPace
+tags:
+  - smoke
+  - j3
+---
+- launchApp:
+    clearState: true
+- runFlow: ../helpers/seed-demo.yaml
+- tapOn:
+    id: "tabs.home"
+- tapOn:
+    id: "home.addExpense"
+- tapOn:
+    id: "expense.amount"
+- inputText: "50"
+- tapOn:
+    id: "expense.category.groceries"
+- tapOn:
+    id: "expense.save"
+- extendedWaitUntil:
+    visible:
+      id: "home.safeToday"
+    timeout: 15000
+- tapOn:
+    id: "tabs.status"
+- extendedWaitUntil:
+    visible:
+      id: "pace.dayLabel"
+    timeout: 10000
+- assertVisible:
+    id: "pace.status"
+- assertVisible:
+    id: "pace.leftToSpend"
+- assertVisible:
+    id: "pace.safeToday"
+- assertVisible:
+    id: "pace.projectedPayday"
+# Seed is Day 1 of 15; spend burns today's lock but day index stays 1.
+- assertVisible: "Day 1 of"

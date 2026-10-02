@@ -249,11 +249,11 @@ npm run test:e2e:smoke     # лише J1–J3
 
 ## 10. Фази впровадження
 
-### Фаза A — фундамент
+### Фаза A — фундамент ✅ (в репо)
 
-- testID на критичних екранах.
-- Debug reset/seed.
-- Maestro smoke: J1 + J2 + J3 (числа).
+- testID на критичних екранах (`onboarding.*`, `tabs.*`, `home.*`, `pace.*`, `expense.*`, `settings.*`, `plus.*`, …).
+- Debug reset/seed у Settings (`__DEV__`): **SEED DEMO CYCLE** / **RESET APP DATA**; seed math у `src/services/e2eSeed.ts` + `npm run test:e2e-seed`.
+- Maestro smoke: `.maestro/flows/` (J1–J3 + `smoke.yaml`) — див. [.maestro/README.md](./.maestro/README.md).
 - Чеклист ручний у PR / реліз: J11 (2 phones) + J12.
 
 ### Фаза B — Plus і імпорт

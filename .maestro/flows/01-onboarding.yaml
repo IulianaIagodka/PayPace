@@ -1,0 +1,46 @@
+# J1 — Onboarding → Home safe today
+appId: app.paypace.PayPace
+tags:
+  - smoke
+  - j1
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "onboarding.getStarted"
+    timeout: 30000
+- tapOn:
+    id: "onboarding.getStarted"
+- assertVisible:
+    id: "onboarding.balanceInput"
+- tapOn:
+    id: "onboarding.balanceInput"
+- eraseText
+- inputText: "3000"
+- tapOn:
+    id: "onboarding.continue"
+- assertVisible:
+    id: "onboarding.daysUntil"
+- tapOn:
+    id: "onboarding.daysUntil"
+- eraseText
+- inputText: "15"
+- tapOn:
+    id: "onboarding.continue"
+- assertVisible:
+    id: "onboarding.seeSafeSpend"
+- tapOn:
+    id: "onboarding.seeSafeSpend"
+- assertVisible:
+    id: "onboarding.goHome"
+- tapOn:
+    id: "onboarding.goHome"
+- extendedWaitUntil:
+    visible:
+      id: "home.safeToday"
+    timeout: 15000
+- assertVisible:
+    id: "home.addExpense"
+- assertVisible:
+    id: "tabs.home"

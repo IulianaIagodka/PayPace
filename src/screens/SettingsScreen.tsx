@@ -38,8 +38,15 @@ const HORIZON_OPTIONS: Array<{ value: PaceHorizon; label: string }> = [
 ];
 
 export function SettingsScreen({ navigation }: Props) {
-  const { store, updateSettings, setPremium, addCustomCategory, removeCustomCategory } =
-    useBudget();
+  const {
+    store,
+    updateSettings,
+    setPremium,
+    addCustomCategory,
+    removeCustomCategory,
+    resetAll,
+    seedDemoCycle,
+  } = useBudget();
   const tabClearance = useTabBarClearance(48);
   const s = store.settings;
   const household = store.household;
@@ -48,6 +55,23 @@ export function SettingsScreen({ navigation }: Props) {
   const customs = s.customCategories ?? [];
   const [newCategory, setNewCategory] = useState('');
   const [adding, setAdding] = useState(false);
+
+  const onResetAppData = () => {
+    Alert.alert('Reset app data?', 'Clears onboarding, cycle, and Plus demo state on this device.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        style: 'destructive',
+        onPress: () => {
+          void resetAll();
+        },
+      },
+    ]);
+  };
+
+  const onSeedDemo = () => {
+    void seedDemoCycle();
+  };
 
   const currencyOptions = CURRENCIES.map((c) => ({
     value: c.code,
@@ -99,6 +123,7 @@ export function SettingsScreen({ navigation }: Props) {
             <Text style={styles.section}>BUDGET</Text>
             {s.isPremium ? (
               <HudButton
+                testID="settings.allocate"
                 compact
                 title="ALLOCATE RESOURCES"
                 onPress={() => navigation.navigate('Allocate')}
@@ -106,12 +131,14 @@ export function SettingsScreen({ navigation }: Props) {
               />
             ) : null}
             <HudButton
+              testID="settings.editCycle"
               compact
               title="EDIT CYCLE"
               onPress={() => navigation.navigate('PayCycle')}
               variant="secondary"
             />
             <HudButton
+              testID="settings.bills"
               compact
               title="BILLS"
               onPress={() => navigation.navigate('Bills')}
@@ -128,6 +155,7 @@ export function SettingsScreen({ navigation }: Props) {
                 </Text>
               ) : null}
               <HudButton
+                testID="settings.sharedBudget"
                 compact
                 title="SHARED BUDGET"
                 onPress={() => navigation.navigate('SharedBudget')}
@@ -209,6 +237,29 @@ export function SettingsScreen({ navigation }: Props) {
             </HUDPanel>
           ) : null}
         </View>
+
+        {__DEV__ ? (
+          <HUDPanel variant="compact" contentStyle={styles.panelInner}>
+            <Text style={styles.section}>DEBUG · E2E</Text>
+            <Text style={hudType.body}>
+              Seed loads balance 3000 · 15 days · free. Reset clears local store.
+            </Text>
+            <HudButton
+              testID="settings.seedDemo"
+              compact
+              title="SEED DEMO CYCLE"
+              onPress={onSeedDemo}
+              variant="secondary"
+            />
+            <HudButton
+              testID="settings.resetApp"
+              compact
+              title="RESET APP DATA"
+              onPress={onResetAppData}
+              variant="danger"
+            />
+          </HUDPanel>
+        ) : null}
 
         <View style={styles.legalBlock}>
           <Text style={styles.section}>LEGAL</Text>
