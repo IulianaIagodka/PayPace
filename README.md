@@ -8,6 +8,7 @@ One Expo app at the **repo root**. Develop from the **phone** or the **Mac**. Sh
 |-----|----------|
 | **[USER-GUIDE.md](./USER-GUIDE.md)** | How to use Home, Pace, categories, receipts, Free/Plus |
 | **[TECHNICAL.md](./TECHNICAL.md)** | Architecture, services, invariants, tests, build |
+| [E2E-TESTING-PLAN.md](./E2E-TESTING-PLAN.md) | End-to-end journeys, Maestro, Free/Plus, release gates |
 | [RELEASE-YOU.md](./RELEASE-YOU.md) | Owner checklist (ASC, secrets, subscriptions) |
 | [SHARED-BUDGET.md](./SHARED-BUDGET.md) | Partner sync + Supabase setup |
 | [TESTFLIGHT-EAS.md](./TESTFLIGHT-EAS.md) | Phone / Mac / cloud TestFlight paths |
