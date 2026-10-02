@@ -101,6 +101,8 @@ type BudgetContextValue = {
     expenses: Array<Omit<DailyExpense, 'id' | 'date'> & { id?: string; date?: string }>,
   ) => Promise<{ cycleCount: number; itemCount: number }>;
   deleteExpense: (id: string) => Promise<void>;
+  /** Remove every expense logged on the given date key (YYYY-MM-DD) in the active cycle. */
+  deleteExpensesByDate: (date: string) => Promise<void>;
   replaceActiveCycle: (cycle: PayCycle) => Promise<void>;
   resetAll: () => Promise<void>;
   setPremium: (enabled: boolean) => Promise<void>;
@@ -649,6 +651,20 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
             ? withCycleTouch({
                 ...c,
                 expenses: c.expenses.filter((e) => e.id !== id),
+              })
+            : c,
+        ),
+      });
+    },
+    deleteExpensesByDate: async (date) => {
+      if (!activeCycle) return;
+      await commit({
+        ...store,
+        cycles: store.cycles.map((c) =>
+          c.id === activeCycle.id
+            ? withCycleTouch({
+                ...c,
+                expenses: c.expenses.filter((e) => e.date !== date),
               })
             : c,
         ),

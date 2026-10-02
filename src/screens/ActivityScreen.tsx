@@ -30,7 +30,7 @@ type Props = CompositeScreenProps<
 const copy = CONTROL_PANEL_COPY.activity;
 
 export function ActivityScreen({ navigation }: Props) {
-  const { activeCycle, store, deleteExpense, snapshot } = useBudget();
+  const { activeCycle, store, deleteExpense, deleteExpensesByDate, snapshot } = useBudget();
   const currency = store.settings.currencyCode;
   const tabClearance = useTabBarClearance(28);
   const todayKey = useMemo(() => toDateKey(new Date()), []);
@@ -85,6 +85,31 @@ export function ActivityScreen({ navigation }: Props) {
         onPress: () => deleteExpense(expense.id),
       },
     ]);
+  };
+
+  const onDeleteDay = (date: string, items: DailyExpense[]) => {
+    const label = formatShortDate(date);
+    const entryLabel = items.length === 1 ? '1 entry' : `${items.length} entries`;
+    Alert.alert(
+      'Delete this whole day?',
+      `${label} · ${entryLabel}. Safe-to-spend will recalculate.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete day',
+          style: 'destructive',
+          onPress: () => {
+            void deleteExpensesByDate(date);
+            setExpandedDates((prev) => {
+              if (!prev.has(date)) return prev;
+              const next = new Set(prev);
+              next.delete(date);
+              return next;
+            });
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -147,25 +172,41 @@ export function ActivityScreen({ navigation }: Props) {
             // Same plate seed as TOTAL SPENT so grit/stars match exactly
             return (
               <HUDPanel key={date} variant="standard" seed={`primary:${copy.totalLabel}`}>
-                <Pressable
-                  onPress={() => toggleDay(date)}
-                  style={styles.dayHeader}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded }}
-                  accessibilityLabel={`${formatShortDate(date)}, ${items.length} entries`}
-                >
-                  <View style={styles.dayHeaderText}>
+                <View style={styles.dayHeader}>
+                  <Pressable
+                    onPress={() => toggleDay(date)}
+                    style={styles.dayHeaderText}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded }}
+                    accessibilityLabel={`${formatShortDate(date)}, ${items.length} entries`}
+                  >
                     <Text style={hudType.label}>{formatShortDate(date)}</Text>
                     <HudMeta>
                       {items.length} · {formatMoney(dayTotal, currency)}
                     </HudMeta>
-                  </View>
-                  <Ionicons
-                    name={expanded ? 'chevron-up' : 'chevron-down'}
-                    size={16}
-                    color={colors.borderBright}
-                  />
-                </Pressable>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => onDeleteDay(date, items)}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Delete all expenses on ${formatShortDate(date)}`}
+                    style={styles.dayDeleteBtn}
+                  >
+                    <Text style={styles.dayDeleteText}>{copy.deleteDay}</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => toggleDay(date)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={expanded ? 'Collapse day' : 'Expand day'}
+                  >
+                    <Ionicons
+                      name={expanded ? 'chevron-up' : 'chevron-down'}
+                      size={16}
+                      color={colors.borderBright}
+                    />
+                  </Pressable>
+                </View>
                 {expanded
                   ? items.map((expense) => (
                       <ExpenseRow
@@ -226,5 +267,14 @@ const styles = StyleSheet.create({
   dayHeaderText: {
     flex: 1,
     gap: 2,
+  },
+  dayDeleteBtn: {
+    minHeight: 28,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  dayDeleteText: {
+    ...hudType.link,
+    color: colors.danger,
   },
 });

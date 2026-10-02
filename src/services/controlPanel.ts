@@ -233,6 +233,7 @@ export const CONTROL_PANEL_COPY = {
     feedLabel: 'BY DAY',
     expandAll: 'EXPAND ALL',
     collapseAll: 'COLLAPSE ALL',
+    deleteDay: 'DEL DAY',
     empty: 'No expenses yet. Log one to start the ledger.',
   },
   onboarding: {

@@ -19,7 +19,7 @@ Payday → payday. Гроші = енергія. Додаток показує, �
 | Вкладка | Що робить |
 |---------|-----------|
 | **Home** | Баланс, safe today, прогрес до payday, картки категорій |
-| **Trans** (Spend) | Список витрат цього циклу |
+| **Trans** (Spend) | Витрати цього циклу по днях; **DEL** на рядку / **DEL DAY** на дні |
 | **Pace** | LEFT TO SPEND NOW, прогноз IF THIS PACE → PAYDAY, темп (PACE), Day 1…N |
 | **Settings** | Plus, shared budget, рахунки, цикл, категорії, privacy |
 

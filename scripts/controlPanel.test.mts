@@ -275,6 +275,9 @@ assertEq(CONTROL_PANEL_COPY.activity.title, 'SPEND', 'activity title');
 assertEq(CONTROL_PANEL_COPY.activity.sysTag, 'EXPENSE LOG // THIS CYCLE', 'activity sys tag');
 assertEq(CONTROL_PANEL_COPY.activity.totalLabel, 'TOTAL SPENT', 'total drain');
 assertEq(CONTROL_PANEL_COPY.activity.feedLabel, 'BY DAY', 'event feed');
+assertEq(CONTROL_PANEL_COPY.activity.expandAll, 'EXPAND ALL', 'expand all');
+assertEq(CONTROL_PANEL_COPY.activity.collapseAll, 'COLLAPSE ALL', 'collapse all');
+assertEq(CONTROL_PANEL_COPY.activity.deleteDay, 'DEL DAY', 'delete day');
 assertEq(
   CONTROL_PANEL_COPY.activity.empty,
   'No expenses yet. Log one to start the ledger.',
