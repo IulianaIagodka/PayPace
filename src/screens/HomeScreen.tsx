@@ -62,8 +62,8 @@ export function HomeScreen({ navigation }: Props) {
   const [recentOpen, setRecentOpen] = useState(true);
   const availableRatioLive = availableRatioFor(horizon, snapshot);
   const prevRatio = useRef(availableRatioLive);
-  /** Clears the absolute tab bar under the docked + ADD EXPENSE footer. */
-  const tabClearance = useTabBarClearance(0);
+  /** Clears the absolute tab bar under scrolled panels. */
+  const tabClearance = useTabBarClearance(28);
 
   useEffect(() => {
     if (prevRatio.current > availableRatioLive) {
@@ -101,10 +101,6 @@ export function HomeScreen({ navigation }: Props) {
     return list.slice(0, 4);
   }, [activeCycle?.expenses]);
 
-  const openAddExpense = (envelopeKey?: string) => {
-    navigation.navigate('AddExpense', envelopeKey ? { envelopeKey } : undefined);
-  };
-
   if (!activeCycle) {
     return (
       <ScreenBackground>
@@ -132,13 +128,10 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
-      <View style={styles.flex}>
-        {/* Scroll ends above the dock — content cannot enter the CTA / tab zone. */}
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={[tabScreen.pad, styles.scrollContent]}
-          keyboardShouldPersistTaps="handled"
-        >
+      <ScrollView
+        contentContainerStyle={[tabScreen.pad, { paddingBottom: tabClearance }]}
+        keyboardShouldPersistTaps="handled"
+      >
           <Text style={hudType.brand}>
             PAY<Text style={hudType.brandAccent}>PACE</Text>
           </Text>
@@ -223,7 +216,6 @@ export function HomeScreen({ navigation }: Props) {
                       periodShare={periodShare}
                       horizonLabel={horizonLabel}
                       layout="rail"
-                      onPress={() => openAddExpense(String(mod.envelope.key))}
                     />
                   ))}
                 </ScrollView>
@@ -296,23 +288,12 @@ export function HomeScreen({ navigation }: Props) {
               )
             ) : null}
           </HUDPanel>
-        </ScrollView>
-
-        <View
-          style={[styles.ctaDock, { paddingBottom: tabClearance + 8 }]}
-          pointerEvents="box-none"
-        >
-          <HudButton title="+ ADD EXPENSE" onPress={() => openAddExpense()} />
-        </View>
-      </View>
+      </ScrollView>
     </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 12 },
   rangeRow: {
     flexDirection: 'row',
     gap: 6,
@@ -361,13 +342,5 @@ const styles = StyleSheet.create({
   recentHeadText: {
     flex: 1,
     gap: 2,
-  },
-  /** Solid dock so scrolled panels never show through under + ADD / tab bar. */
-  ctaDock: {
-    paddingHorizontal: hud.screenPad,
-    paddingTop: 10,
-    backgroundColor: '#060504',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(90, 80, 64, 0.45)',
   },
 });
