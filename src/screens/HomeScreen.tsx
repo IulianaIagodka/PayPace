@@ -53,9 +53,6 @@ const POPULAR_KEYS = [
   'other',
 ] as const;
 
-/** Space for sticky + ADD above the translucent tab bar. */
-const STICKY_CTA_BLOCK = 72;
-
 export function HomeScreen({ navigation }: Props) {
   const { activeCycle, snapshot, store, updateSettings } = useBudget();
   const currency = store.settings.currencyCode;
@@ -65,6 +62,7 @@ export function HomeScreen({ navigation }: Props) {
   const [recentOpen, setRecentOpen] = useState(true);
   const availableRatioLive = availableRatioFor(horizon, snapshot);
   const prevRatio = useRef(availableRatioLive);
+  /** Clears the absolute tab bar under the docked + ADD EXPENSE footer. */
   const tabClearance = useTabBarClearance(0);
 
   useEffect(() => {
@@ -135,11 +133,10 @@ export function HomeScreen({ navigation }: Props) {
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <View style={styles.flex}>
+        {/* Scroll ends above the dock — content cannot enter the CTA / tab zone. */}
         <ScrollView
-          contentContainerStyle={[
-            tabScreen.pad,
-            { paddingBottom: tabClearance + STICKY_CTA_BLOCK + 16 },
-          ]}
+          style={styles.scroll}
+          contentContainerStyle={[tabScreen.pad, styles.scrollContent]}
           keyboardShouldPersistTaps="handled"
         >
           <Text style={hudType.brand}>
@@ -301,7 +298,10 @@ export function HomeScreen({ navigation }: Props) {
           </HUDPanel>
         </ScrollView>
 
-        <View style={[styles.stickyCta, { bottom: tabClearance + 8 }]} pointerEvents="box-none">
+        <View
+          style={[styles.ctaDock, { paddingBottom: tabClearance + 8 }]}
+          pointerEvents="box-none"
+        >
           <HudButton title="+ ADD EXPENSE" onPress={() => openAddExpense()} />
         </View>
       </View>
@@ -311,6 +311,8 @@ export function HomeScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 12 },
   rangeRow: {
     flexDirection: 'row',
     gap: 6,
@@ -360,9 +362,12 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  stickyCta: {
-    position: 'absolute',
-    left: hud.screenPad,
-    right: hud.screenPad,
+  /** Solid dock so scrolled panels never show through under + ADD / tab bar. */
+  ctaDock: {
+    paddingHorizontal: hud.screenPad,
+    paddingTop: 10,
+    backgroundColor: '#060504',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(90, 80, 64, 0.45)',
   },
 });
