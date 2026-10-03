@@ -494,12 +494,9 @@ export function parseNarrativeStatementText(text: string): ParsedStatementRow[] 
 }
 
 function parseLooseText(text: string): ParsedStatementRow[] {
-  const narrative = parseNarrativeStatementText(text);
-  if (narrative.length) return narrative;
-
   const items: ParsedStatementRow[] = [];
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  const amountTail = String.raw`([+-]?\d+[.,]\d{2}[+-]?|[+-]?\d+[.,]\d{2}\s*(?:PLN|EUR|USD|GBP)?)`;
+  const amountTail = String.raw`([+-]?\d+[.,]\d{2}[+-]?|[+-]?\d+[.,]\d{2}\s*(?:PLN|EUR|USD|GBP|zł|zl)?)`;
   for (const line of lines) {
     const withDate = line.match(
       new RegExp(
@@ -529,7 +526,9 @@ function parseLooseText(text: string): ParsedStatementRow[] {
       date: leadingDate ?? undefined,
     });
   }
-  return items;
+  if (items.length) return items;
+  // Erste / multi-line PDF layout: date on its own line, then description.
+  return parseNarrativeStatementText(text);
 }
 
 /** Parse CSV / TSV / semicolon bank exports into expense rows. */
