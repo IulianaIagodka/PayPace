@@ -1,11 +1,12 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
 
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
 // docutext's browser build still contains a dynamic `import('fs/promises')`
-// for Node path inputs. Metro must resolve those to empty modules so the
-// React Native bundle can ship on-device PDF extraction via fromBuffer().
+// for Node path inputs. Stub those builtins only for docutext so the rest of
+// the graph keeps normal resolution.
 const emptyNodeBuiltins = new Set([
   'fs',
   'fs/promises',
@@ -15,7 +16,11 @@ const emptyNodeBuiltins = new Set([
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (emptyNodeBuiltins.has(moduleName)) {
-    return { type: 'empty' };
+    const origin = context.originModulePath || '';
+    const normalized = origin.split(path.sep).join('/');
+    if (normalized.includes('/docutext/')) {
+      return { type: 'empty' };
+    }
   }
   return context.resolveRequest(context, moduleName, platform);
 };
