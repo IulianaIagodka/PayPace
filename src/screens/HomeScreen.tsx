@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import {
   CategoryCell,
   ExpenseRow,
@@ -60,6 +61,8 @@ export function HomeScreen({ navigation }: Props) {
   const currency = store.settings.currencyCode;
   const horizon: PaceHorizon = store.settings.paceHorizon ?? 'week';
   const [drainFrom, setDrainFrom] = useState<number | undefined>();
+  /** Matches Spend day groups / Pace breakdown — tap header to collapse. */
+  const [recentOpen, setRecentOpen] = useState(true);
   const availableRatioLive = availableRatioFor(horizon, snapshot);
   const prevRatio = useRef(availableRatioLive);
   const tabClearance = useTabBarClearance(0);
@@ -243,23 +246,59 @@ export function HomeScreen({ navigation }: Props) {
             </HUDPanel>
           )}
 
-          <View style={styles.recentBlock}>
+          <HUDPanel variant="standard">
             <View style={styles.recentHead}>
-              <Text style={hudType.label}>RECENT</Text>
-              <Pressable onPress={() => navigation.navigate('Activity')}>
+              <Pressable
+                onPress={() => setRecentOpen((v) => !v)}
+                style={styles.recentHeadText}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: recentOpen }}
+                accessibilityLabel={
+                  recent.length === 0
+                    ? 'Recent spend'
+                    : `Recent spend, ${recent.length} entr${recent.length === 1 ? 'y' : 'ies'}`
+                }
+              >
+                <Text style={hudType.label}>RECENT SPEND</Text>
+                <HudMeta>
+                  {recent.length === 0
+                    ? 'No expenses yet'
+                    : recentOpen
+                      ? 'Hide recent entries'
+                      : `${recent.length} entr${recent.length === 1 ? 'y' : 'ies'}`}
+                </HudMeta>
+              </Pressable>
+              <Pressable
+                onPress={() => navigation.navigate('Activity')}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Open spend log"
+              >
                 <Text style={hudType.link}>SPEND ›</Text>
               </Pressable>
+              <Pressable
+                onPress={() => setRecentOpen((v) => !v)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={recentOpen ? 'Collapse recent spend' : 'Expand recent spend'}
+              >
+                <Ionicons
+                  name={recentOpen ? 'chevron-up' : 'chevron-down'}
+                  size={16}
+                  color={colors.borderBright}
+                />
+              </Pressable>
             </View>
-            <HUDPanel variant="standard">
-              {recent.length === 0 ? (
+            {recentOpen ? (
+              recent.length === 0 ? (
                 <HudBody>No expenses yet.</HudBody>
               ) : (
                 recent.map((e) => (
                   <ExpenseRow key={e.id} expense={e} currencyCode={currency} />
                 ))
-              )}
-            </HUDPanel>
-          </View>
+              )
+            ) : null}
+          </HUDPanel>
         </ScrollView>
 
         <View style={[styles.stickyCta, { bottom: tabClearance + 8 }]} pointerEvents="box-none">
@@ -311,8 +350,16 @@ const styles = StyleSheet.create({
   // let pods paint into screenPad and look wider while scrolling.
   railScroll: { overflow: 'hidden' },
   rail: { gap: 12, paddingRight: 0, paddingVertical: 2, flexGrow: 0 },
-  recentBlock: { gap: hud.gap },
-  recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  recentHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  recentHeadText: {
+    flex: 1,
+    gap: 2,
+  },
   stickyCta: {
     position: 'absolute',
     left: hud.screenPad,
