@@ -10,6 +10,11 @@ import {
   splitDelimitedLine,
   parseAmountTokenSigned,
 } from './statementParse';
+import {
+  extractPdfText,
+  isStatementImage,
+  isStatementPdf,
+} from './statementPdf';
 
 export type StatementLineItem = {
   id: string;
@@ -66,9 +71,34 @@ export function parseStatementText(text: string): StatementLineItem[] {
   }));
 }
 
+async function readFileBytes(uri: string): Promise<Uint8Array> {
+  const response = await fetch(uri);
+  if (!response.ok) {
+    throw new Error(`Could not read the file (${response.status}).`);
+  }
+  const buffer = await response.arrayBuffer();
+  return new Uint8Array(buffer);
+}
+
+async function analyzePdfStatement(
+  uri: string,
+  fileName: string,
+): Promise<StatementImportResult> {
+  const bytes = await readFileBytes(uri);
+  const text = extractPdfText(bytes);
+  const parsed = parseStatementText(text);
+  if (!parsed.length) {
+    throw new Error(
+      'Couldn’t find expenses in this PDF. Try a CSV export, or a statement PDF with clear dates, merchants, and amounts.',
+    );
+  }
+  return { sourceName: fileName || 'statement.pdf', items: parsed, source: 'parsed' };
+}
+
 /**
- * Parse a bank statement / CSV export into expense line items.
+ * Parse a bank statement / CSV / PDF export into expense line items.
  * Throws when the file cannot be parsed — never invents demo rows in production.
+ * PDF text is extracted on-device (not uploaded).
  */
 export async function analyzeStatementFile(
   uri: string,
@@ -76,17 +106,21 @@ export async function analyzeStatementFile(
   mimeType?: string | null,
   options?: { allowDemo?: boolean },
 ): Promise<StatementImportResult> {
-  const lowerName = (fileName || '').toLowerCase();
-  const isProbablyBinary =
-    lowerName.endsWith('.pdf') ||
-    (mimeType ?? '').includes('pdf') ||
-    (mimeType ?? '').includes('image');
-
-  if (isProbablyBinary) {
+  if (isStatementImage(fileName, mimeType)) {
     if (options?.allowDemo) return demoStatement(fileName || 'statement');
     throw new Error(
-      'PDF/image statements aren’t supported yet. Export a CSV or text statement from your bank, then try again.',
+      'Image statements aren’t supported. Export a CSV or PDF statement from your bank, then try again.',
     );
+  }
+
+  if (isStatementPdf(fileName, mimeType)) {
+    try {
+      return await analyzePdfStatement(uri, fileName);
+    } catch (error) {
+      if (options?.allowDemo) return demoStatement(fileName || 'statement');
+      const detail = error instanceof Error ? error.message : 'Could not read the PDF.';
+      throw new Error(detail);
+    }
   }
 
   try {
@@ -106,6 +140,6 @@ export async function analyzeStatementFile(
 
   if (options?.allowDemo) return demoStatement(fileName || 'statement');
   throw new Error(
-    'Couldn’t find expenses in that file. Use a CSV export with date, description, and amount columns.',
+    'Couldn’t find expenses in that file. Use a CSV or PDF export with date, description, and amount.',
   );
 }

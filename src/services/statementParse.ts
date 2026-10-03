@@ -24,6 +24,12 @@ export function parseAmountTokenSigned(raw: string): number | null {
   if (!cleaned || cleaned === '-' || cleaned === '+' || cleaned === '.' || cleaned === ',') {
     return null;
   }
+  // Bank PDFs often print debits as "86,40-" (trailing minus).
+  if (cleaned.endsWith('-') && !cleaned.startsWith('-')) {
+    cleaned = `-${cleaned.slice(0, -1)}`;
+  } else if (cleaned.endsWith('+') && !cleaned.startsWith('+')) {
+    cleaned = cleaned.slice(0, -1);
+  }
   const digitCount = (cleaned.match(/\d/g) ?? []).length;
   if (digitCount > 12) return null;
 
@@ -311,9 +317,13 @@ function rowToItem(cols: string[], roles: ColumnRole[] | null): ParsedStatementR
 function parseLooseText(text: string): ParsedStatementRow[] {
   const items: ParsedStatementRow[] = [];
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const amountTail = String.raw`([+-]?\d+[.,]\d{2}[+-]?|[+-]?\d+[.,]\d{2}\s*(?:PLN|EUR|USD|GBP)?)`;
   for (const line of lines) {
     const withDate = line.match(
-      /^(\d{1,2}[./-]\d{1,2}[./-]\d{2,4}|\d{4}-\d{2}-\d{2})\s+(.+?)\s+(-?\d+[.,]\d{2})\s*$/,
+      new RegExp(
+        String.raw`^(\d{1,2}[./-]\d{1,2}[./-]\d{2,4}|\d{4}-\d{2}-\d{2})\s+(.+?)\s+${amountTail}\s*$`,
+        'i',
+      ),
     );
     if (withDate) {
       const signed = parseAmountTokenSigned(withDate[3]!);
@@ -325,7 +335,7 @@ function parseLooseText(text: string): ParsedStatementRow[] {
       });
       continue;
     }
-    const match = line.match(/(.+?)\s+(-?\d+[.,]\d{2})\s*$/);
+    const match = line.match(new RegExp(String.raw`(.+?)\s+${amountTail}\s*$`, 'i'));
     if (!match) continue;
     const signed = parseAmountTokenSigned(match[2]!);
     if (signed == null || signed > 0) continue;

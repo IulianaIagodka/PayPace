@@ -37,7 +37,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 After changing keys, **rebuild** — an old TestFlight build will not pick up new secrets.
 
 If receipt scan fails, the app now shows the real error (missing key, billing, bad photo) instead of a silent demo receipt.
-Statement import throws if the file can’t be parsed (no invented expenses).
+Statement import (CSV or PDF) throws if the file can’t be parsed (no invented expenses). PDF text is extracted on-device.
 
 ## Free vs Plus
 
@@ -47,7 +47,7 @@ Statement import throws if the file can’t be parsed (no invented expenses).
 | Bills | Allocate amounts per category |
 | Manual expenses | Custom categories |
 | **3 receipt photo scans** | Unlimited receipt scans |
-| | Bank statement import (CSV/text) |
+| | Bank statement import (CSV/PDF) |
 | | Spend-by-category detail + history |
 | | Shared budget with a partner |
 

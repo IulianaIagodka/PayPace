@@ -112,8 +112,8 @@ export function StatementImportScreen({ navigation, route }: Props) {
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>UPLOAD STATEMENT</Text>
           <Text style={styles.sub}>
-            Plus imports a bank statement, sorts by day and category, and puts each row in the right
-            pay cycle.
+            Plus imports a bank CSV or PDF statement, sorts by day and category, and puts each row in
+            the right pay cycle.
           </Text>
           <PlusUnlockButton />
           <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
@@ -200,8 +200,9 @@ export function StatementImportScreen({ navigation, route }: Props) {
       <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.title}>UPLOAD STATEMENT</Text>
         <Text style={styles.sub}>
-          Import only rows in the date window below (toggle off to include the whole file). Each
-          row keeps its bank date and category — tap a row to change category.
+          Choose a CSV or PDF bank export. Import only rows in the date window below (toggle off to
+          include the whole file). Each row keeps its bank date and category — tap a row to change
+          category.
         </Text>
 
         <Panel>
