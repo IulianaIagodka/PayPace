@@ -37,7 +37,7 @@ assertEq(parseAmountTokenSigned('43.00+'), 43, 'trailing plus credit');
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pdfBytes = new Uint8Array(readFileSync(join(here, 'fixtures/statement-sample.pdf')));
-const text = extractPdfText(pdfBytes);
+const text = await extractPdfText(pdfBytes);
 assert(text.includes('Biedronka'), 'extracted merchant');
 assert(text.includes('2026-09-25'), 'extracted date');
 
@@ -54,7 +54,7 @@ assertEq(trailing.length, 1, 'only debit from trailing-sign PDF lines');
 assertEq(trailing[0]!.amount, 86.4, 'trailing minus amount');
 
 try {
-  extractPdfText(new Uint8Array([0x00, 0x01, 0x02, 0x03]));
+  await extractPdfText(new Uint8Array([0x00, 0x01, 0x02, 0x03]));
   throw new Error('FAIL: expected non-PDF reject');
 } catch (e) {
   assert(e instanceof Error && e.message.includes('doesn’t look like a PDF'), 'reject non-pdf');

@@ -1,10 +1,25 @@
 /**
  * On-device PDF text extraction for bank statement import.
- * Uses docutext (no native modules / no upload).
+ * DocuText is loaded lazily so Hermes never evaluates it at app startup
+ * (a static import white-screened TestFlight build #102).
  */
-import { DocuText } from 'docutext';
-
 const MAX_PDF_BYTES = 8_000_000;
+
+type DocuTextApi = {
+  fromBuffer: (
+    data: Uint8Array,
+    options?: { textMode?: 'layout' | 'clean' },
+  ) => { text?: string };
+};
+
+let docuTextPromise: Promise<DocuTextApi> | null = null;
+
+function loadDocuText(): Promise<DocuTextApi> {
+  if (!docuTextPromise) {
+    docuTextPromise = import('docutext').then((mod) => mod.DocuText as DocuTextApi);
+  }
+  return docuTextPromise;
+}
 
 export function isStatementPdf(
   fileName: string,
@@ -32,7 +47,7 @@ export function isStatementImage(
  * Extract plain text from a PDF buffer.
  * Prefers layout mode (better for tabular statements), falls back to clean.
  */
-export function extractPdfText(bytes: Uint8Array): string {
+export async function extractPdfText(bytes: Uint8Array): Promise<string> {
   if (!bytes.length) {
     throw new Error('PDF file is empty.');
   }
@@ -44,6 +59,14 @@ export function extractPdfText(bytes: Uint8Array): string {
   const head = String.fromCharCode(bytes[0]!, bytes[1]!, bytes[2]!, bytes[3]!);
   if (head !== '%PDF') {
     throw new Error('That file doesn’t look like a PDF.');
+  }
+
+  let DocuText: DocuTextApi;
+  try {
+    DocuText = await loadDocuText();
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'PDF engine unavailable.';
+    throw new Error(`Couldn’t load PDF reader. ${detail}`);
   }
 
   let layoutText = '';

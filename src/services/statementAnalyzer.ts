@@ -113,7 +113,7 @@ async function analyzePdfStatement(
   fileName: string,
 ): Promise<StatementImportResult> {
   const bytes = await readFileBytes(uri);
-  const text = extractPdfText(bytes);
+  const text = await extractPdfText(bytes);
   const parsed = parseStatementText(text);
   if (!parsed.length) {
     throw new Error(

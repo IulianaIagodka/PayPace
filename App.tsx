@@ -29,7 +29,6 @@ import { HistoryScreen } from './src/screens/HistoryScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AllocateScreen } from './src/screens/AllocateScreen';
 import { ReceiptScanScreen } from './src/screens/ReceiptScanScreen';
-import { StatementImportScreen } from './src/screens/StatementImportScreen';
 import { CategoryBalancesScreen } from './src/screens/CategoryBalancesScreen';
 import { SharedBudgetScreen } from './src/screens/SharedBudgetScreen';
 import { PeriodReportScreen } from './src/screens/PeriodReportScreen';
@@ -39,6 +38,29 @@ import { PlusEntitlementSync } from './src/components/PlusEntitlementSync';
 import { PeriodReportPrompt } from './src/components/PeriodReportPrompt';
 import { colors } from './src/theme/colors';
 import { fonts } from './src/theme/fonts';
+
+/** Lazy: keeps docutext / statement PDF code off the cold-start path. */
+const StatementImportScreen = React.lazy(() =>
+  import('./src/screens/StatementImportScreen').then((m) => ({
+    default: m.StatementImportScreen,
+  })),
+);
+
+function StatementImportRoute(
+  props: React.ComponentProps<typeof StatementImportScreen>,
+) {
+  return (
+    <React.Suspense
+      fallback={
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
+          <ActivityIndicator color={colors.resource} />
+        </View>
+      }
+    >
+      <StatementImportScreen {...props} />
+    </React.Suspense>
+  );
+}
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -193,7 +215,7 @@ function RootNavigator() {
           <Stack.Screen name="ReceiptScan" component={ReceiptScanScreen} options={{ title: 'SCAN' }} />
           <Stack.Screen
             name="StatementImport"
-            component={StatementImportScreen}
+            component={StatementImportRoute}
             options={{ title: 'STATEMENT' }}
           />
           <Stack.Screen name="CategoryBalances" component={CategoryBalancesScreen} options={{ title: 'CELLS' }} />
