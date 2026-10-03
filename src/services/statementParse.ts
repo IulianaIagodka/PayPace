@@ -54,29 +54,121 @@ function parseAmountToken(raw: string): number | null {
   return Math.abs(signed);
 }
 
-/** Parse common bank date formats into YYYY-MM-DD. */
+const MONTH_INDEX: Record<string, number> = {
+  jan: 0,
+  january: 0,
+  sty: 0,
+  stycznia: 0,
+  feb: 1,
+  february: 1,
+  lut: 1,
+  lutego: 1,
+  mar: 2,
+  march: 2,
+  marca: 2,
+  apr: 3,
+  april: 3,
+  kwi: 3,
+  kwietnia: 3,
+  may: 4,
+  maj: 4,
+  maja: 4,
+  jun: 5,
+  june: 5,
+  cze: 5,
+  czerwca: 5,
+  jul: 6,
+  july: 6,
+  lip: 6,
+  lipca: 6,
+  aug: 7,
+  august: 7,
+  sie: 7,
+  sierpnia: 7,
+  sep: 8,
+  sept: 8,
+  september: 8,
+  wrz: 8,
+  wrzesnia: 8,
+  oct: 9,
+  october: 9,
+  paz: 9,
+  pazdziernika: 9,
+  nov: 10,
+  november: 10,
+  lis: 10,
+  listopada: 10,
+  dec: 11,
+  december: 11,
+  gru: 11,
+  grudnia: 11,
+};
+
+function monthTokenToIndex(raw: string): number | null {
+  const key = raw
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\./g, '');
+  return MONTH_INDEX[key] ?? null;
+}
+
+function ymdKey(y: number, m: number, d: number): string | null {
+  if (m < 0 || m > 11 || d < 1 || d > 31) return null;
+  if (y < 2000 || y > 2100) return null;
+  const dt = new Date(y, m, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== m || dt.getDate() !== d) return null;
+  return format(dt, 'yyyy-MM-dd');
+}
+
+/** True for booking / document metadata dates that must not become spend dates. */
+export function isNonTransactionDateLabel(raw: string): boolean {
+  const t = raw.trim().toLowerCase();
+  return (
+    t.includes('booking date') ||
+    t.includes('data ksieg') ||
+    t.includes('data księg') ||
+    t.startsWith('document on') ||
+    t.includes('dokument z dnia') ||
+    t.includes('statement date') ||
+    t.includes('wygenerowano')
+  );
+}
+
+/**
+ * Pull the first calendar date from bank text ("02 oct 2026", "02.10.2026", ISO).
+ * Ignores booking/document labels so Erste "Booking date …" is not used as spend day.
+ */
 export function parseStatementDate(raw: string, now = new Date()): string | null {
   const text = raw.trim();
   if (!text) return null;
+  if (isNonTransactionDateLabel(text)) return null;
 
-  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(text);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const iso = /(\d{4})-(\d{2})-(\d{2})/.exec(text);
+  if (iso) return ymdKey(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
 
-  const dmy = /^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/.exec(text);
+  const dmy = /(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/.exec(text);
   if (dmy) {
     let y = Number(dmy[3]);
     if (y < 100) y += 2000;
-    const d = Number(dmy[1]);
-    const m = Number(dmy[2]);
-    if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
-      return format(new Date(y, m - 1, d), 'yyyy-MM-dd');
-    }
+    return ymdKey(y, Number(dmy[2]) - 1, Number(dmy[1]));
   }
+
+  // Erste / EN-PL statements: "02 oct 2026", "30 Sep 2026", "1 października 2026"
+  const mon = /(\d{1,2})\s+([A-Za-zÀ-ž.]+)\s+(\d{4})/.exec(text);
+  if (mon) {
+    const month = monthTokenToIndex(mon[2]!);
+    if (month != null) return ymdKey(Number(mon[3]), month, Number(mon[1]));
+  }
+
+  // Avoid Date.parse on bare numbers / junk like "02" (ambiguous epoch dates).
+  if (!/[a-z]/i.test(text) && !/\d{4}/.test(text)) return null;
 
   const parsed = Date.parse(text);
   if (Number.isFinite(parsed)) {
     const d = new Date(parsed);
     if (d.getFullYear() > 2000 && d.getFullYear() < now.getFullYear() + 2) {
+      // Rebuild via local Y-M-D parts from UTC parse — prefer explicit formats above.
       return toDateKey(d);
     }
   }
@@ -163,7 +255,13 @@ function classifyHeader(cell: string): ColumnRole {
   ) {
     return 'amount';
   }
-  if (h.includes('data oper') || h.includes('operation date') || h.includes('trans date')) {
+  if (
+    h.includes('data oper') ||
+    h.includes('operation date') ||
+    h.includes('trans date') ||
+    h.includes('transaction date') ||
+    h.includes('data transakcji')
+  ) {
     return 'opDate';
   }
   if (
@@ -172,7 +270,7 @@ function classifyHeader(cell: string): ColumnRole {
     h.includes('booking') ||
     h.includes('posting') ||
     h === 'data' ||
-    (h.includes('date') && !h.includes('oper'))
+    (h.includes('date') && !h.includes('oper') && !h.includes('trans'))
   ) {
     return 'bookingDate';
   }
@@ -314,14 +412,95 @@ function rowToItem(cols: string[], roles: ColumnRole[] | null): ParsedStatementR
   };
 }
 
+function isStandaloneDateLine(line: string): string | null {
+  const trimmed = line.trim();
+  if (!trimmed || isNonTransactionDateLabel(trimmed)) return null;
+  // Whole line is basically just a date (optional punctuation).
+  if (!/^[\dA-Za-zÀ-ž.\s/-]+$/.test(trimmed)) return null;
+  const words = trimmed.split(/\s+/);
+  if (words.length > 4) return null;
+  return parseStatementDate(trimmed);
+}
+
+function extractDebitAmount(line: string): number | null {
+  // Prefer "… -39.26 PLN" / "… -39,26" near the end (Erste amount column).
+  const matches = [
+    ...line.matchAll(/([-+]?\d{1,3}(?:[ \u00a0]?\d{3})*[.,]\d{2})\s*(?:PLN|zł|zl)?/gi),
+  ];
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const signed = parseAmountTokenSigned(matches[i]![1]!);
+    if (signed != null && signed < 0) return Math.abs(signed);
+  }
+  // Some exports omit the minus for debit-only lists — take last money token if line looks like a card spend.
+  if (/płatność|platnosc|visa|mastercard|debit|card/i.test(line) && matches.length) {
+    const signed = parseAmountTokenSigned(matches[matches.length - 1]![1]!);
+    if (signed != null) return Math.abs(signed);
+  }
+  return null;
+}
+
+function merchantFromErsteLine(line: string): string {
+  let text = line.replace(/\s+/g, ' ').trim();
+  text = text.replace(/^visa\s+\w+\s+\d+\*{4,}\d+\s*/i, '');
+  text = text.replace(/^mastercard\s+\w*\s*\d*\*{0,}\d*\s*/i, '');
+  text = text.replace(/płatność\s+kartą|platnosc\s+karta/gi, ' ');
+  text = text.replace(/\d+[.,]\d+\s*(eur|usd|dkk|gbp|chf|nok|sek)\b[^]*?(?:pln|zł)?/gi, ' ');
+  text = text.replace(/\d+\s+\w+\s*=\s*[\d.,]+\s*\w+/gi, ' ');
+  text = text.replace(/[-+]?\d{1,3}(?:[ \u00a0]?\d{3})*[.,]\d{2}\s*(?:PLN|zł|zl)?/gi, ' ');
+  text = text.replace(/\b\d{2}\s+[A-Za-zÀ-ž.]+\s+\d{4}\b/g, ' ');
+  text = text.replace(/\bbooking\s+date\b/gi, ' ');
+  text = text.replace(/\s+/g, ' ').trim();
+  const { name } = cleanMerchantName(text);
+  return name;
+}
+
+/**
+ * Erste / multi-line PDF text: date on its own line, then description+amount.
+ * Uses Transaction date lines; ignores "Booking date" and "Document on".
+ */
+export function parseNarrativeStatementText(text: string): ParsedStatementRow[] {
+  const items: ParsedStatementRow[] = [];
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  let currentDate: string | undefined;
+
+  for (const line of lines) {
+    if (/^page\s+\d+/i.test(line)) continue;
+    if (/list of transactions|erste bank|account number/i.test(line)) continue;
+    if (isNonTransactionDateLabel(line)) continue;
+
+    const alone = isStandaloneDateLine(line);
+    if (alone) {
+      currentDate = alone;
+      continue;
+    }
+
+    const amount = extractDebitAmount(line);
+    if (amount == null) continue;
+
+    const leading = parseStatementDate(line.split(/\s{2,}|\t/)[0] ?? '');
+    const date = leading ?? currentDate;
+    const name = merchantFromErsteLine(line);
+    if (!name || name === 'Transaction') {
+      // Amount-only line after a merchant line — skip if no usable name.
+      if (name === 'Transaction' && !/[a-zA-Zа-яА-ЯіІїЇєЄęółąśżźćń]/i.test(line)) continue;
+    }
+    items.push({
+      name: name.slice(0, 80),
+      amount,
+      date,
+    });
+  }
+  return items;
+}
+
 function parseLooseText(text: string): ParsedStatementRow[] {
   const items: ParsedStatementRow[] = [];
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  const amountTail = String.raw`([+-]?\d+[.,]\d{2}[+-]?|[+-]?\d+[.,]\d{2}\s*(?:PLN|EUR|USD|GBP)?)`;
+  const amountTail = String.raw`([+-]?\d+[.,]\d{2}[+-]?|[+-]?\d+[.,]\d{2}\s*(?:PLN|EUR|USD|GBP|zł|zl)?)`;
   for (const line of lines) {
     const withDate = line.match(
       new RegExp(
-        String.raw`^(\d{1,2}[./-]\d{1,2}[./-]\d{2,4}|\d{4}-\d{2}-\d{2})\s+(.+?)\s+${amountTail}\s*$`,
+        String.raw`^(\d{1,2}[./-]\d{1,2}[./-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}\s+[A-Za-zÀ-ž.]+\s+\d{4})\s+(.+?)\s+${amountTail}\s*$`,
         'i',
       ),
     );
@@ -329,7 +508,7 @@ function parseLooseText(text: string): ParsedStatementRow[] {
       const signed = parseAmountTokenSigned(withDate[3]!);
       if (signed == null || signed > 0) continue;
       items.push({
-        name: withDate[2]!.trim().slice(0, 80) || 'Transaction',
+        name: cleanMerchantName(withDate[2]!.trim()).name.slice(0, 80) || 'Transaction',
         amount: Math.abs(signed),
         date: parseStatementDate(withDate[1]!) ?? undefined,
       });
@@ -340,14 +519,16 @@ function parseLooseText(text: string): ParsedStatementRow[] {
     const signed = parseAmountTokenSigned(match[2]!);
     if (signed == null || signed > 0) continue;
     const name = match[1]!.replace(/[\d./-]+$/, '').trim() || 'Transaction';
-    const leadingDate = parseStatementDate(match[1]!.trim().split(/\s+/)[0] ?? '');
+    const leadingDate = parseStatementDate(match[1]!.trim().split(/\s+/).slice(0, 3).join(' '));
     items.push({
-      name: name.slice(0, 80),
+      name: cleanMerchantName(name).name.slice(0, 80),
       amount: Math.abs(signed),
       date: leadingDate ?? undefined,
     });
   }
-  return items;
+  if (items.length) return items;
+  // Erste / multi-line PDF layout: date on its own line, then description.
+  return parseNarrativeStatementText(text);
 }
 
 /** Parse CSV / TSV / semicolon bank exports into expense rows. */

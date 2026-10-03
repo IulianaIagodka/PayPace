@@ -1,0 +1,50 @@
+List of transactions
+Account number 71 1090 1043 0000 0001 6503 3627
+Transaction date Transaction Amount Balance
+
+02 oct 2026
+Booking date 04 oct 2026
+Visa Plat 421352******4679 Płatność Kartą 8.93 Eur 1 Eur=4.3962 Pln Appleads/apple228 Ireland -39.26 PLN 14954.21 PLN
+
+02 oct 2026
+Booking date 04 oct 2026
+Visa Plat 421352******4679 Płatność Kartą 35.00 Eur 1 Eur=4.5017 Pln Apple.com/bill Cork -157.56 PLN 14796.65 PLN
+
+02 oct 2026
+Booking date 04 oct 2026
+Visa Plat 421352******4679 Płatność Kartą 0.99 Eur 1 Eur=4.5017 Pln Itunes.com/bill Cork -1.06 PLN 14795.59 PLN
+
+01 oct 2026
+Booking date 04 oct 2026
+Visa Plat 421352******4679 Płatność Kartą Copenhagen Island Gentofte -27.53 PLN 14768.06 PLN
+
+01 oct 2026
+Booking date 02 oct 2026
+Visa Plat 421352******4679 Płatność Kartą Snk Group Aps Copenhagen -25.72 PLN 14742.34 PLN
+
+01 oct 2026
+Booking date 02 oct 2026
+Visa Plat 421352******4679 Płatność Kartą Zocalo Copenhagen -119.97 PLN 14622.37 PLN
+
+01 oct 2026
+Booking date 02 oct 2026
+Visa Plat 421352******4679 Płatność Kartą Gameskarrusellalou Copenhagen -181.13 PLN 14441.24 PLN
+
+01 oct 2026
+Booking date 04 oct 2026
+Visa Plat 421352******4679 Płatność Kartą 22.00 Eur 1 Eur=4.545 Pln Apple.com/bill Cork -99.99 PLN 14341.25 PLN
+
+30 sep 2026
+Booking date 02 oct 2026
+Visa Plat 421352******4679 Płatność Kartą 204.00 Dkk 1 Dkk=0.5881 Pln Bog & Ide City Copenhagen -126.03 PLN 14215.22 PLN
+
+30 sep 2026
+Booking date 02 oct 2026
+Visa Plat 421352******4679 Płatność Kartą 114.60 Dkk 1 Dkk=0.5881 Pln Lidlfisketorvet Copenhagen -67.39 PLN 14147.83 PLN
+
+30 sep 2026
+Booking date 02 oct 2026
+Visa Plat 421352******4679 Płatność Kartą Snk Group Aps Copenhagen -31.87 PLN 14115.96 PLN
+
+Document on: 03 oct 2026
+Page 1 of 2

@@ -1,5 +1,5 @@
 /**
- * Bank statement CSV parsing (mBank + heuristics).
+ * Bank statement CSV parsing (mBank + Erste heuristics).
  * Run: npm run test:statement
  */
 import { readFileSync } from 'node:fs';
@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import {
   cleanMerchantName,
   parseAmountTokenSigned,
+  parseNarrativeStatementText,
+  parseStatementDate,
   parseStatementText,
   splitDelimitedLine,
 } from '../src/services/statementParse.ts';
@@ -31,6 +33,13 @@ assertEq(parseAmountTokenSigned('32 958,56'), 32958.56, 'PL thousands');
 assertEq(parseAmountTokenSigned('2 438,88 PLN'), 2438.88, 'PLN suffix');
 assert(parseAmountTokenSigned('79 1140 2004 0000 3402 8529 1556') == null, 'reject account#');
 assert(parseAmountTokenSigned('+48 (42) 6 300 800') == null, 'reject phone');
+
+assertEq(parseStatementDate('02 oct 2026'), '2026-10-02', 'Erste EN month');
+assertEq(parseStatementDate('30 sep 2026'), '2026-09-30', 'Erste sep');
+assertEq(parseStatementDate('01 Oct 2026'), '2026-10-01', 'Erste capitalized');
+assertEq(parseStatementDate('Booking date 04 oct 2026'), null, 'ignore booking date');
+assertEq(parseStatementDate('Document on: 03 oct 2026'), null, 'ignore document on');
+assertEq(parseStatementDate('02'), null, 'reject bare day');
 
 const merchant = cleanMerchantName(
   'ANDRZEJ OTOWSKI    /WARSZAWA                                          DATA TRANSAKCJI: 2026-09-25',
@@ -84,5 +93,27 @@ try {
 } catch (e) {
   if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
 }
+
+const ersteText = readFileSync(join(here, 'fixtures/erste-list-of-transactions.txt'), 'utf8');
+const erste = parseNarrativeStatementText(ersteText);
+assert(erste.length >= 10, `Erste narrative rows (>=10, got ${erste.length})`);
+assert(
+  erste.every(
+    (row) => row.date === '2026-10-02' || row.date === '2026-10-01' || row.date === '2026-09-30',
+  ),
+  'Erste rows use transaction dates not booking/document',
+);
+assert(erste.some((row) => row.date === '2026-10-02'), 'has 02 oct');
+assert(erste.some((row) => row.date === '2026-10-01'), 'has 01 oct');
+assert(erste.some((row) => row.date === '2026-09-30'), 'has 30 sep');
+assert(!erste.some((row) => row.date === '2026-10-03'), 'not document-on today');
+assert(!erste.some((row) => row.date === '2026-10-04'), 'not booking date');
+
+const ersteViaMain = parseStatementText(ersteText);
+assert(ersteViaMain.length >= 10, 'parseStatementText hits Erste narrative');
+assert(
+  new Set(ersteViaMain.map((r) => r.date)).size >= 3,
+  'Erste spans 3+ days',
+);
 
 console.log(`statementParse.test.mts: ok (${passed} asserts)`);
