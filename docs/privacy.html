@@ -23,7 +23,7 @@
 
     <main class="wrap prose">
       <h1>Privacy Policy</h1>
-      <p class="meta">Last updated: 23 September 2026</p>
+      <p class="meta">Last updated: 3 October 2026</p>
 
       <p>
         PayPace (“we”, “the app”) is a payday-to-payday budgeting app. This
@@ -36,8 +36,8 @@
         <li>Budget data on your device stays on your device by default.</li>
         <li>
           Optional features may send limited data to third-party services you
-          choose to use (receipt photo scan, shared budget sync, in-app
-          purchases).
+          choose to use (receipt photo scan, statement photo scan, shared budget
+          sync, in-app purchases).
         </li>
         <li>We do not sell your personal information.</li>
         <li>We do not use your content for advertising.</li>
@@ -72,9 +72,16 @@
       <h2>4. Bank statement import (Plus)</h2>
       <p>
         If you import a bank export (for example CSV or PDF), the file is read
-        on your device to create expense entries. We do not upload statement
-        files to our own servers. PDF text is extracted in the app; unsupported
-        formats are rejected rather than replaced with invented data.
+        on your device to create expense entries. We do not upload those
+        exports to our own servers. PDF text is extracted in the app;
+        unsupported formats are rejected rather than replaced with invented
+        data.
+      </p>
+      <p>
+        If you import a <strong>photo of a statement</strong>, the image is sent
+        to <strong>OpenAI</strong> (same path as receipt scan) to read merchants,
+        amounts, and each transaction date. Prefer CSV/PDF when you can; do not
+        photograph statement pages you do not want that service to process.
       </p>
 
       <h2>5. Shared budget (Plus only)</h2>

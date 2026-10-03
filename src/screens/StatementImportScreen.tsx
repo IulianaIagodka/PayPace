@@ -112,8 +112,8 @@ export function StatementImportScreen({ navigation, route }: Props) {
         <ScrollView contentContainerStyle={styles.pad}>
           <Text style={styles.title}>UPLOAD STATEMENT</Text>
           <Text style={styles.sub}>
-            Plus imports a bank CSV or PDF statement, sorts by day and category, and puts each row in
-            the right pay cycle.
+            Plus imports a bank CSV, PDF, or photo of a multi-day statement, keeps each spend on its
+            real day, and puts rows in the right pay cycle.
           </Text>
           <PlusUnlockButton />
           <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
@@ -200,9 +200,9 @@ export function StatementImportScreen({ navigation, route }: Props) {
       <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.title}>UPLOAD STATEMENT</Text>
         <Text style={styles.sub}>
-          Choose a CSV or PDF bank export. Import only rows in the date window below (toggle off to
-          include the whole file). Each row keeps its bank date and category — tap a row to change
-          category.
+          CSV, PDF, or a photo of a multi-day statement. Each row keeps its bank transaction date
+          (not booking / document date) and its own category — tap a row to change it. Filter below
+          can hide days outside this window.
         </Text>
 
         <Panel>
@@ -237,9 +237,13 @@ export function StatementImportScreen({ navigation, route }: Props) {
             <Text style={styles.fileName}>{fileLabel}</Text>
             {result ? (
               <Text style={styles.meta}>
-                {result.source === 'parsed' ? 'PARSED' : 'DEMO PARSE'} · {visibleItems.length}/
-                {result.items.length} shown · {formatMoney(total, currency)} · {dayGroups.length}{' '}
-                day{dayGroups.length === 1 ? '' : 's'}
+                {result.source === 'parsed'
+                  ? 'PARSED'
+                  : result.source === 'ai'
+                    ? 'PHOTO AI'
+                    : 'DEMO PARSE'}{' '}
+                · {visibleItems.length}/{result.items.length} shown · {formatMoney(total, currency)} ·{' '}
+                {dayGroups.length} day{dayGroups.length === 1 ? '' : 's'}
               </Text>
             ) : null}
           </Panel>
