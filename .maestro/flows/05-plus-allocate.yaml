@@ -1,0 +1,39 @@
+# J6 — Plus demo → Allocate groceries → Home category rail shows plan
+appId: app.paypace.PayPace
+tags:
+  - smoke
+  - j6
+  - plus
+---
+- launchApp:
+    clearState: true
+- runFlow: ../helpers/seed-demo.yaml
+- runFlow: ../helpers/unlock-plus.yaml
+- tapOn:
+    id: "settings.allocate"
+- assertVisible:
+    id: "allocate.amount.groceries"
+- scrollUntilVisible:
+    element:
+      id: "allocate.amount.groceries"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "allocate.amount.groceries"
+- eraseText
+- inputText: "500"
+- scrollUntilVisible:
+    element:
+      id: "allocate.save"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "allocate.save"
+- extendedWaitUntil:
+    visible:
+      id: "tabs.home"
+    timeout: 10000
+- tapOn:
+    id: "tabs.home"
+- assertVisible:
+    id: "home.category.groceries"

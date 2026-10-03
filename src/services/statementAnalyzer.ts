@@ -1,8 +1,7 @@
-import { subDays } from 'date-fns';
 import type { ExpenseCategory } from '../models/types';
 import { guessCategory } from './categories';
+import { buildDemoStatementResult } from './demoFixtures';
 import { newId } from './id';
-import { toDateKey } from './formatting';
 import {
   parseStatementText as parseStatementRows,
   parseStatementDate,
@@ -10,6 +9,8 @@ import {
   splitDelimitedLine,
   parseAmountTokenSigned,
 } from './statementParse';
+
+export { buildDemoStatementResult } from './demoFixtures';
 
 export type StatementLineItem = {
   id: string;
@@ -33,26 +34,7 @@ export {
 };
 
 function demoStatement(fileName: string): StatementImportResult {
-  const today = new Date();
-  const samples = [
-    { name: 'Biedronka', amount: 86.4, daysAgo: 1 },
-    { name: 'Żabka', amount: 24.9, daysAgo: 3 },
-    { name: 'Uber Trip', amount: 31.5, daysAgo: 5 },
-    { name: 'Netflix', amount: 43, daysAgo: 12 },
-    { name: 'Orlen Fuel', amount: 210, daysAgo: 18 },
-    { name: 'McDonalds', amount: 38.2, daysAgo: 25 },
-  ];
-  return {
-    sourceName: fileName || 'statement.csv',
-    source: 'demo',
-    items: samples.map((s) => ({
-      id: newId(),
-      name: s.name,
-      amount: s.amount,
-      date: toDateKey(subDays(today, s.daysAgo)),
-      category: guessCategory(s.name),
-    })),
-  };
+  return buildDemoStatementResult(fileName || 'statement.csv');
 }
 
 /** Parse CSV / TSV / semicolon bank exports into categorized expense line items. */

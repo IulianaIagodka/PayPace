@@ -15,6 +15,7 @@ import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { FormScroll } from '../components/FormScroll';
 import { categoryTitle, nextCategoryInCycle } from '../services/categories';
 import { formatMoney, formatShortDate, toDateKey } from '../services/formatting';
+import { buildDemoStatementResult } from '../services/demoFixtures';
 import {
   analyzeStatementFile,
   type StatementImportResult,
@@ -97,7 +98,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
   if (!store.settings.isPremium) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <ScrollView contentContainerStyle={styles.pad}>
+        <ScrollView contentContainerStyle={styles.pad} testID="statement.plusGate">
           <Text style={styles.title}>UPLOAD STATEMENT</Text>
           <Text style={styles.sub}>
             Plus imports a bank statement, sorts by day and category, and puts each row in the right
@@ -109,6 +110,17 @@ export function StatementImportScreen({ navigation, route }: Props) {
       </ScreenBackground>
     );
   }
+
+  const loadDemoStatement = () => {
+    setBusy(true);
+    try {
+      const demo = buildDemoStatementResult('demo-statement.csv');
+      setFileLabel(demo.sourceName);
+      setResult(demo);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const cycleItemCategory = (itemId: string) => {
     setResult((prev) => {
@@ -214,7 +226,16 @@ export function StatementImportScreen({ navigation, route }: Props) {
           </Pressable>
         </Panel>
 
-        <HudButton title="CHOOSE FILE" onPress={pickFile} disabled={busy} />
+        <HudButton testID="statement.chooseFile" title="CHOOSE FILE" onPress={pickFile} disabled={busy} />
+        {__DEV__ ? (
+          <HudButton
+            testID="statement.loadDemo"
+            title="LOAD DEMO STATEMENT"
+            onPress={loadDemoStatement}
+            disabled={busy}
+            variant="secondary"
+          />
+        ) : null}
 
         {fileLabel ? (
           <Panel>

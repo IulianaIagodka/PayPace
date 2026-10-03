@@ -1,0 +1,58 @@
+# J5 — Free user hits Plus gates (Allocate, Shared, Statement)
+appId: app.paypace.PayPace
+tags:
+  - smoke
+  - j5
+  - plus
+---
+- launchApp:
+    clearState: true
+- runFlow: ../helpers/seed-demo.yaml
+# Allocate gate
+- tapOn:
+    id: "tabs.settings"
+- scrollUntilVisible:
+    element:
+      id: "settings.allocate"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "settings.allocate"
+- assertVisible:
+    id: "allocate.plusGate"
+- assertVisible:
+    id: "plus.unlock"
+- tapOn:
+    id: "allocate.back"
+# Shared gate
+- scrollUntilVisible:
+    element:
+      id: "settings.sharedBudget"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "settings.sharedBudget"
+- assertVisible:
+    id: "shared.plusGate"
+- assertVisible:
+    id: "plus.unlock"
+- tapOn:
+    id: "shared.back"
+# Statement gate via Add Expense
+- tapOn:
+    id: "tabs.home"
+- tapOn:
+    id: "home.addExpense"
+- tapOn:
+    id: "expense.bankFile"
+- assertVisible:
+    id: "statement.plusGate"
+- assertVisible:
+    id: "plus.unlock"
+# Unlock from statement gate and confirm import UI opens
+- tapOn:
+    id: "plus.unlock"
+- extendedWaitUntil:
+    visible:
+      id: "statement.loadDemo"
+    timeout: 10000

@@ -117,15 +117,18 @@ npm test                 # shared + control + sync + status + pace + range + not
 npm run test:control     # Pace labels / control panel
 npm run test:pace        # dayPace lock math
 npm run test:e2e-seed    # demo seed math (safe today = 200)
+npm run test:demo-receipt # offline receipt/statement fixtures
 npm run test:receipt-category
 npm run test:categories
 npm run typecheck
-npm run test:e2e:smoke   # Maestro UI smoke (needs iOS sim + native build)
+npm run test:e2e:smoke   # Maestro UI smoke J1–J8 (needs iOS sim + native build)
+npm run test:e2e:plus    # Maestro Plus journeys only
 ```
 
 Leaf services are tested with `node --experimental-strip-types` (no Expo runtime). Prefer keeping domain logic in `services/` so tests stay importable.
 
-**UI / device E2E:** plan + Maestro flows in [E2E-TESTING-PLAN.md](./E2E-TESTING-PLAN.md) and [.maestro/README.md](./.maestro/README.md). Debug Settings: **SEED DEMO CYCLE** / **RESET APP DATA** (`__DEV__` only). Stable `testID`s: `onboarding.*`, `tabs.*`, `home.*`, `pace.*`, `expense.*`, `settings.*`, `plus.*`, `receipt.save`, `statement.confirm`.
+**UI / device E2E:** [E2E-TESTING-PLAN.md](./E2E-TESTING-PLAN.md), [.maestro/README.md](./.maestro/README.md).  
+Debug (`__DEV__`): **SEED DEMO CYCLE**, **EXHAUST FREE SCANS**, **RESET APP DATA**, **LOAD DEMO RECEIPT**, **LOAD DEMO STATEMENT**. Fixtures in `src/services/demoFixtures.ts`.
 
 ## Build / ship
 

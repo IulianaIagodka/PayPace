@@ -34,13 +34,18 @@ export function AllocateScreen({ navigation }: Props) {
   if (!store.settings.isPremium) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <FormScroll contentContainerStyle={styles.pad}>
+        <FormScroll contentContainerStyle={styles.pad} testID="allocate.plusGate">
           <Text style={styles.title}>ALLOCATE RESOURCES</Text>
           <Text style={styles.sub}>
             Plus lets you split spending across categories and see what’s left in each one.
           </Text>
           <PlusUnlockButton testID="plus.unlock" />
-          <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
+          <HudButton
+            testID="allocate.back"
+            title="BACK"
+            onPress={() => navigation.goBack()}
+            variant="secondary"
+          />
         </FormScroll>
       </ScreenBackground>
     );
@@ -93,9 +98,10 @@ export function AllocateScreen({ navigation }: Props) {
         </Panel>
 
         {draft.map((env) => (
-          <Panel key={env.id}>
+          <Panel key={env.id} testID={`allocate.row.${env.key}`}>
             <Text style={styles.label}>{env.title}</Text>
             <AmountField
+              testID={`allocate.amount.${env.key}`}
               label="ALLOCATION"
               value={String(env.allocated || '')}
               onChangeText={(t) => updateAlloc(env.id, t)}
@@ -105,6 +111,7 @@ export function AllocateScreen({ navigation }: Props) {
               {[0.1, 0.15, 0.2, 0.25].map((share) => (
                 <Pressable
                   key={share}
+                  testID={`allocate.pct.${env.key}.${Math.round(share * 100)}`}
                   onPress={() =>
                     setDraft((prev) =>
                       prev.map((e) =>
@@ -123,8 +130,13 @@ export function AllocateScreen({ navigation }: Props) {
           </Panel>
         ))}
 
-        <HudButton title="SAVE" onPress={save} />
-        <HudButton title="CANCEL" onPress={() => navigation.goBack()} variant="secondary" />
+        <HudButton testID="allocate.save" title="SAVE" onPress={save} />
+        <HudButton
+          testID="allocate.cancel"
+          title="CANCEL"
+          onPress={() => navigation.goBack()}
+          variant="secondary"
+        />
       </FormScroll>
     </ScreenBackground>
   );

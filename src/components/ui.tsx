@@ -81,6 +81,7 @@ export function Panel({
   contentStyle,
   glow,
   innerGlow,
+  testID,
 }: {
   children?: React.ReactNode;
   style?: ViewStyle;
@@ -89,10 +90,11 @@ export function Panel({
   alt?: boolean;
   glow?: boolean;
   innerGlow?: boolean;
+  testID?: string;
 }) {
   const variant: HUDPanelVariant = glow || innerGlow ? 'primary' : 'standard';
   return (
-    <HUDPanel variant={variant} style={style} contentStyle={contentStyle}>
+    <HUDPanel testID={testID} variant={variant} style={style} contentStyle={contentStyle}>
       {children}
     </HUDPanel>
   );
@@ -208,8 +210,16 @@ export function HudButton({
 
 /** @deprecated alias */
 export const PrimaryButton = HudButton;
-export function SecondaryButton({ title, onPress }: { title: string; onPress: () => void }) {
-  return <HudButton title={title} onPress={onPress} variant="secondary" />;
+export function SecondaryButton({
+  title,
+  onPress,
+  testID,
+}: {
+  title: string;
+  onPress: () => void;
+  testID?: string;
+}) {
+  return <HudButton testID={testID} title={title} onPress={onPress} variant="secondary" />;
 }
 export const SoftCard = Panel;
 
@@ -336,6 +346,7 @@ export function CategoryCell({
   horizonLabel = 'CYCLE',
   depleted = false,
   layout = 'grid',
+  testID,
 }: {
   title: string;
   iconKey: string;
@@ -352,6 +363,7 @@ export function CategoryCell({
   depleted?: boolean;
   /** `rail` = fixed-width pod for horizontal scroll */
   layout?: 'grid' | 'rail';
+  testID?: string;
 }) {
   const used = Math.max(spent, 0);
   const planned = Math.max(allocated, 0);
@@ -449,10 +461,12 @@ export function CategoryCell({
     </HUDPanel>
   );
 
+  const cellTestID = testID ?? `home.category.${iconKey}`;
+
   if (isRail) {
     return (
-      <View style={styles.railItem}>
-        <Pressable onPress={onPress} disabled={!onPress}>
+      <View style={styles.railItem} testID={cellTestID}>
+        <Pressable onPress={onPress} disabled={!onPress} testID={`${cellTestID}.press`}>
           {panel}
         </Pressable>
       </View>
@@ -461,6 +475,7 @@ export function CategoryCell({
 
   return (
     <Animated.View
+      testID={cellTestID}
       style={{
         flex: 1,
         opacity: enter,

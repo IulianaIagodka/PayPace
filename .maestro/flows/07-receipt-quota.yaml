@@ -1,0 +1,52 @@
+# J4 — Demo receipt save + exhaust free scans → quota gate
+appId: app.paypace.PayPace
+tags:
+  - smoke
+  - j4
+  - receipt
+---
+- launchApp:
+    clearState: true
+- runFlow: ../helpers/seed-demo.yaml
+- tapOn:
+    id: "home.addExpense"
+- tapOn:
+    id: "expense.photoReceipt"
+- assertVisible:
+    id: "receipt.loadDemo"
+- tapOn:
+    id: "receipt.loadDemo"
+- extendedWaitUntil:
+    visible:
+      id: "receipt.save"
+    timeout: 10000
+- assertVisible: "Demo Market"
+- assertVisible: "Milk 2.5%"
+- tapOn:
+    id: "receipt.save"
+- tapOn: "OK"
+- extendedWaitUntil:
+    visible:
+      id: "home.safeToday"
+    timeout: 15000
+- assertVisible: "Milk 2.5%"
+# Exhaust remaining free scans via debug control
+- tapOn:
+    id: "tabs.settings"
+- scrollUntilVisible:
+    element:
+      id: "settings.exhaustScans"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "settings.exhaustScans"
+- tapOn:
+    id: "tabs.home"
+- tapOn:
+    id: "home.addExpense"
+- tapOn:
+    id: "expense.photoReceipt"
+- assertVisible:
+    id: "receipt.quotaGate"
+- assertVisible:
+    id: "plus.unlock"

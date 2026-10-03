@@ -20,6 +20,7 @@ import { HudSelect } from '../components/HudSelect';
 import { WEEK_START_OPTIONS, type PaceHorizon, type WeekStartsOn } from '../models/calculator';
 import { CURRENCIES } from '../services/currencies';
 import { PRIVACY_POLICY_URL, SUPPORT_URL, TERMS_OF_USE_URL } from '../services/plusBilling';
+import { FREE_RECEIPT_SCAN_LIMIT } from '../services/receiptScanQuota';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -121,15 +122,13 @@ export function SettingsScreen({ navigation }: Props) {
 
           <HUDPanel variant="compact" contentStyle={styles.panelInner}>
             <Text style={styles.section}>BUDGET</Text>
-            {s.isPremium ? (
-              <HudButton
-                testID="settings.allocate"
-                compact
-                title="ALLOCATE RESOURCES"
-                onPress={() => navigation.navigate('Allocate')}
-                variant="secondary"
-              />
-            ) : null}
+            <HudButton
+              testID="settings.allocate"
+              compact
+              title={s.isPremium ? 'ALLOCATE RESOURCES' : 'ALLOCATE · PLUS'}
+              onPress={() => navigation.navigate('Allocate')}
+              variant="secondary"
+            />
             <HudButton
               testID="settings.editCycle"
               compact
@@ -146,23 +145,21 @@ export function SettingsScreen({ navigation }: Props) {
             />
           </HUDPanel>
 
-          {s.isPremium ? (
-            <HUDPanel variant="compact" contentStyle={styles.panelInner}>
-              <Text style={styles.section}>SHARE</Text>
-              {household ? (
-                <Text style={hudType.body}>
-                  Linked · {household.members.map((m) => m.displayName).join(' & ')}
-                </Text>
-              ) : null}
-              <HudButton
-                testID="settings.sharedBudget"
-                compact
-                title="SHARED BUDGET"
-                onPress={() => navigation.navigate('SharedBudget')}
-                variant="secondary"
-              />
-            </HUDPanel>
-          ) : null}
+          <HUDPanel variant="compact" contentStyle={styles.panelInner}>
+            <Text style={styles.section}>SHARE</Text>
+            {household ? (
+              <Text style={hudType.body}>
+                Linked · {household.members.map((m) => m.displayName).join(' & ')}
+              </Text>
+            ) : null}
+            <HudButton
+              testID="settings.sharedBudget"
+              compact
+              title={s.isPremium ? 'SHARED BUDGET' : 'SHARED BUDGET · PLUS'}
+              onPress={() => navigation.navigate('SharedBudget')}
+              variant="secondary"
+            />
+          </HUDPanel>
 
           <HUDPanel variant="compact" contentStyle={styles.panelInner}>
             <Text style={styles.section}>SYSTEM</Text>
@@ -249,6 +246,15 @@ export function SettingsScreen({ navigation }: Props) {
               compact
               title="SEED DEMO CYCLE"
               onPress={onSeedDemo}
+              variant="secondary"
+            />
+            <HudButton
+              testID="settings.exhaustScans"
+              compact
+              title="EXHAUST FREE SCANS"
+              onPress={() => {
+                void updateSettings({ freeReceiptScansUsed: FREE_RECEIPT_SCAN_LIMIT });
+              }}
               variant="secondary"
             />
             <HudButton

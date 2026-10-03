@@ -1,0 +1,38 @@
+# J8 — Plus → load demo statement → import → Home shows a merchant
+appId: app.paypace.PayPace
+tags:
+  - smoke
+  - j8
+  - plus
+---
+- launchApp:
+    clearState: true
+- runFlow: ../helpers/seed-demo.yaml
+- runFlow: ../helpers/unlock-plus.yaml
+- tapOn:
+    id: "tabs.home"
+- tapOn:
+    id: "home.addExpense"
+- tapOn:
+    id: "expense.bankFile"
+- extendedWaitUntil:
+    visible:
+      id: "statement.loadDemo"
+    timeout: 10000
+- tapOn:
+    id: "statement.loadDemo"
+- scrollUntilVisible:
+    element:
+      id: "statement.confirm"
+    direction: DOWN
+    timeout: 10000
+- assertVisible: "Biedronka"
+- tapOn:
+    id: "statement.confirm"
+- # Saved alert
+- tapOn: "OK"
+- extendedWaitUntil:
+    visible:
+      id: "home.safeToday"
+    timeout: 15000
+- assertVisible: "Biedronka"

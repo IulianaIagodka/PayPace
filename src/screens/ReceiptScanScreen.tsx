@@ -16,6 +16,7 @@ import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { categoryTitle, nextCategoryInCycle } from '../services/categories';
 import { categoryBalancesForDisplay } from '../services/categoryBalances';
 import { formatMoney } from '../services/formatting';
+import { buildDemoReceiptResult } from '../services/demoFixtures';
 import { analyzeReceiptPhoto, type ReceiptScanResult } from '../services/receiptAnalyzer';
 import { withReceiptCategory } from '../services/receiptCategory';
 import {
@@ -61,12 +62,28 @@ export function ReceiptScanScreen({ navigation }: Props) {
 
   const cycleCategoryBalances = categoryBalancesForDisplay(activeCycle, custom);
 
+  const loadDemoReceipt = async () => {
+    if (!canScanReceipt(store.settings)) {
+      Alert.alert('Free scans used', `Upgrade to Plus for unlimited receipt scans.`);
+      return;
+    }
+    setPhotoUri(null);
+    setScanning(true);
+    try {
+      const scanned = buildDemoReceiptResult();
+      setResult(scanned);
+      await recordReceiptScan();
+    } finally {
+      setScanning(false);
+    }
+  };
+
   if (!allowed) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <ScrollView contentContainerStyle={styles.pad}>
+        <ScrollView contentContainerStyle={styles.pad} testID="receipt.quotaGate">
           <Text style={styles.title}>SCAN RECEIPT</Text>
-          <Text style={styles.sub}>
+          <Text style={styles.sub} testID="receipt.quotaMessage">
             You’ve used your {FREE_RECEIPT_SCAN_LIMIT} free receipt scans. Plus unlocks unlimited
             scans, plus statements and category tools.
           </Text>
@@ -163,8 +180,21 @@ export function ReceiptScanScreen({ navigation }: Props) {
         <Text style={styles.title}>SCAN RECEIPT</Text>
         <Text style={styles.sub}>{freeHint}</Text>
 
-        <PrimaryButton title="Take photo" onPress={() => pick(true)} />
-        <SecondaryButton title="Choose from gallery" onPress={() => pick(false)} />
+        <PrimaryButton testID="receipt.takePhoto" title="Take photo" onPress={() => pick(true)} />
+        <SecondaryButton
+          testID="receipt.gallery"
+          title="Choose from gallery"
+          onPress={() => pick(false)}
+        />
+        {__DEV__ ? (
+          <SecondaryButton
+            testID="receipt.loadDemo"
+            title="LOAD DEMO RECEIPT"
+            onPress={() => {
+              void loadDemoReceipt();
+            }}
+          />
+        ) : null}
 
         {photoUri ? (
           <Image source={{ uri: photoUri }} style={styles.preview} resizeMode="cover" />

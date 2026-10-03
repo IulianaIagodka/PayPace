@@ -1,6 +1,6 @@
 # PayPace Maestro E2E
 
-UI smoke for journeys **J1–J3** from [E2E-TESTING-PLAN.md](../E2E-TESTING-PLAN.md).
+UI flows for journeys from [E2E-TESTING-PLAN.md](../E2E-TESTING-PLAN.md).
 
 ## Prerequisites
 
@@ -8,18 +8,15 @@ UI smoke for journeys **J1–J3** from [E2E-TESTING-PLAN.md](../E2E-TESTING-PLAN
 2. [Maestro CLI](https://maestro.mobile.dev/getting-started/installing-maestro) installed.
 3. iOS Simulator booted; app installed (`npx expo run:ios` or a local IPA).
 
-Debug-only Settings controls (seed / reset) ship only in `__DEV__`.
+Debug-only controls (`__DEV__`): Settings **SEED DEMO CYCLE** / **EXHAUST FREE SCANS** / **RESET APP DATA**; Receipt **LOAD DEMO RECEIPT**; Statement **LOAD DEMO STATEMENT**.
 
 ## Run
 
 ```bash
-# All flows under .maestro/flows
-npm run test:e2e
+npm run test:e2e           # all flows
+npm run test:e2e:smoke     # tag smoke (J1–J8)
+npm run test:e2e:plus      # tag plus (J5–J6, J8)
 
-# Smoke tag only (01–03 + smoke.yaml)
-npm run test:e2e:smoke
-
-# One flow
 maestro test .maestro/flows/01-onboarding.yaml
 ```
 
@@ -30,7 +27,12 @@ maestro test .maestro/flows/01-onboarding.yaml
 | `flows/01-onboarding.yaml` | J1 onboarding → Home |
 | `flows/02-add-expense.yaml` | J2 log expense |
 | `flows/03-pace-after-spend.yaml` | J3 Pace after spend |
-| `flows/smoke.yaml` | J1→J2→J3 in one session |
-| `helpers/seed-demo.yaml` | Shared onboarding to 3000 / 15 days |
+| `flows/04-plus-gates-free.yaml` | J5 Free → Plus gates |
+| `flows/05-plus-allocate.yaml` | J6 Allocate + category rail |
+| `flows/06-statement-import.yaml` | J8 demo statement import |
+| `flows/07-receipt-quota.yaml` | J4 demo receipt + quota gate |
+| `flows/smoke.yaml` | J1→J2→J3 one session |
+| `helpers/seed-demo.yaml` | Onboarding to 3000 / 15 days |
+| `helpers/unlock-plus.yaml` | Settings TRY PLUS (DEMO) |
 
-Domain seed math (safe today = 200) is asserted in CI via `npm run test:e2e-seed` without a simulator.
+Domain asserts without a simulator: `npm run test:e2e-seed`, `npm run test:demo-receipt`.

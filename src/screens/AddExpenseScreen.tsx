@@ -76,6 +76,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
 
         <View style={styles.importRow}>
           <Pressable
+            testID="expense.photoReceipt"
             style={styles.importCard}
             onPress={() => navigation.navigate('ReceiptScan')}
           >
@@ -84,6 +85,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
             <Text style={styles.importHint}>{receiptHint}</Text>
           </Pressable>
           <Pressable
+            testID="expense.bankFile"
             style={styles.importCard}
             onPress={() =>
               navigation.navigate('StatementImport', {

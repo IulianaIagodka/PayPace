@@ -1,9 +1,11 @@
 import Constants from 'expo-constants';
 import type { ExpenseCategory } from '../models/types';
 import { guessCategory, isBuiltinCategory } from './categories';
+import { buildDemoReceiptResult } from './demoFixtures';
 import { dominantReceiptCategory, withReceiptCategory } from './receiptCategory';
 
 export { dominantReceiptCategory, withReceiptCategory } from './receiptCategory';
+export { buildDemoReceiptResult } from './demoFixtures';
 
 export type ReceiptLineItem = {
   id: string;
@@ -121,29 +123,8 @@ function unifyReceipt(result: ReceiptScanResult): ReceiptScanResult {
   return withReceiptCategory(result, category);
 }
 
-/** Offline demo recognizer — only when explicitly requested (dev / missing key tests). */
 function demoRecognize(): ReceiptScanResult {
-  const samples = [
-    { name: 'Milk 2.5%', amount: 42 },
-    { name: 'White bread', amount: 28 },
-    { name: 'Hard cheese', amount: 96 },
-    { name: 'Americano', amount: 65 },
-    { name: 'Uber Trip', amount: 120 },
-    { name: 'Bananas 1kg', amount: 55 },
-    { name: 'Yogurt', amount: 31 },
-  ];
-  const items = samples.map((s, index) => ({
-    id: `demo-${index}`,
-    name: s.name,
-    amount: s.amount,
-    category: guessCategory(s.name),
-  }));
-  return unifyReceipt({
-    merchant: 'Demo Market',
-    total: items.reduce((sum, item) => sum + item.amount, 0),
-    items,
-    source: 'demo',
-  });
+  return buildDemoReceiptResult();
 }
 
 async function recognizeWithOpenAI(base64: string, apiKey: string): Promise<ReceiptScanResult> {

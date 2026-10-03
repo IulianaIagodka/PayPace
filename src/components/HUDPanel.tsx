@@ -20,6 +20,7 @@ export function HUDPanel({
   contentStyle,
   /** Override grit seed so adjacent same-variant cards stay unique */
   seed,
+  testID,
 }: {
   variant?: HUDPanelVariant;
   /** Optional top label — same position/type for every module */
@@ -30,6 +31,7 @@ export function HUDPanel({
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
   seed?: string;
+  testID?: string;
 }) {
   const isPrimary = variant === 'primary';
   const isCompact = variant === 'compact';
@@ -41,7 +43,7 @@ export function HUDPanel({
   const grainSeed = seed ?? `${variant}:${label ?? 'panel'}`;
 
   return (
-    <View style={[isPrimary && styles.glow, style]}>
+    <View testID={testID} style={[isPrimary && styles.glow, style]}>
       <View
         style={[
           styles.shell,

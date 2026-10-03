@@ -61,14 +61,19 @@ export function SharedBudgetScreen({ navigation }: Props) {
   if (!store.settings.isPremium) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <FormScroll contentContainerStyle={styles.pad}>
+        <FormScroll contentContainerStyle={styles.pad} testID="shared.plusGate">
           <Text style={styles.title}>SHARED BUDGET</Text>
           <Text style={styles.sub}>
             SHARED BUDGET is Plus only. Share one payday budget with a partner — each expense is
             tagged with who logged it.
           </Text>
           <PlusUnlockButton testID="plus.unlock" />
-          <HudButton title="Back" onPress={() => navigation.goBack()} variant="secondary" />
+          <HudButton
+            testID="shared.back"
+            title="Back"
+            onPress={() => navigation.goBack()}
+            variant="secondary"
+          />
         </FormScroll>
       </ScreenBackground>
     );

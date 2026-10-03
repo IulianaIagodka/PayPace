@@ -256,10 +256,14 @@ npm run test:e2e:smoke     # лише J1–J3
 - Maestro smoke: `.maestro/flows/` (J1–J3 + `smoke.yaml`) — див. [.maestro/README.md](./.maestro/README.md).
 - Чеклист ручний у PR / реліз: J11 (2 phones) + J12.
 
-### Фаза B — Plus і імпорт
+### Фаза B — Plus і імпорт ✅ (в репо)
 
-- J4 (mock receipt), J5, J6, J8.
-- Підключити smoke до локального pre-submit (`build:ios:local` перед сабмітом).
+- J4 mock receipt: `__DEV__` **LOAD DEMO RECEIPT** + **EXHAUST FREE SCANS**; `.maestro/flows/07-receipt-quota.yaml`
+- J5 Plus gates: Settings always links Allocate/Shared (gate on screen); `.maestro/flows/04-plus-gates-free.yaml`
+- J6 Allocate: `.maestro/flows/05-plus-allocate.yaml`
+- J8 Statement: `__DEV__` **LOAD DEMO STATEMENT**; `.maestro/flows/06-statement-import.yaml`
+- Fixtures: `src/services/demoFixtures.ts` + `npm run test:demo-receipt`
+- Локально: `npm run test:e2e:smoke` / `npm run test:e2e:plus` на native iOS build.
 
 ### Фаза C — CI (опційно)
 

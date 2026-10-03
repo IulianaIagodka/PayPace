@@ -1,0 +1,16 @@
+# From Home after seed — unlock Plus via Settings demo button (__DEV__).
+appId: app.paypace.PayPace
+---
+- tapOn:
+    id: "tabs.settings"
+- scrollUntilVisible:
+    element:
+      id: "settings.plusDemo"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "settings.plusDemo"
+- extendedWaitUntil:
+    visible:
+      id: "settings.plusDemoDowngrade"
+    timeout: 10000
