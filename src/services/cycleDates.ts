@@ -135,3 +135,33 @@ export function resolveCycleDatesOnSave(opts: {
     resetDayLock: true,
   };
 }
+
+/**
+ * Edit Budget when the user picks concrete first-day + payday dates
+ * (not “days until / days since”).
+ */
+export function resolveCycleDatesFromPicks(opts: {
+  startDate: string;
+  nextPayday: string;
+  now?: Date;
+}): { startDate: string; nextPayday: string } {
+  const today = startOfDay(opts.now ?? new Date());
+  const todayKey = toDateKey(today);
+  let start = (opts.startDate || todayKey).slice(0, 10);
+  let payday = (opts.nextPayday || '').slice(0, 10);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) start = todayKey;
+  if (start > todayKey) start = todayKey;
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(payday)) {
+    payday = toDateKey(addDays(today, 1));
+  }
+  if (differenceInCalendarDays(fromDateKey(payday), fromDateKey(start)) < 1) {
+    payday = toDateKey(addDays(fromDateKey(start), 1));
+  }
+
+  const minStart = toDateKey(addDays(fromDateKey(payday), -MAX_CYCLE_TIMELINE_DAYS));
+  if (start < minStart) start = minStart;
+
+  return { startDate: start, nextPayday: payday };
+}

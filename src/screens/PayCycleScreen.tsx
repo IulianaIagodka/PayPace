@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns';
+import { addDays, startOfDay } from 'date-fns';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { newId } from '../services/id';
 import {
@@ -13,7 +13,7 @@ import {
 import { FormScroll } from '../components/FormScroll';
 import { HudSelect } from '../components/HudSelect';
 import { nextPaydayAfter, scheduleOptions } from '../models/calculator';
-import { MAX_CYCLE_TIMELINE_DAYS, resolveCycleDatesOnSave } from '../services/cycleDates';
+import { MAX_CYCLE_TIMELINE_DAYS, resolveCycleDatesFromPicks } from '../services/cycleDates';
 import type { PaySchedule } from '../models/types';
 import {
   asMoney,
@@ -32,6 +32,44 @@ import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PayCycle'>;
 
+function dateLabel(key: string): string {
+  return fromDateKey(key).toLocaleDateString('uk-UA', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+/** Past first-day options: today back through max cycle length. */
+function buildFirstDayOptions(now: Date, currentStart?: string) {
+  const today = startOfDay(now);
+  const keys = new Set<string>();
+  for (let i = 0; i <= MAX_CYCLE_TIMELINE_DAYS; i++) {
+    keys.add(toDateKey(addDays(today, -i)));
+  }
+  if (currentStart && /^\d{4}-\d{2}-\d{2}$/.test(currentStart.slice(0, 10))) {
+    keys.add(currentStart.slice(0, 10));
+  }
+  return Array.from(keys)
+    .sort((a, b) => (a < b ? 1 : a > b ? -1 : 0))
+    .map((value) => ({ value, label: dateLabel(value) }));
+}
+
+/** Payday options: today through today + max window (plus current). */
+function buildPaydayOptions(now: Date, currentPayday?: string) {
+  const today = startOfDay(now);
+  const keys = new Set<string>();
+  for (let i = 0; i <= MAX_CYCLE_TIMELINE_DAYS; i++) {
+    keys.add(toDateKey(addDays(today, i)));
+  }
+  if (currentPayday && /^\d{4}-\d{2}-\d{2}$/.test(currentPayday.slice(0, 10))) {
+    keys.add(currentPayday.slice(0, 10));
+  }
+  return Array.from(keys)
+    .sort()
+    .map((value) => ({ value, label: dateLabel(value) }));
+}
+
 export function PayCycleScreen({ navigation }: Props) {
   const { activeCycle, snapshot, store, updateActiveCycle, replaceActiveCycle } = useBudget();
   const suffix = currencySymbol(store.settings.currencyCode);
@@ -40,8 +78,8 @@ export function PayCycleScreen({ navigation }: Props) {
   const [savings, setSavings] = useState('');
   const [emergency, setEmergency] = useState('');
   const [buffer, setBuffer] = useState('');
-  const [daysUntil, setDaysUntil] = useState('15');
-  const [daysSinceStart, setDaysSinceStart] = useState('0');
+  const [firstDay, setFirstDay] = useState(toDateKey(new Date()));
+  const [payday, setPayday] = useState(toDateKey(addDays(new Date(), 15)));
   const [schedule, setSchedule] = useState<PaySchedule>('monthly');
   const [saved, setSaved] = useState(false);
 
@@ -53,56 +91,28 @@ export function PayCycleScreen({ navigation }: Props) {
     setEmergency(activeCycle.emergencyBuffer ? String(activeCycle.emergencyBuffer) : '');
     setBuffer(activeCycle.spendingBuffer ? String(activeCycle.spendingBuffer) : '');
     setSchedule(activeCycle.schedule);
-    const today = startOfDay(new Date());
-    const days = Math.max(
-      differenceInCalendarDays(fromDateKey(activeCycle.nextPayday), today),
-      0,
-    );
-    setDaysUntil(String(days));
-    const since = Math.max(
-      differenceInCalendarDays(today, fromDateKey(activeCycle.startDate)),
-      0,
-    );
-    setDaysSinceStart(String(since));
+    setFirstDay(activeCycle.startDate.slice(0, 10));
+    setPayday(activeCycle.nextPayday.slice(0, 10));
   }, [activeCycle?.id, activeCycle?.nextPayday, activeCycle?.startDate]);
 
-  const previewStartKey = useMemo(() => {
-    const today = startOfDay(new Date());
-    const since = Math.min(
-      Math.max(Number(daysSinceStart) || 0, 0),
-      MAX_CYCLE_TIMELINE_DAYS,
-    );
-    return toDateKey(addDays(today, -since));
-  }, [daysSinceStart]);
-
-  const previewPaydayKey = useMemo(() => {
-    const today = startOfDay(new Date());
-    const days = Math.max(Number(daysUntil) || 0, 0);
-    if (!activeCycle) return toDateKey(addDays(today, Math.max(days, 1)));
-    const currentLeft = Math.max(
-      differenceInCalendarDays(fromDateKey(activeCycle.nextPayday), today),
-      0,
-    );
-    if (days === currentLeft) return activeCycle.nextPayday.slice(0, 10);
-    return toDateKey(addDays(today, Math.max(days, 1)));
-  }, [daysUntil, activeCycle?.nextPayday]);
+  const firstDayOptions = useMemo(
+    () => buildFirstDayOptions(new Date(), activeCycle?.startDate),
+    [activeCycle?.startDate],
+  );
+  const paydayOptions = useMemo(
+    () => buildPaydayOptions(new Date(), activeCycle?.nextPayday),
+    [activeCycle?.nextPayday],
+  );
 
   if (!activeCycle) return null;
 
   const save = async () => {
-    const days = Math.max(Number(daysUntil) || 0, 0);
-    const since = Math.min(
-      Math.max(Number(daysSinceStart) || 0, 0),
-      MAX_CYCLE_TIMELINE_DAYS,
-    );
-    const today = startOfDay(new Date());
-    const userStart = toDateKey(addDays(today, -since));
-    const dates = resolveCycleDatesOnSave({
-      existingStartDate: userStart,
-      existingNextPayday: activeCycle.nextPayday,
-      daysUntilInput: days,
-      // User-chosen start wins; do not pull back to older activity.
+    const dates = resolveCycleDatesFromPicks({
+      startDate: firstDay,
+      nextPayday: payday,
     });
+    const startChanged = dates.startDate !== activeCycle.startDate.slice(0, 10);
+    const paydayChanged = dates.nextPayday !== activeCycle.nextPayday.slice(0, 10);
     await updateActiveCycle((c) => ({
       ...c,
       currentBalance: parseAmount(balance) ?? 0,
@@ -113,16 +123,14 @@ export function PayCycleScreen({ navigation }: Props) {
       schedule,
       startDate: dates.startDate,
       nextPayday: dates.nextPayday,
-      ...(dates.resetDayLock || dates.startDate !== activeCycle.startDate.slice(0, 10)
-        ? { dayPaceLock: undefined }
-        : {}),
+      ...(startChanged || paydayChanged ? { dayPaceLock: undefined } : {}),
     }));
     setSaved(true);
     navigation.navigate('MainTabs');
   };
 
   const startNext = async () => {
-    const payday = nextPaydayAfter(schedule, fromDateKey(activeCycle.nextPayday));
+    const next = nextPaydayAfter(schedule, fromDateKey(activeCycle.nextPayday));
     const balanceN = (parseAmount(balance) ?? 0) + (parseAmount(paycheck) ?? 0);
     const savingsN = parseAmount(savings) ?? 0;
     const emergencyN = parseAmount(emergency) ?? 0;
@@ -138,7 +146,7 @@ export function PayCycleScreen({ navigation }: Props) {
       id: newId(),
       schedule,
       startDate: toDateKey(fromDateKey(activeCycle.nextPayday)),
-      nextPayday: toDateKey(payday),
+      nextPayday: toDateKey(next),
       currentBalance: balanceN,
       expectedPaycheck: parseAmount(paycheck) ?? 0,
       savingsGoal: savingsN,
@@ -159,7 +167,7 @@ export function PayCycleScreen({ navigation }: Props) {
       <FormScroll contentContainerStyle={styles.pad}>
         <Text style={styles.title}>EDIT BUDGET</Text>
         <Text style={styles.sub}>
-          Update balance, cycle start, payday, or buffers — safe-to-spend recalculates right away.
+          Set the pay-cycle dates, balance, and buffers — safe-to-spend recalculates right away.
         </Text>
         <CycleProgress
           progress={snapshot.cycleProgress}
@@ -167,30 +175,41 @@ export function PayCycleScreen({ navigation }: Props) {
           totalDays={snapshot.totalDaysInCycle}
         />
         <SoftCard>
+          <Text style={styles.cycleLabel}>CYCLE WINDOW</Text>
+          <Text style={styles.cycleWindow}>
+            {formatShortDate(firstDay)} → {formatShortDate(payday)}
+          </Text>
           <Row label="Safe today" value={formatMoney(Math.max(snapshot.safeToSpendToday, 0), store.settings.currencyCode)} />
           <Row label="Left until payday" value={formatMoney(snapshot.remainingUntilPayday, store.settings.currencyCode)} />
           <Row label="Spent this cycle" value={formatMoney(snapshot.spentThisCycle, store.settings.currencyCode)} />
-          <Row
-            label="Cycle window"
-            value={`${formatShortDate(previewStartKey)} → ${formatShortDate(previewPaydayKey)}`}
-          />
         </SoftCard>
+
+        <HudSelect
+          label="FIRST DAY"
+          value={firstDay}
+          options={firstDayOptions}
+          onChange={(value) => {
+            setFirstDay(value);
+            if (value >= payday) {
+              setPayday(toDateKey(addDays(fromDateKey(value), 1)));
+            }
+          }}
+          hint="When this pay cycle started (usually last payday)."
+        />
+        <HudSelect
+          label="PAYDAY"
+          value={payday}
+          options={paydayOptions}
+          onChange={(value) => {
+            setPayday(value);
+            if (value <= firstDay) {
+              setFirstDay(toDateKey(addDays(fromDateKey(value), -1)));
+            }
+          }}
+          hint="Next payday — end of this cycle."
+        />
+
         <AmountField label="Current balance" value={balance} onChangeText={setBalance} suffix={suffix} />
-        <AmountField
-          label="Days since cycle start"
-          value={daysSinceStart}
-          onChangeText={setDaysSinceStart}
-          suffix="days"
-          keyboardType="number-pad"
-        />
-        <Text style={styles.hint}>Starts {formatShortDate(previewStartKey)} — last payday / when this cycle began.</Text>
-        <AmountField
-          label="Days until payday"
-          value={daysUntil}
-          onChangeText={setDaysUntil}
-          suffix="days"
-          keyboardType="number-pad"
-        />
         <AmountField label="Expected paycheck" value={paycheck} onChangeText={setPaycheck} suffix={suffix} />
         <HudSelect
           label="PAY SCHEDULE"
@@ -222,7 +241,8 @@ const styles = StyleSheet.create({
   pad: { padding: 20, gap: 12, paddingBottom: 40 },
   title: { ...hudType.screenTitle },
   sub: { ...hudType.body },
-  hint: { ...hudType.meta, marginTop: -4 },
+  cycleLabel: { ...hudType.label },
+  cycleWindow: { ...hudType.bodyStrong, color: colors.ammo, marginBottom: 4 },
   ok: { ...hudType.body, color: colors.resource },
   rowLabel: { ...hudType.label },
   rowValue: { ...hudType.bodyStrong },
