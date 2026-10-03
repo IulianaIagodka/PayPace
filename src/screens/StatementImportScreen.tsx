@@ -27,6 +27,7 @@ import {
 } from '../services/statementGrouping';
 import { categoryToEnvelopeKey } from '../services/envelopes';
 import { findCycleForDate, horizonWindow } from '../services/cycleMatching';
+import { effectiveCycleStartDate } from '../services/cycleDates';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { hudType } from '../theme/hud';
@@ -54,7 +55,8 @@ export function StatementImportScreen({ navigation, route }: Props) {
   const [filterToHorizon, setFilterToHorizon] = useState(true);
 
   const paydayKey = activeCycle?.nextPayday ?? null;
-  const window = horizonWindow(horizon, weekStartsOn, new Date(), paydayKey);
+  const cycleStartKey = activeCycle ? effectiveCycleStartDate(activeCycle) : null;
+  const window = horizonWindow(horizon, weekStartsOn, new Date(), paydayKey, cycleStartKey);
 
   const visibleItems = useMemo(() => {
     return filterItemsToWindow(result?.items ?? [], {
@@ -208,7 +210,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
           <Text style={styles.label}>DATE WINDOW</Text>
           <Text style={styles.fileName}>
             {formatShortDate(window.startKey)} → {formatShortDate(window.endKey)} ·{' '}
-            {horizon === 'week' ? 'WEEK' : 'UNTIL PAYDAY'}
+            {horizon === 'week' ? 'WEEK' : 'PAY CYCLE'}
           </Text>
           <Pressable
             onPress={() => setFilterToHorizon((v) => !v)}
@@ -216,7 +218,7 @@ export function StatementImportScreen({ navigation, route }: Props) {
           >
             <Text style={styles.meta}>
               {filterToHorizon ? '●' : '○'} Only rows in this{' '}
-              {horizon === 'week' ? 'week' : 'payday window'}
+              {horizon === 'week' ? 'week' : 'pay cycle'}
             </Text>
           </Pressable>
           {result && outsideCount > 0 ? (

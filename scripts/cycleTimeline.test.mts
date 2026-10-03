@@ -170,6 +170,20 @@ function dayMetrics(startDate: string, nextPayday: string, now: Date) {
   assertEq(dates.resetDayLock, false, 'days-until unchanged → no lock reset');
 }
 
+// Explicit Edit Budget start (days since start) overrides a wrong “today” start.
+{
+  const now = startOfDay(new Date(2026, 9, 3)); // Oct 3
+  const userStart = toDateKey(addDays(now, -8)); // Sep 25
+  const dates = resolveCycleDatesOnSave({
+    existingStartDate: userStart,
+    existingNextPayday: '2026-10-25',
+    daysUntilInput: 22,
+    now,
+  });
+  assertEq(dates.startDate, '2026-09-25', 'user-chosen cycle start is kept on save');
+  assertEq(dates.nextPayday, '2026-10-25', 'payday unchanged when days-until matches');
+}
+
 // Regression: repeating Edit Cycle save must not pin the timeline at Day 1.
 {
   const start = startOfDay(new Date(2026, 8, 1));
