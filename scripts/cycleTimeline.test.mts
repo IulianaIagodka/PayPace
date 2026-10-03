@@ -9,6 +9,7 @@
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns';
 import {
   effectiveCycleStartDate,
+  resolveCycleDatesFromPicks,
   resolveCycleDatesOnSave,
 } from '../src/services/cycleDates.ts';
 
@@ -168,6 +169,46 @@ function dayMetrics(startDate: string, nextPayday: string, now: Date) {
   });
   assertEq(dates.startDate, '2026-09-21', 'save heals start from earliest activity');
   assertEq(dates.resetDayLock, false, 'days-until unchanged → no lock reset');
+}
+
+// Explicit Edit Budget start (days since start) overrides a wrong “today” start.
+{
+  const now = startOfDay(new Date(2026, 9, 3)); // Oct 3
+  const userStart = toDateKey(addDays(now, -8)); // Sep 25
+  const dates = resolveCycleDatesOnSave({
+    existingStartDate: userStart,
+    existingNextPayday: '2026-10-25',
+    daysUntilInput: 22,
+    now,
+  });
+  assertEq(dates.startDate, '2026-09-25', 'user-chosen cycle start is kept on save');
+  assertEq(dates.nextPayday, '2026-10-25', 'payday unchanged when days-until matches');
+}
+
+// Date picks: first day + payday as calendar dates.
+{
+  const now = startOfDay(new Date(2026, 9, 3));
+  const dates = resolveCycleDatesFromPicks({
+    startDate: '2026-09-25',
+    nextPayday: '2026-10-25',
+    now,
+  });
+  assertEq(dates.startDate, '2026-09-25', 'first day pick kept');
+  assertEq(dates.nextPayday, '2026-10-25', 'payday pick kept');
+
+  const clamped = resolveCycleDatesFromPicks({
+    startDate: '2026-10-20',
+    nextPayday: '2026-10-10',
+    now,
+  });
+  assertEq(clamped.startDate, '2026-10-03', 'future first day clamps to today');
+  assertEq(clamped.nextPayday, '2026-10-10', 'payday stays when after clamped start?');
+  // start today Oct 3, payday Oct 10 → OK
+  assertEq(
+    differenceInCalendarDays(fromDateKey(clamped.nextPayday), fromDateKey(clamped.startDate)) >= 1,
+    true,
+    'payday after first day',
+  );
 }
 
 // Regression: repeating Edit Cycle save must not pin the timeline at Day 1.

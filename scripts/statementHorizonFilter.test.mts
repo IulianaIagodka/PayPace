@@ -37,12 +37,21 @@ const all = filterItemsToWindow(items, {
 });
 assertEq(all.length, 4, 'filter off keeps entire statement');
 
+// Pay cycle window = cycle start → payday (not today → payday).
 const paydayFiltered = filterItemsToWindow(items, {
+  filterToWindow: true,
+  startKey: '2026-09-25',
+  endKey: '2026-10-05',
+});
+assertEq(paydayFiltered.length, 2, 'pay cycle window: cycle start through payday');
+assertEq(paydayFiltered.map((i) => i.id).join(','), 'mon,wed', 'keeps rows from cycle start onward');
+
+const todayOnly = filterItemsToWindow(items, {
   filterToWindow: true,
   startKey: '2026-09-30',
   endKey: '2026-10-05',
 });
-assertEq(paydayFiltered.length, 1, 'payday window: today through payday');
-assertEq(paydayFiltered[0]!.id, 'wed', 'only today is inside payday window for this sample');
+assertEq(todayOnly.length, 1, 'narrow today→payday still works when that window is chosen');
+assertEq(todayOnly[0]!.id, 'wed', 'only today in narrow window');
 
 console.log(`statementHorizonFilter.test.mts: ok (${passed} asserts)`);
