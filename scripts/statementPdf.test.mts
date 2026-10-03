@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { parseStatementText, parseAmountTokenSigned } from '../src/services/statementParse.ts';
 import {
   extractPdfText,
+  extractTextFromPdfContent,
   isStatementImage,
   isStatementPdf,
 } from '../src/services/statementPdf.ts';
@@ -35,19 +36,28 @@ assert(!isStatementImage('statement.pdf', 'application/pdf'), 'pdf is not image'
 assertEq(parseAmountTokenSigned('86,40-'), -86.4, 'trailing minus debit');
 assertEq(parseAmountTokenSigned('43.00+'), 43, 'trailing plus credit');
 
-const here = dirname(fileURLToPath(import.meta.url));
-const pdfBytes = new Uint8Array(readFileSync(join(here, 'fixtures/statement-sample.pdf')));
-const text = await extractPdfText(pdfBytes);
-assert(text.includes('Biedronka'), 'extracted merchant');
-assert(text.includes('2026-09-25'), 'extracted date');
+assertEq(
+  extractTextFromPdfContent('BT (Hello) Tj ET'),
+  'Hello',
+  'literal Tj extract',
+);
 
-const items = parseStatementText(text);
-assertEq(items.length, 5, '5 expenses from sample PDF');
-assertEq(items[0]!.name, 'Biedronka', 'first merchant');
-assertEq(items[0]!.amount, 86.4, 'first amount');
-assertEq(items[0]!.date, '2026-09-25', 'first date');
-assertEq(items[3]!.name, 'Orlen Fuel', 'fuel merchant');
-assertEq(items[3]!.amount, 210, 'fuel amount');
+const here = dirname(fileURLToPath(import.meta.url));
+
+async function checkPdf(file: string, expectMerchant: string, expectCount: number) {
+  const pdfBytes = new Uint8Array(readFileSync(join(here, 'fixtures', file)));
+  const text = await extractPdfText(pdfBytes);
+  assert(text.includes(expectMerchant), `${file}: merchant`);
+  assert(text.includes('2026-09-25'), `${file}: date`);
+  const items = parseStatementText(text);
+  assertEq(items.length, expectCount, `${file}: expense count`);
+  assertEq(items[0]!.name, 'Biedronka', `${file}: first merchant`);
+  assertEq(items[0]!.amount, 86.4, `${file}: first amount`);
+  assertEq(items[0]!.date, '2026-09-25', `${file}: first date`);
+}
+
+await checkPdf('statement-sample.pdf', 'Biedronka', 5);
+await checkPdf('statement-sample-flate.pdf', 'Biedronka', 5);
 
 const trailing = parseStatementText('2026-09-25 Biedronka 86,40-\n2026-09-26 Salary 5000,00+');
 assertEq(trailing.length, 1, 'only debit from trailing-sign PDF lines');

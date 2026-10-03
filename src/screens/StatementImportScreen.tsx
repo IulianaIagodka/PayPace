@@ -190,6 +190,8 @@ export function StatementImportScreen({ navigation, route }: Props) {
         `${itemCount} expenses added across ${cycleCount} pay cycle${cycleCount === 1 ? '' : 's'} (by date + category).`,
         [{ text: 'OK', onPress: () => navigation.navigate('MainTabs') }],
       );
+    } catch (error) {
+      Alert.alert('Import failed', error instanceof Error ? error.message : 'Could not save expenses.');
     } finally {
       setSaving(false);
     }

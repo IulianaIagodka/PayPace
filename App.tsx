@@ -39,7 +39,7 @@ import { PeriodReportPrompt } from './src/components/PeriodReportPrompt';
 import { colors } from './src/theme/colors';
 import { fonts } from './src/theme/fonts';
 
-/** Lazy: keeps docutext / statement PDF code off the cold-start path. */
+/** Lazy: keeps statement PDF/CSV import code off the cold-start path. */
 const StatementImportScreen = React.lazy(() =>
   import('./src/screens/StatementImportScreen').then((m) => ({
     default: m.StatementImportScreen,
