@@ -28,7 +28,7 @@ import {
 import { formatMoney, formatShortDate } from '../services/formatting';
 import type { Bill, DailyExpense } from '../models/types';
 import { fonts } from '../theme/fonts';
-import { hud, hudType } from '../theme/hud';
+import { fieldChrome, hud, hudType } from '../theme/hud';
 import {
   HUDPanel,
   HudBody,
@@ -501,6 +501,34 @@ export function AmountDoneAccessory() {
   );
 }
 
+/** Labeled text control — same box geometry as AmountField / HudSelect. */
+export function HudTextField({
+  label,
+  value,
+  onChangeText,
+  style,
+  ...rest
+}: {
+  label?: string;
+  value: string;
+  onChangeText: (t: string) => void;
+} & TextInputProps) {
+  return (
+    <View style={fieldChrome.wrap}>
+      {label ? <Text style={hudType.label}>{label}</Text> : null}
+      <View style={fieldChrome.box}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholderTextColor={colors.textDim}
+          style={[fieldChrome.textInput, style]}
+          {...rest}
+        />
+      </View>
+    </View>
+  );
+}
+
 export function AmountField({
   label,
   value,
@@ -514,20 +542,20 @@ export function AmountField({
   suffix?: string;
 } & TextInputProps) {
   return (
-    <View style={{ gap: hud.gap }}>
+    <View style={fieldChrome.wrap}>
       <Text style={hudType.label}>{label}</Text>
-      <View style={styles.fieldBox}>
+      <View style={fieldChrome.box}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
           keyboardType="decimal-pad"
           placeholder="0"
           placeholderTextColor={colors.textDim}
-          style={styles.fieldInput}
+          style={fieldChrome.amountInput}
           inputAccessoryViewID={Platform.OS === 'ios' ? AMOUNT_ACCESSORY_ID : undefined}
           {...rest}
         />
-        <Text style={styles.suffix}>{suffix}</Text>
+        <Text style={fieldChrome.suffix}>{suffix}</Text>
       </View>
     </View>
   );
@@ -809,22 +837,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.panelDeep,
     opacity: 0.45,
   },
-  fieldBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.panelAlt,
-    borderRadius: 0,
-    borderWidth: hud.stroke,
-    borderColor: colors.border,
-    paddingHorizontal: hud.pad,
-    paddingVertical: 12,
-  },
-  fieldInput: {
-    flex: 1,
-    ...hudType.value,
-    fontSize: 22,
-  },
-  suffix: { ...hudType.label, color: colors.textSecondary, fontSize: 14, letterSpacing: 1 },
   accessory: {
     flexDirection: 'row',
     alignItems: 'center',

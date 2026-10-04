@@ -6,7 +6,7 @@ import { PlusUnlockButton } from '../components/PlusUnlockButton';
 import { FormScroll } from '../components/FormScroll';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { hudType } from '../theme/hud';
+import { formScreen, hud, hudType } from '../theme/hud';
 import { currencySymbol, formatMoney, parseAmount } from '../services/formatting';
 import { calculateSafeSpend } from '../models/calculator';
 import { ensureEnvelopes } from '../services/envelopes';
@@ -34,7 +34,7 @@ export function AllocateScreen({ navigation }: Props) {
   if (!store.settings.isPremium) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <FormScroll contentContainerStyle={styles.pad}>
+        <FormScroll contentContainerStyle={formScreen.pad}>
           <Text style={styles.title}>ALLOCATE RESOURCES</Text>
           <Text style={styles.sub}>
             Plus lets you split spending across categories and see what’s left in each one.
@@ -49,7 +49,7 @@ export function AllocateScreen({ navigation }: Props) {
   if (!activeCycle) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <View style={styles.pad}>
+        <View style={formScreen.pad}>
           <Text style={styles.title}>ALLOCATE RESOURCES</Text>
           <Text style={styles.sub}>No active cycle.</Text>
         </View>
@@ -57,7 +57,6 @@ export function AllocateScreen({ navigation }: Props) {
     );
   }
 
-  const allocated = draft.reduce((s, e) => s + (parseAmount(String(e.allocated)) ?? e.allocated), 0);
   const unallocated = spendPool - draft.reduce((s, e) => s + e.allocated, 0);
 
   const updateAlloc = (id: string, raw: string) => {
@@ -74,7 +73,7 @@ export function AllocateScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <FormScroll contentContainerStyle={styles.pad}>
+      <FormScroll contentContainerStyle={formScreen.pad}>
         <Text style={styles.title}>ALLOCATE RESOURCES</Text>
         <Text style={styles.sub}>Decide how much each category gets this pay cycle.</Text>
 
@@ -93,10 +92,9 @@ export function AllocateScreen({ navigation }: Props) {
         </Panel>
 
         {draft.map((env) => (
-          <Panel key={env.id}>
-            <Text style={styles.label}>{env.title}</Text>
+          <View key={env.id} style={styles.allocBlock}>
             <AmountField
-              label="ALLOCATION"
+              label={env.title}
               value={String(env.allocated || '')}
               onChangeText={(t) => updateAlloc(env.id, t)}
               suffix={suffix}
@@ -120,7 +118,7 @@ export function AllocateScreen({ navigation }: Props) {
                 </Pressable>
               ))}
             </View>
-          </Panel>
+          </View>
         ))}
 
         <HudButton title="SAVE" onPress={save} />
@@ -131,15 +129,15 @@ export function AllocateScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 12, paddingBottom: 40 },
   title: { ...hudType.screenTitle },
   sub: { ...hudType.body },
   label: { ...hudType.label },
   big: { ...hudType.value },
   unalloc: { ...hudType.meta, color: colors.warning },
+  allocBlock: { gap: hud.gap },
   quick: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   chip: {
-    borderWidth: 1,
+    borderWidth: hud.stroke,
     borderColor: colors.border,
     backgroundColor: colors.panelAlt,
     paddingHorizontal: 10,
