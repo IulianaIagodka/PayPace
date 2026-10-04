@@ -6,10 +6,11 @@ import { newId } from '../services/id';
 import {
   AmountField,
   CycleProgress,
+  HudTextField,
   PrimaryButton,
   ScreenBackground,
   SoftCard,
-} from '../components/ui'
+} from '../components/ui';
 import { FormScroll } from '../components/FormScroll';
 import { HudSelect } from '../components/HudSelect';
 import { nextPaydayAfter, scheduleOptions } from '../models/calculator';
@@ -27,6 +28,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'PayCycle'>;
 export function PayCycleScreen({ navigation }: Props) {
   const { activeCycle, snapshot, store, updateActiveCycle, replaceActiveCycle } = useBudget();
   const suffix = currencySymbol(store.settings.currencyCode);
+  const [startDate, setStartDate] = useState('');
+  const [dateError, setDateError] = useState('');
   const [balance, setBalance] = useState('');
   const [paycheck, setPaycheck] = useState('');
   const [savings, setSavings] = useState('');
@@ -38,6 +41,8 @@ export function PayCycleScreen({ navigation }: Props) {
 
   useEffect(() => {
     if (!activeCycle) return;
+    setStartDate(activeCycle.startDate.slice(0, 10));
+    setDateError('');
     setBalance(String(activeCycle.currentBalance || ''));
     setPaycheck(activeCycle.expectedPaycheck ? String(activeCycle.expectedPaycheck) : '');
     setSavings(activeCycle.savingsGoal ? String(activeCycle.savingsGoal) : '');
@@ -49,7 +54,7 @@ export function PayCycleScreen({ navigation }: Props) {
       0,
     );
     setDaysUntil(String(days));
-  }, [activeCycle?.id, activeCycle?.nextPayday]);
+  }, [activeCycle?.id, activeCycle?.nextPayday, activeCycle?.startDate]);
 
   if (!activeCycle) return null;
 
@@ -61,12 +66,21 @@ export function PayCycleScreen({ navigation }: Props) {
     ]
       .filter((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d)))
       .sort()[0];
-    const dates = resolveCycleDatesOnSave({
-      existingStartDate: activeCycle.startDate,
-      existingNextPayday: activeCycle.nextPayday,
-      daysUntilInput: days,
-      earliestActivityDate: earliestActivity,
-    });
+    const startDateChanged = startDate.trim() !== activeCycle.startDate.slice(0, 10);
+    let dates: ReturnType<typeof resolveCycleDatesOnSave>;
+    try {
+      dates = resolveCycleDatesOnSave({
+        existingStartDate: activeCycle.startDate,
+        existingNextPayday: activeCycle.nextPayday,
+        daysUntilInput: days,
+        earliestActivityDate: earliestActivity,
+        startDateInput: startDateChanged || activeCycle.startDateIsManual ? startDate : undefined,
+      });
+    } catch (error) {
+      setDateError(error instanceof Error ? error.message : 'Check the start date.');
+      return;
+    }
+    setDateError('');
     await updateActiveCycle((c) => ({
       ...c,
       currentBalance: parseAmount(balance) ?? 0,
@@ -76,6 +90,7 @@ export function PayCycleScreen({ navigation }: Props) {
       spendingBuffer: parseAmount(buffer) ?? 0,
       schedule,
       startDate: dates.startDate,
+      startDateIsManual: startDateChanged || activeCycle.startDateIsManual,
       nextPayday: dates.nextPayday,
       ...(dates.resetDayLock ? { dayPaceLock: undefined } : {}),
     }));
@@ -121,7 +136,7 @@ export function PayCycleScreen({ navigation }: Props) {
       <FormScroll contentContainerStyle={formScreen.compactPad}>
         <Text style={styles.title}>EDIT BUDGET</Text>
         <Text style={styles.sub}>
-          Update your balance, payday, or buffers — safe-to-spend recalculates right away.
+          Update your balance, cycle dates, or buffers — safe-to-spend recalculates right away.
         </Text>
         <CycleProgress
           progress={snapshot.cycleProgress}
@@ -134,6 +149,19 @@ export function PayCycleScreen({ navigation }: Props) {
           <Row label="Spent this cycle" value={formatMoney(snapshot.spentThisCycle, store.settings.currencyCode)} />
         </SoftCard>
         <AmountField compact label="CURRENT BALANCE" value={balance} onChangeText={setBalance} suffix={suffix} />
+        <HudTextField compact
+          label="CYCLE START DATE"
+          accessibilityLabel="Cycle start date"
+          value={startDate}
+          onChangeText={(value) => { setStartDate(value); setDateError(''); }}
+          placeholder="YYYY-MM-DD"
+          autoCapitalize="none"
+          autoCorrect={false}
+          maxLength={10}
+          returnKeyType="done"
+        />
+        <Text style={styles.dateHint}>YYYY-MM-DD · First day of this pay cycle</Text>
+        {dateError ? <Text accessibilityRole="alert" style={styles.error}>{dateError}</Text> : null}
         <AmountField compact
           label="DAYS UNTIL PAYDAY"
           value={daysUntil}
@@ -171,6 +199,8 @@ function Row({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   title: { ...hudType.screenTitle },
   sub: { ...hudType.body },
+  dateHint: { ...hudType.meta },
+  error: { ...hudType.body, color: colors.danger },
   ok: { ...hudType.body, color: colors.resource },
   rowLabel: { ...hudType.label },
   rowValue: { ...hudType.bodyStrong },

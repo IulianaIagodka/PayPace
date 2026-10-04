@@ -193,4 +193,29 @@ function dayMetrics(startDate: string, nextPayday: string, now: Date) {
   }
 }
 
+// Explicit starts override legacy repair and refresh the daily allowance.
+{
+  const now = new Date(2026, 9, 4);
+  const base = { existingStartDate: '2026-10-01', existingNextPayday: '2026-11-01', daysUntilInput: 28, now };
+  const todayStart = resolveCycleDatesOnSave({ ...base, startDateInput: '2026-10-04', earliestActivityDate: '2026-10-01' });
+  assertEq(todayStart.startDate, '2026-10-04', 'explicit today start is not repaired backwards');
+  assertEq(todayStart.nextPayday, base.existingNextPayday, 'editing start preserves payday');
+  assertEq(todayStart.resetDayLock, true, 'editing start resets daily lock');
+  const cycle = { startDate: todayStart.startDate, startDateIsManual: true, nextPayday: todayStart.nextPayday, createdAt: '2026-10-01', expenses: [{date: '2026-10-02'}] };
+  assertEq(effectiveCycleStartDate(cycle, now), '2026-10-04', 'calculator honors explicit start');
+  const repeat = resolveCycleDatesOnSave({ ...base, existingStartDate: todayStart.startDate, startDateInput: todayStart.startDate });
+  assertEq(repeat.resetDayLock, false, 'unchanged manual start does not reset lock');
+  const early = resolveCycleDatesOnSave({ ...base, startDateInput: '2026-09-01' });
+  assertEq(early.startDate, '2026-09-01', 'manual long cycle is not silently clamped');
+  assertEq(effectiveCycleStartDate({ ...cycle, startDate: early.startDate }, now), early.startDate, 'long manual timeline is honored');
+  for (const value of ['2026-02-30', '2026-13-01', '2026-10-05', '', '04.10.2026']) {
+    let rejected = false;
+    try { resolveCycleDatesOnSave({ ...base, startDateInput: value }); } catch { rejected = true; }
+    assertEq(rejected, true, `reject invalid/future start ${value}`);
+  }
+  let rejected = false;
+  try { resolveCycleDatesOnSave({ ...base, existingNextPayday: '2026-10-04', daysUntilInput: 0, startDateInput: '2026-10-04' }); } catch { rejected = true; }
+  assertEq(rejected, true, 'start must precede payday');
+}
+
 console.log(`OK: cycleTimeline ${passed} assertions`);

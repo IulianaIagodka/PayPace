@@ -67,6 +67,8 @@ export interface PayCycle {
   id: string;
   schedule: PaySchedule;
   startDate: string;
+  /** A user-selected start takes precedence over legacy timeline repair. */
+  startDateIsManual?: boolean;
   nextPayday: string;
   currentBalance: number;
   expectedPaycheck: number;

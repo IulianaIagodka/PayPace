@@ -41,6 +41,7 @@ export const MAX_CYCLE_TIMELINE_DAYS = 40;
 export function effectiveCycleStartDate(
   cycle: {
     startDate: string;
+    startDateIsManual?: boolean;
     nextPayday?: string;
     createdAt?: string;
     expenses?: Array<{ date?: string }>;
@@ -50,6 +51,7 @@ export function effectiveCycleStartDate(
   const todayKey = toDateKey(startOfDay(now));
   let start = (cycle.startDate || todayKey).slice(0, 10);
   if (start > todayKey) start = todayKey;
+  if (cycle.startDateIsManual) return start;
 
   // Historical start is authoritative for expense pull-back. Only heal a
   // forward-reset to today.
@@ -86,6 +88,8 @@ export function resolveCycleDatesOnSave(opts: {
   existingStartDate: string;
   existingNextPayday: string;
   daysUntilInput: number;
+  /** Explicit date from Edit Budget; validated and never silently clamped. */
+  startDateInput?: string;
   /** Optional: earliest expense / createdAt — keeps Day N after a bad reset. */
   earliestActivityDate?: string;
   now?: Date;
@@ -97,6 +101,25 @@ export function resolveCycleDatesOnSave(opts: {
     differenceInCalendarDays(fromDateKey(opts.existingNextPayday), today),
     0,
   );
+
+  if (opts.startDateInput !== undefined) {
+    const startDate = opts.startDateInput.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) ||
+        !Number.isFinite(fromDateKey(startDate).getTime()) ||
+        toDateKey(fromDateKey(startDate)) !== startDate) {
+      throw new Error('Enter a valid start date as YYYY-MM-DD.');
+    }
+    const nextPayday = days === currentDaysUntil
+      ? opts.existingNextPayday
+      : toDateKey(addDays(today, Math.max(days, 1)));
+    if (startDate > todayKey) throw new Error('The start date cannot be in the future.');
+    if (startDate >= nextPayday.slice(0, 10)) throw new Error('The start date must be before payday.');
+    return {
+      startDate,
+      nextPayday,
+      resetDayLock: startDate !== opts.existingStartDate.slice(0, 10) || nextPayday !== opts.existingNextPayday,
+    };
+  }
 
   let startKey = (opts.existingStartDate || todayKey).slice(0, 10);
   if (startKey > todayKey) startKey = todayKey;
