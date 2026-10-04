@@ -56,6 +56,7 @@ function migrate(raw: unknown): AppStoreData {
     household: data.household ?? null,
     localMemberId: data.localMemberId ?? null,
     periodReports: Array.isArray(data.periodReports) ? data.periodReports : [],
+    activityEvents: Array.isArray(data.activityEvents) ? data.activityEvents : [],
   };
 }
 

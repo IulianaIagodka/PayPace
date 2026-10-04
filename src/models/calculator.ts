@@ -9,6 +9,7 @@ import {
 import type { PayCycle, PaySchedule, SafeSpendSnapshot, TrajectoryLabel } from './types';
 import { asMoney, fromDateKey, toDateKey } from '../services/formatting';
 import { effectiveCycleStartDate } from '../services/cycleDates';
+import { countsTowardSharedPool } from '../services/expenseFilters';
 import {
   adaptiveFutureDaily,
   remainingForFutureDays,
@@ -20,6 +21,16 @@ import {
   weekBudgetRemaining,
   type DayPaceLock,
 } from '../services/dayPace';
+
+/** Expenses that draw from the shared payday pool (excludes personal). */
+function poolExpenseRows(cycle: PayCycle) {
+  return cycle.expenses
+    .filter(countsTowardSharedPool)
+    .map((e) => ({
+      date: e.date,
+      amount: asMoney(e.amount),
+    }));
+}
 
 export type { DayPaceLock };
 export type WeekStartsOn = 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -80,7 +91,9 @@ export function cycleMetrics(cycle: PayCycle, now = new Date()) {
   const unpaidBillsTotal = cycle.bills
     .filter((b) => !b.isPaid)
     .reduce((s, b) => s + asMoney(b.amount), 0);
-  const spentThisCycle = cycle.expenses.reduce((s, e) => s + Math.max(asMoney(e.amount), 0), 0);
+  const spentThisCycle = cycle.expenses
+    .filter(countsTowardSharedPool)
+    .reduce((s, e) => s + Math.max(asMoney(e.amount), 0), 0);
   return {
     daysUntilPayday,
     totalDaysInCycle,
@@ -107,10 +120,7 @@ export function buildDayPaceLock(cycle: PayCycle, now = new Date()): DayPaceLock
   const todayKey = toDateKey(startOfDay(now));
   const { daysUntilPayday, unpaidBillsTotal, balance, reservedTotal } = cycleMetrics(cycle, now);
   const spendPool = balance - unpaidBillsTotal - reservedTotal;
-  const expenses = cycle.expenses.map((e) => ({
-    date: e.date,
-    amount: asMoney(e.amount),
-  }));
+  const expenses = poolExpenseRows(cycle);
   const poolAtDayStart = spendPool - spentBeforeDate(expenses, todayKey);
   const daysToCover = Math.max(daysUntilPayday, 1);
   return resolveDayPaceLock(cycle.dayPaceLock, todayKey, poolAtDayStart, daysToCover);
@@ -137,10 +147,7 @@ export function calculateSafeSpend(
 
   const today = startOfDay(now);
   const todayKey = toDateKey(today);
-  const expenses = cycle.expenses.map((e) => ({
-    date: e.date,
-    amount: asMoney(e.amount),
-  }));
+  const expenses = poolExpenseRows(cycle);
   const spentToday = spentOnDate(expenses, todayKey);
   const weekStartKey = toDateKey(startOfWeek(today, { weekStartsOn }));
   const spentThisWeek = spentBetweenDates(expenses, weekStartKey, todayKey);

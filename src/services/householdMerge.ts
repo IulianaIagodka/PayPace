@@ -1,4 +1,37 @@
-import type { Bill, DailyExpense, Household, PayCycle, SharedHouseholdPayload, CustomCategory } from '../models/types';
+import type {
+  Bill,
+  CustomCategory,
+  DailyExpense,
+  Household,
+  HouseholdActivityEvent,
+  PayCycle,
+  SharedHouseholdPayload,
+} from '../models/types';
+
+export const ACTIVITY_EVENT_LIMIT = 150;
+
+export function trimActivityEvents(
+  events: HouseholdActivityEvent[],
+  limit = ACTIVITY_EVENT_LIMIT,
+): HouseholdActivityEvent[] {
+  return [...events]
+    .sort((a, b) => b.at.localeCompare(a.at) || b.id.localeCompare(a.id))
+    .slice(0, limit);
+}
+
+/** Union by id (append-only). Newer `at` wins on collision. */
+export function mergeActivityEvents(
+  local: HouseholdActivityEvent[] | undefined,
+  remote: HouseholdActivityEvent[] | undefined,
+): HouseholdActivityEvent[] {
+  const map = new Map<string, HouseholdActivityEvent>();
+  for (const event of local ?? []) map.set(event.id, event);
+  for (const event of remote ?? []) {
+    const existing = map.get(event.id);
+    if (!existing || event.at >= existing.at) map.set(event.id, event);
+  }
+  return trimActivityEvents(Array.from(map.values()));
+}
 
 function byId<T extends { id: string }>(items: T[]): Map<string, T> {
   return new Map(items.map((item) => [item.id, item]));
@@ -118,6 +151,7 @@ export function mergeSharedPayloads(
       ),
     },
     cycles: mergePayCycles(local.cycles, remote.cycles),
+    activityEvents: mergeActivityEvents(local.activityEvents, remote.activityEvents),
     revision,
     updatedAt,
   };
@@ -140,6 +174,7 @@ export function toSharedPayload(input: {
   currencyCode: string;
   cycles: PayCycle[];
   customCategories?: CustomCategory[];
+  activityEvents?: HouseholdActivityEvent[];
 }): SharedHouseholdPayload {
   const updatedAt = new Date().toISOString();
   return {
@@ -149,7 +184,12 @@ export function toSharedPayload(input: {
       customCategories: input.customCategories ?? [],
     },
     cycles: input.cycles.map((c) => ({ ...c, updatedAt: c.updatedAt ?? updatedAt })),
+    activityEvents: trimOrEmpty(input.activityEvents),
     revision: input.household.revision,
     updatedAt,
   };
+}
+
+function trimOrEmpty(events: HouseholdActivityEvent[] | undefined): HouseholdActivityEvent[] {
+  return mergeActivityEvents(events ?? [], []);
 }

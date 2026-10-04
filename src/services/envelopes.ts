@@ -130,6 +130,7 @@ export function spentInEnvelope(cycle: PayCycle, envelope: Envelope): number {
   const envelopeCategory = normalizeCategory(envelope.category);
   return cycle.expenses
     .filter((e) => {
+      if (e.scope === 'personal') return false;
       const cat = normalizeCategory(e.category);
       return cat === envelopeCategory || e.envelopeKey === envelope.key;
     })
