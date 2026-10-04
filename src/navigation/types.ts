@@ -1,15 +1,16 @@
-import type { EnvelopeKey } from '../models/types';
+import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { EnvelopeKey, ExpenseCategory } from '../models/types';
 
 export type MainTabParamList = {
   Home: undefined;
-  Activity: undefined;
+  Activity: { category?: ExpenseCategory } | undefined;
   Status: undefined;
   Settings: undefined;
 };
 
 export type RootStackParamList = {
   Onboarding: undefined;
-  MainTabs: { screen?: keyof MainTabParamList; params?: undefined } | undefined;
+  MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   AddExpense: { envelopeKey?: EnvelopeKey } | undefined;
   Bills: undefined;
   PayCycle: undefined;

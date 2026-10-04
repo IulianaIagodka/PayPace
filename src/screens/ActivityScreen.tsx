@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
@@ -19,6 +19,7 @@ import { colors } from '../theme/colors';
 import { hudType, tabScreen } from '../theme/hud';
 import { formatMoney, formatShortDate, toDateKey } from '../services/formatting';
 import { CONTROL_PANEL_COPY } from '../services/controlPanel';
+import { categoryTitle, normalizeCategory } from '../services/categories';
 import type { DailyExpense } from '../models/types';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
@@ -29,36 +30,55 @@ type Props = CompositeScreenProps<
 
 const copy = CONTROL_PANEL_COPY.activity;
 
-export function ActivityScreen({ navigation }: Props) {
-  const { activeCycle, store, deleteExpense, deleteExpensesByDate, snapshot } = useBudget();
+export function ActivityScreen({ navigation, route }: Props) {
+  const { activeCycle, store, deleteExpense, deleteExpensesByDate } = useBudget();
   const currency = store.settings.currencyCode;
   const tabClearance = useTabBarClearance(28);
   const todayKey = useMemo(() => toDateKey(new Date()), []);
 
-  /** Dates the user has expanded; everything else stays collapsed. Today starts open. */
-  const [expandedDates, setExpandedDates] = useState<Set<string>>(() => new Set([todayKey]));
+  /** Expanded date/category groups. Today starts open in the day view. */
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set([todayKey]));
 
+  const [groupBy, setGroupBy] = useState<'day' | 'category'>('day');
+  const categoryFilter = route.params?.category;
+  const custom = store.settings.customCategories ?? [];
+  useEffect(() => {
+    if (categoryFilter !== undefined) {
+      setGroupBy('category');
+      setExpandedGroups(new Set([normalizeCategory(categoryFilter)]));
+    }
+  }, [categoryFilter]);
+
+  const visibleExpenses = useMemo(
+    () => (activeCycle?.expenses ?? []).filter((expense) =>
+      categoryFilter === undefined || normalizeCategory(expense.category) === normalizeCategory(categoryFilter)),
+    [activeCycle?.expenses, categoryFilter],
+  );
   const grouped = useMemo(() => {
-    const list = [...(activeCycle?.expenses ?? [])];
+    const list = [...visibleExpenses];
     list.sort((a, b) => {
       if (a.date !== b.date) return a.date < b.date ? 1 : -1;
       return (b.updatedAt ?? b.date).localeCompare(a.updatedAt ?? a.date);
     });
     const map = new Map<string, DailyExpense[]>();
     for (const expense of list) {
-      const bucket = map.get(expense.date) ?? [];
+      const key = groupBy === 'day' ? expense.date : normalizeCategory(expense.category);
+      const bucket = map.get(key) ?? [];
       bucket.push(expense);
-      map.set(expense.date, bucket);
+      map.set(key, bucket);
     }
-    return Array.from(map.entries());
-  }, [activeCycle?.expenses]);
+    const groups = Array.from(map.entries());
+    if (groupBy === 'category') groups.sort((a, b) =>
+      b[1].reduce((sum, e) => sum + e.amount, 0) - a[1].reduce((sum, e) => sum + e.amount, 0) || a[0].localeCompare(b[0]));
+    return groups;
+  }, [visibleExpenses, groupBy]);
 
-  const dates = useMemo(() => grouped.map(([date]) => date), [grouped]);
-  const allExpanded = dates.length > 0 && dates.every((date) => expandedDates.has(date));
-  const allCollapsed = dates.length > 0 && dates.every((date) => !expandedDates.has(date));
+  const groupKeys = useMemo(() => grouped.map(([date]) => date), [grouped]);
+  const allExpanded = groupKeys.length > 0 && groupKeys.every((date) => expandedGroups.has(date));
+  const allCollapsed = groupKeys.length > 0 && groupKeys.every((date) => !expandedGroups.has(date));
 
-  const toggleDay = (date: string) => {
-    setExpandedDates((prev) => {
+  const toggleGroup = (date: string) => {
+    setExpandedGroups((prev) => {
       const next = new Set(prev);
       if (next.has(date)) next.delete(date);
       else next.add(date);
@@ -67,14 +87,15 @@ export function ActivityScreen({ navigation }: Props) {
   };
 
   const expandAll = () => {
-    setExpandedDates(new Set(dates));
+    setExpandedGroups(new Set(groupKeys));
   };
 
   const collapseAll = () => {
-    setExpandedDates(new Set());
+    setExpandedGroups(new Set());
   };
 
-  const count = activeCycle?.expenses.length ?? 0;
+  const count = visibleExpenses.length;
+  const visibleTotal = visibleExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   const onDelete = (expense: DailyExpense) => {
     Alert.alert('Delete this expense?', expense.name, [
@@ -100,7 +121,7 @@ export function ActivityScreen({ navigation }: Props) {
           style: 'destructive',
           onPress: () => {
             void deleteExpensesByDate(date);
-            setExpandedDates((prev) => {
+            setExpandedGroups((prev) => {
               if (!prev.has(date)) return prev;
               const next = new Set(prev);
               next.delete(date);
@@ -120,17 +141,35 @@ export function ActivityScreen({ navigation }: Props) {
         </Text>
         <Text style={hudType.meta}>{copy.sysTag}</Text>
 
-        <HUDPanel variant="primary" label={copy.totalLabel}>
-          <HudValue>{formatMoney(snapshot.spentThisCycle, currency)}</HudValue>
+        <HUDPanel variant="primary" label={categoryFilter === undefined ? copy.totalLabel : categoryTitle(categoryFilter, { custom })}>
+          <HudValue>{formatMoney(visibleTotal, currency)}</HudValue>
           <HudMeta>
             {count === 0
-              ? 'Nothing logged this cycle'
+              ? categoryFilter === undefined ? 'Nothing logged this cycle' : 'No expenses in this category this cycle'
               : `${count} entr${count === 1 ? 'y' : 'ies'} · pay cycle`}
           </HudMeta>
         </HUDPanel>
 
+        <View style={styles.groupControls}>
+          {(['day', 'category'] as const).map((mode) => (
+            <Pressable key={mode} accessibilityRole="button"
+              accessibilityState={{ selected: groupBy === mode }}
+              onPress={() => {
+                setGroupBy(mode);
+                setExpandedGroups(new Set(mode === 'day' ? [todayKey] : visibleExpenses.map((e) => normalizeCategory(e.category))));
+              }}>
+              <Text style={[styles.feedAction, groupBy !== mode && styles.feedActionDisabled]}>
+                {mode === 'day' ? 'BY DAY' : 'BY CATEGORY'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        {categoryFilter !== undefined ? (
+          <HudButton title="SHOW ALL EXPENSES" variant="secondary"
+            onPress={() => navigation.setParams({ category: undefined })} />
+        ) : null}
         <View style={styles.feedHead}>
-          <Text style={hudType.label}>{copy.feedLabel}</Text>
+          <Text style={hudType.label}>EXPENSES</Text>
           {grouped.length > 0 ? (
             <View style={styles.feedActions}>
               <Pressable
@@ -162,30 +201,31 @@ export function ActivityScreen({ navigation }: Props) {
 
         {grouped.length === 0 ? (
           <HUDPanel variant="standard">
-            <HudBody>{copy.empty}</HudBody>
+            <HudBody>{categoryFilter === undefined ? copy.empty : 'No expenses in this category this cycle.'}</HudBody>
             <HudButton title="+ ADD EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
           </HUDPanel>
         ) : (
           grouped.map(([date, items]) => {
+            const groupLabel = groupBy === 'day' ? formatShortDate(date) : categoryTitle(date, { custom });
             const dayTotal = items.reduce((sum, e) => sum + e.amount, 0);
-            const expanded = expandedDates.has(date);
+            const expanded = expandedGroups.has(date);
             // Same plate seed as TOTAL SPENT so grit/stars match exactly
             return (
               <HUDPanel key={date} variant="standard" seed={`primary:${copy.totalLabel}`}>
                 <View style={styles.dayHeader}>
                   <Pressable
-                    onPress={() => toggleDay(date)}
+                    onPress={() => toggleGroup(date)}
                     style={styles.dayHeaderText}
                     accessibilityRole="button"
                     accessibilityState={{ expanded }}
-                    accessibilityLabel={`${formatShortDate(date)}, ${items.length} entries`}
+                    accessibilityLabel={`${groupLabel}, ${items.length} entries`}
                   >
-                    <Text style={hudType.label}>{formatShortDate(date)}</Text>
+                    <Text style={hudType.label}>{groupLabel}</Text>
                     <HudMeta>
                       {items.length} · {formatMoney(dayTotal, currency)}
                     </HudMeta>
                   </Pressable>
-                  <Pressable
+                  {groupBy === 'day' && categoryFilter === undefined ? <Pressable
                     onPress={() => onDeleteDay(date, items)}
                     hitSlop={10}
                     accessibilityRole="button"
@@ -193,12 +233,12 @@ export function ActivityScreen({ navigation }: Props) {
                     style={styles.dayDeleteBtn}
                   >
                     <Text style={styles.dayDeleteText}>{copy.deleteDay}</Text>
-                  </Pressable>
+                  </Pressable> : null}
                   <Pressable
-                    onPress={() => toggleDay(date)}
+                    onPress={() => toggleGroup(date)}
                     hitSlop={8}
                     accessibilityRole="button"
-                    accessibilityLabel={expanded ? 'Collapse day' : 'Expand day'}
+                    accessibilityLabel={`${expanded ? 'Collapse' : 'Expand'} ${groupBy}`}
                   >
                     <Ionicons
                       name={expanded ? 'chevron-up' : 'chevron-down'}
@@ -232,6 +272,7 @@ export function ActivityScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  groupControls: { flexDirection: 'row', gap: 24, paddingVertical: 8 },
   feedHead: {
     marginTop: 2,
     flexDirection: 'row',
