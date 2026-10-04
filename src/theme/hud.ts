@@ -159,6 +159,7 @@ export const tabScreen = StyleSheet.create({
 
 /** Stack / modal form screens — Edit Cycle, Add, Bills, Allocate, … */
 export const formScreen = StyleSheet.create({
+  compactPad: { padding: 16, gap: 12, paddingBottom: 28 },
   pad: {
     padding: 20,
     gap: hud.stackGap,
@@ -185,6 +186,9 @@ export const fieldChrome = StyleSheet.create({
     paddingVertical: 12,
     minHeight: 52,
   },
+  wrapCompact: { gap: 4 },
+  boxCompact: { paddingHorizontal: 12, paddingVertical: 8, minHeight: 44 },
+  amountInputCompact: { fontSize: 18, lineHeight: 22 },
   boxFocused: {
     borderColor: colors.borderBright,
     backgroundColor: colors.panelAlt,

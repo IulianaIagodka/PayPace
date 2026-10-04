@@ -34,13 +34,13 @@ export function AllocateScreen({ navigation }: Props) {
   if (!store.settings.isPremium) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <FormScroll contentContainerStyle={formScreen.pad}>
+        <FormScroll contentContainerStyle={formScreen.compactPad}>
           <Text style={styles.title}>ALLOCATE RESOURCES</Text>
           <Text style={styles.sub}>
             Plus lets you split spending across categories and see what’s left in each one.
           </Text>
           <PlusUnlockButton />
-          <HudButton title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
+          <HudButton compact title="BACK" onPress={() => navigation.goBack()} variant="secondary" />
         </FormScroll>
       </ScreenBackground>
     );
@@ -49,7 +49,7 @@ export function AllocateScreen({ navigation }: Props) {
   if (!activeCycle) {
     return (
       <ScreenBackground edges={['left', 'right', 'bottom']}>
-        <View style={formScreen.pad}>
+        <View style={formScreen.compactPad}>
           <Text style={styles.title}>ALLOCATE RESOURCES</Text>
           <Text style={styles.sub}>No active cycle.</Text>
         </View>
@@ -73,7 +73,7 @@ export function AllocateScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <FormScroll contentContainerStyle={formScreen.pad}>
+      <FormScroll contentContainerStyle={formScreen.compactPad}>
         <Text style={styles.title}>ALLOCATE RESOURCES</Text>
         <Text style={styles.sub}>Decide how much each category gets this pay cycle.</Text>
 
@@ -93,7 +93,7 @@ export function AllocateScreen({ navigation }: Props) {
 
         {draft.map((env) => (
           <View key={env.id} style={styles.allocBlock}>
-            <AmountField
+            <AmountField compact
               label={env.title}
               value={String(env.allocated || '')}
               onChangeText={(t) => updateAlloc(env.id, t)}
@@ -113,6 +113,8 @@ export function AllocateScreen({ navigation }: Props) {
                     )
                   }
                   style={styles.chip}
+                  hitSlop={4}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.chipText}>{Math.round(share * 100)}%</Text>
                 </Pressable>
@@ -121,8 +123,8 @@ export function AllocateScreen({ navigation }: Props) {
           </View>
         ))}
 
-        <HudButton title="SAVE" onPress={save} />
-        <HudButton title="CANCEL" onPress={() => navigation.goBack()} variant="secondary" />
+        <HudButton compact title="SAVE" onPress={save} />
+        <HudButton compact title="CANCEL" onPress={() => navigation.goBack()} variant="secondary" />
       </FormScroll>
     </ScreenBackground>
   );
@@ -132,16 +134,18 @@ const styles = StyleSheet.create({
   title: { ...hudType.screenTitle },
   sub: { ...hudType.body },
   label: { ...hudType.label },
-  big: { ...hudType.value },
+  big: { ...hudType.valueMid },
   unalloc: { ...hudType.meta, color: colors.warning },
-  allocBlock: { gap: hud.gap },
+  allocBlock: { gap: 6 },
   quick: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   chip: {
     borderWidth: hud.stroke,
     borderColor: colors.border,
     backgroundColor: colors.panelAlt,
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 6,
+    minHeight: 36,
+    justifyContent: 'center',
     borderRadius: 0,
   },
   chipText: { ...hudType.label },

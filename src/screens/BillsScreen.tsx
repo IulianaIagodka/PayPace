@@ -28,7 +28,7 @@ export function BillsScreen() {
 
   return (
     <ScreenBackground>
-      <FormScroll contentContainerStyle={formScreen.pad}>
+      <FormScroll contentContainerStyle={formScreen.compactPad}>
         <Text style={styles.title}>UPCOMING BILLS</Text>
         <Text style={styles.sub}>
           Total reserved: {formatMoney(upcoming.reduce((s, b) => s + b.amount, 0), currency)}
@@ -68,7 +68,7 @@ export function BillsScreen() {
         )}
 
         <Text style={styles.section}>Add a bill</Text>
-        <HudTextField
+        <HudTextField compact
           label="NAME"
           value={name}
           onChangeText={setName}
@@ -76,8 +76,8 @@ export function BillsScreen() {
           returnKeyType="done"
           blurOnSubmit
         />
-        <AmountField label="AMOUNT" value={amount} onChangeText={setAmount} suffix={suffix} />
-        <PrimaryButton
+        <AmountField compact label="AMOUNT" value={amount} onChangeText={setAmount} suffix={suffix} />
+        <PrimaryButton compact
           title="Save bill"
           onPress={async () => {
             const value = parsePositiveAmount(amount);

@@ -507,16 +507,18 @@ export function HudTextField({
   value,
   onChangeText,
   style,
+  compact = false,
   ...rest
 }: {
   label?: string;
+  compact?: boolean;
   value: string;
   onChangeText: (t: string) => void;
 } & TextInputProps) {
   return (
-    <View style={fieldChrome.wrap}>
+    <View style={[fieldChrome.wrap, compact && fieldChrome.wrapCompact]}>
       {label ? <Text style={hudType.label}>{label}</Text> : null}
-      <View style={fieldChrome.box}>
+      <View style={[fieldChrome.box, compact && fieldChrome.boxCompact]}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -534,24 +536,26 @@ export function AmountField({
   value,
   onChangeText,
   suffix = 'USD',
+  compact = false,
   ...rest
 }: {
   label: string;
+  compact?: boolean;
   value: string;
   onChangeText: (t: string) => void;
   suffix?: string;
 } & TextInputProps) {
   return (
-    <View style={fieldChrome.wrap}>
+    <View style={[fieldChrome.wrap, compact && fieldChrome.wrapCompact]}>
       <Text style={hudType.label}>{label}</Text>
-      <View style={fieldChrome.box}>
+      <View style={[fieldChrome.box, compact && fieldChrome.boxCompact]}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
           keyboardType="decimal-pad"
           placeholder="0"
           placeholderTextColor={colors.textDim}
-          style={fieldChrome.amountInput}
+          style={[fieldChrome.amountInput, compact && fieldChrome.amountInputCompact]}
           inputAccessoryViewID={Platform.OS === 'ios' ? AMOUNT_ACCESSORY_ID : undefined}
           {...rest}
         />

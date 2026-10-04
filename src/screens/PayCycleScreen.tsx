@@ -118,7 +118,7 @@ export function PayCycleScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <FormScroll contentContainerStyle={formScreen.pad}>
+      <FormScroll contentContainerStyle={formScreen.compactPad}>
         <Text style={styles.title}>EDIT BUDGET</Text>
         <Text style={styles.sub}>
           Update your balance, payday, or buffers — safe-to-spend recalculates right away.
@@ -133,26 +133,26 @@ export function PayCycleScreen({ navigation }: Props) {
           <Row label="Left until payday" value={formatMoney(snapshot.remainingUntilPayday, store.settings.currencyCode)} />
           <Row label="Spent this cycle" value={formatMoney(snapshot.spentThisCycle, store.settings.currencyCode)} />
         </SoftCard>
-        <AmountField label="CURRENT BALANCE" value={balance} onChangeText={setBalance} suffix={suffix} />
-        <AmountField
+        <AmountField compact label="CURRENT BALANCE" value={balance} onChangeText={setBalance} suffix={suffix} />
+        <AmountField compact
           label="DAYS UNTIL PAYDAY"
           value={daysUntil}
           onChangeText={setDaysUntil}
           suffix="days"
           keyboardType="number-pad"
         />
-        <AmountField label="EXPECTED PAYCHECK" value={paycheck} onChangeText={setPaycheck} suffix={suffix} />
-        <HudSelect
+        <AmountField compact label="EXPECTED PAYCHECK" value={paycheck} onChangeText={setPaycheck} suffix={suffix} />
+        <HudSelect compact
           label="PAY SCHEDULE"
           value={schedule}
           options={scheduleOptions.map((item) => ({ value: item.id, label: item.title }))}
           onChange={setSchedule}
         />
-        <AmountField label="SAVINGS" value={savings} onChangeText={setSavings} suffix={suffix} />
-        <AmountField label="EMERGENCY BUFFER" value={emergency} onChangeText={setEmergency} suffix={suffix} />
-        <AmountField label="SPENDING BUFFER" value={buffer} onChangeText={setBuffer} suffix={suffix} />
-        <PrimaryButton title="Save changes" onPress={save} />
-        <PrimaryButton title="Start next pay cycle" onPress={startNext} />
+        <AmountField compact label="SAVINGS" value={savings} onChangeText={setSavings} suffix={suffix} />
+        <AmountField compact label="EMERGENCY BUFFER" value={emergency} onChangeText={setEmergency} suffix={suffix} />
+        <AmountField compact label="SPENDING BUFFER" value={buffer} onChangeText={setBuffer} suffix={suffix} />
+        <PrimaryButton compact title="Save changes" onPress={save} />
+        <PrimaryButton compact title="Start next pay cycle" onPress={startNext} />
         {saved && <Text style={styles.ok}>Updated — safe-to-spend refreshed.</Text>}
       </FormScroll>
     </ScreenBackground>
