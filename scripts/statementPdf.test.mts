@@ -75,6 +75,22 @@ await checkPdf('statement-sample-flate.pdf', 'Biedronka', 5);
     ersteItems.some((r) => Math.abs(r.amount - 2485) < 0.001),
     'Erste PDF BLIK amount',
   );
+  assert(
+    ersteItems.every((r) => !!r.date),
+    'Erste PDF rows keep bank dates',
+  );
+  assert(
+    ersteItems.some(
+      (r) => r.name.includes('Bog') && r.date === '2026-09-30' && Math.abs(r.amount - 126.03) < 0.001,
+    ),
+    'Bog recovers Sep 30 (not booking/today)',
+  );
+  assert(
+    ersteItems.some(
+      (r) => r.name.includes('Uniqlo') && r.date === '2026-09-30' && Math.abs(r.amount - 350.74) < 0.001,
+    ),
+    'Uniqlo recovers Sep 30 via chart FX amount',
+  );
 }
 
 const trailing = parseStatementText('2026-09-25 Biedronka 86,40-\n2026-09-26 Salary 5000,00+');

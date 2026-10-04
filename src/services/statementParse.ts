@@ -484,7 +484,7 @@ function merchantFromErsteLine(line: string): string {
  */
 export function normalizeNarrativeStatementText(text: string): string {
   let out = text.replace(/\r\n/g, '\n');
-  // "Booking date 04\noct 2026" → one labeled line (still ignored as spend date).
+  // "Booking date 04\noct 2026" → one labeled line (spend fallback when Tx date missing).
   out = out.replace(
     /Booking date\s+(\d{1,2})\s*\n\s*([A-Za-zÀ-ž.]+)\s+(\d{4})/gi,
     'Booking date $1 $2 $3',
@@ -493,6 +493,108 @@ export function normalizeNarrativeStatementText(text: string): string {
   out = out.replace(/\bP\s*\n\s*atno\s*\n\s*Kart\b/gi, 'Platnosc Kart');
   out = out.replace(/\bP\s+atno\s+Kart\b/gi, 'Platnosc Kart');
   return out;
+}
+
+function amountKey(amount: number): string {
+  return (Math.round(amount * 100) / 100).toFixed(2);
+}
+
+/** Pull "1 Dkk=0.5875 Pln" style rate from an Erste FX description. */
+function extractFxRateToPln(desc: string): number | null {
+  const m = /1\s*(?:eur|usd|dkk|gbp|chf|nok|sek)\s*=\s*([\d.,]+)\s*pln/i.exec(desc);
+  if (!m) return null;
+  const rate = parseAmountTokenSigned(m[1]!);
+  if (rate == null || rate <= 0) return null;
+  return Math.abs(rate);
+}
+
+/** Optional original FX amount printed before the rate, e.g. "204.00 Dkk 1 Dkk=…". */
+function extractFxOriginalAmount(desc: string): number | null {
+  // Ignore the unit "1 Dkk=" in the rate clause.
+  const m = /([\d.,]+)\s*(?:eur|usd|dkk|gbp|chf|nok|sek)\b(?!\s*=)/i.exec(desc);
+  if (!m) return null;
+  const value = parseAmountTokenSigned(m[1]!);
+  if (value == null || value <= 1) return null;
+  return Math.abs(value);
+}
+
+/**
+ * Erste PDF chart/summary above "Transaction list" often keeps the real transaction
+ * dates + amounts even when the list rows only show Booking date (Tx date glyph lost).
+ * Map amount → date (first wins; chart amounts may be PLN or original FX).
+ */
+export function collectChartAmountDates(text: string): Map<string, string> {
+  const map = new Map<string, string>();
+  const lines = normalizeNarrativeStatementText(text)
+    .split(/\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  let pendingDate: string | undefined;
+  let inList = false;
+
+  for (const line of lines) {
+    if (/transaction list|list of transactions/i.test(line)) {
+      inList = true;
+      pendingDate = undefined;
+      continue;
+    }
+    // Page footers restart a chart on the next page.
+    if (/^page\s+\d+/i.test(line) || /^document on\b/i.test(line)) {
+      inList = false;
+      pendingDate = undefined;
+      continue;
+    }
+    if (inList) continue;
+
+    const alone = isStandaloneDateLine(line);
+    if (alone) {
+      pendingDate = alone;
+      continue;
+    }
+    if (!pendingDate) continue;
+
+    const amount = parseAmountOnlyLine(line) ?? parseAmountTokenSigned(line);
+    if (amount == null) continue;
+    const key = amountKey(Math.abs(amount));
+    if (!map.has(key)) map.set(key, pendingDate);
+    pendingDate = undefined;
+  }
+  return map;
+}
+
+function lookupChartDate(
+  chartDates: Map<string, string>,
+  amount: number,
+  desc: string,
+): string | undefined {
+  const direct = chartDates.get(amountKey(amount));
+  if (direct) return direct;
+
+  const fxOriginal = extractFxOriginalAmount(desc);
+  if (fxOriginal != null) {
+    const byFx = chartDates.get(amountKey(fxOriginal));
+    if (byFx) return byFx;
+  }
+
+  const rate = extractFxRateToPln(desc);
+  if (rate != null && rate > 0) {
+    const inferred = amount / rate;
+    // Bank FX rounding can sit a cent off the chart label — probe nearby cents.
+    const cents = Math.round(inferred * 100);
+    for (const delta of [0, -1, 1, -2, 2]) {
+      const hit = chartDates.get(amountKey((cents + delta) / 100));
+      if (hit) return hit;
+    }
+  }
+  return undefined;
+}
+
+function parseBookingDateLine(line: string): string | null {
+  if (!/^booking date\b/i.test(line.trim())) return null;
+  // Strip the label so parseStatementDate can read the calendar day.
+  const rest = line.replace(/^booking date\b[:\s]*/i, '').trim();
+  return parseStatementDate(rest);
 }
 
 function looksLikeErsteExpenseDescription(desc: string): boolean {
@@ -506,17 +608,25 @@ function looksLikeErsteExpenseDescription(desc: string): boolean {
 
 /**
  * Erste / multi-line PDF text: date on its own line, then description+amount.
- * Uses Transaction date lines; ignores "Booking date" and "Document on".
+ * Prefers Transaction date; when the PDF drops that glyph, recovers from the
+ * chart/summary amounts or Booking date — never leave rows dateless (→ today).
  * Real Erste PDFs often put unsigned amount + balance on following lines.
  */
 export function parseNarrativeStatementText(text: string): ParsedStatementRow[] {
   const items: ParsedStatementRow[] = [];
+  const chartDates = collectChartAmountDates(text);
   const lines = normalizeNarrativeStatementText(text)
     .split(/\n/)
     .map((l) => l.trim())
     .filter(Boolean);
   let currentDate: string | undefined;
+  let currentBookingDate: string | undefined;
   let pendingDesc: string[] = [];
+
+  const resolveDate = (amount: number, descRaw: string, preferred?: string) =>
+    preferred ??
+    lookupChartDate(chartDates, amount, descRaw) ??
+    currentBookingDate;
 
   const flushAmount = (amount: number, descRaw: string, date: string | undefined) => {
     if (!looksLikeErsteExpenseDescription(descRaw)) return;
@@ -542,6 +652,7 @@ export function parseNarrativeStatementText(text: string): ParsedStatementRow[] 
       // Chart / header blocks before the real list must not keep a chart date.
       if (/transaction list|list of transactions|^transaction date$/i.test(line)) {
         currentDate = undefined;
+        currentBookingDate = undefined;
         pendingDesc = [];
       }
       continue;
@@ -549,7 +660,14 @@ export function parseNarrativeStatementText(text: string): ParsedStatementRow[] 
     // Chart / glyph junk from Erste PDF extracts.
     if (/^[!"#$%&'*+,./:;<=>?@\\^_`{|}~-]+$/.test(line) || line === '!') continue;
 
-    if (isNonTransactionDateLabel(line) || /^booking date\b/i.test(line)) {
+    if (isNonTransactionDateLabel(line) && !/^booking date\b/i.test(line)) {
+      continue;
+    }
+
+    const booking = parseBookingDateLine(line);
+    if (booking) {
+      // Booking date belongs to the upcoming row only (not a spend date by itself).
+      currentBookingDate = booking;
       continue;
     }
 
@@ -557,6 +675,7 @@ export function parseNarrativeStatementText(text: string): ParsedStatementRow[] 
     if (alone) {
       // Date belongs to the next transaction only — do not carry across rows.
       currentDate = alone;
+      currentBookingDate = undefined;
       pendingDesc = [];
       continue;
     }
@@ -565,13 +684,14 @@ export function parseNarrativeStatementText(text: string): ParsedStatementRow[] 
     const amountOnly = parseAmountOnlyLine(line);
     if (amountOnly != null && pendingDesc.length) {
       const desc = pendingDesc.join(' ');
-      const date = currentDate;
+      const date = resolveDate(amountOnly, desc, currentDate);
       flushAmount(amountOnly, desc, date);
       // Optional balance line immediately after.
       const next = lines[i + 1];
       if (next && parseAmountOnlyLine(next) != null) i += 1;
       pendingDesc = [];
       currentDate = undefined;
+      currentBookingDate = undefined;
       continue;
     }
 
@@ -579,11 +699,12 @@ export function parseNarrativeStatementText(text: string): ParsedStatementRow[] 
     const inlineAmount = extractDebitAmount(line);
     if (inlineAmount != null && !parseAmountOnlyLine(line)) {
       const leading = parseStatementDate(line.split(/\s{2,}|\t/)[0] ?? '');
-      const date = leading ?? currentDate;
       const desc = [...pendingDesc, line].join(' ');
+      const date = resolveDate(inlineAmount, desc, leading ?? currentDate);
       flushAmount(inlineAmount, desc, date);
       pendingDesc = [];
       currentDate = undefined;
+      currentBookingDate = undefined;
       continue;
     }
 

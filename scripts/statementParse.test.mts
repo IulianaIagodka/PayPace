@@ -7,6 +7,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   cleanMerchantName,
+  collectChartAmountDates,
   parseAmountTokenSigned,
   parseNarrativeStatementText,
   parseStatementDate,
@@ -138,5 +139,37 @@ assert(
   'card chrome stripped from merchant',
 );
 assertEq(parseStatementText(erstePdfExtract).length, erstePdfRows.length, 'main path = narrative');
+
+// Real Erste PDFs often drop the Transaction date glyph for later rows and only
+// keep Booking date — without recovery those imports all land on "today".
+const chartDates = collectChartAmountDates(erstePdfExtract);
+assertEq(chartDates.get('126.03'), '2026-09-30', 'chart maps Bog PLN amount');
+assertEq(chartDates.get('114.70'), '2026-09-30', 'chart maps Lidl FX amount');
+assertEq(chartDates.get('597.00'), '2026-09-30', 'chart maps Uniqlo FX on page 2');
+
+const missingTxDateMerchants = [
+  { needle: 'Bog & Ide', amount: 126.03 },
+  { needle: 'Lidlfisketorvet', amount: 67.39 },
+  { needle: 'Snk Group Aps Roedovre', amount: 31.87 },
+  { needle: 'Kalvebod', amount: 109.86 },
+  { needle: 'Foetex', amount: 121.25 },
+  { needle: 'Uniqlo', amount: 350.74 },
+  { needle: 'Rejsebillet', amount: 17.64 },
+];
+for (const m of missingTxDateMerchants) {
+  const row = erstePdfRows.find(
+    (r) => r.name.includes(m.needle) && Math.abs(r.amount - m.amount) < 0.001,
+  );
+  assert(row, `${m.needle} row present`);
+  assertEq(row!.date, '2026-09-30', `${m.needle} recovers transaction day from chart`);
+}
+assert(
+  erstePdfRows.every((r) => !!r.date),
+  'no dateless Erste PDF rows (would become today on import)',
+);
+assert(
+  !erstePdfRows.some((r) => r.name.includes('Bog') && r.date === '2026-10-04'),
+  'Bog must not use booking/today',
+);
 
 console.log(`statementParse.test.mts: ok (${passed} asserts)`);
