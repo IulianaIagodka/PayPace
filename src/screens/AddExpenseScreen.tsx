@@ -13,7 +13,7 @@ import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { hudType } from '../theme/hud';
 import { ensureEnvelopes } from '../services/envelopes';
-import type { EnvelopeKey } from '../models/types';
+import type { EnvelopeKey, ExpenseScope } from '../models/types';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
@@ -30,8 +30,10 @@ export function AddExpenseScreen({ navigation, route }: Props) {
   const { addExpense, store, activeCycle } = useBudget();
   const suffix = currencySymbol(store.settings.currencyCode);
   const envelopes = activeCycle ? ensureEnvelopes(activeCycle) : [];
+  const inHousehold = Boolean(store.household);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
+  const [scope, setScope] = useState<ExpenseScope>('shared');
   const [envelopeKey, setEnvelopeKey] = useState<EnvelopeKey>(() =>
     initialEnvelopeKey(envelopes, route.params?.envelopeKey),
   );
@@ -51,6 +53,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
         date: toDateKey(new Date()),
         category: selected.category,
         envelopeKey: selected.key,
+        scope: inHousehold ? scope : 'shared',
       });
       navigation.goBack();
     } finally {
@@ -100,6 +103,35 @@ export function AddExpenseScreen({ navigation, route }: Props) {
         <Text style={styles.or}>OR LOG MANUALLY</Text>
 
         <AmountField label="AMOUNT" value={amount} onChangeText={setAmount} suffix={suffix} />
+
+        {inHousehold ? (
+          <View style={styles.scopeBlock}>
+            <Text style={styles.label}>FROM</Text>
+            <View style={styles.scopeRow}>
+              <Pressable
+                onPress={() => setScope('shared')}
+                style={[styles.scopeChip, scope === 'shared' && styles.scopeChipOn]}
+              >
+                <Text style={[styles.scopeText, scope === 'shared' && styles.scopeTextOn]}>
+                  SHARED
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setScope('personal')}
+                style={[styles.scopeChip, scope === 'personal' && styles.scopeChipOn]}
+              >
+                <Text style={[styles.scopeText, scope === 'personal' && styles.scopeTextOn]}>
+                  PERSONAL
+                </Text>
+              </Pressable>
+            </View>
+            <Text style={styles.scopeHint}>
+              {scope === 'shared'
+                ? 'Counts toward shared safe-to-spend.'
+                : 'Logged for you — does not pull the shared pool.'}
+            </Text>
+          </View>
+        ) : null}
 
         <Text style={styles.label}>CATEGORY</Text>
         <View style={styles.grid}>
@@ -161,6 +193,20 @@ const styles = StyleSheet.create({
   importHint: { ...hudType.body, fontSize: 12, lineHeight: 16 },
   or: { ...hudType.meta, textAlign: 'center' },
   label: { ...hudType.label },
+  scopeBlock: { gap: 8 },
+  scopeRow: { flexDirection: 'row', gap: 8 },
+  scopeChip: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.panel,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  scopeChipOn: { borderColor: colors.resource, backgroundColor: '#14301A' },
+  scopeText: { ...hudType.label },
+  scopeTextOn: { color: colors.resource },
+  scopeHint: { ...hudType.body, fontSize: 12, lineHeight: 16 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   cat: {
     borderWidth: 1,

@@ -19,7 +19,8 @@ import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
 import { hudType } from '../theme/hud';
 import type { RootStackParamList } from '../navigation/types';
-import { formatMoney } from '../services/formatting';
+import { formatMoney, formatShortDate } from '../services/formatting';
+import { expenseScopeOf } from '../services/expenseFilters';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SharedBudget'>;
 
@@ -45,7 +46,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
   const currency = store.settings.currencyCode;
 
   const spentByMember = useMemo(() => {
-    const expenses = activeCycle?.expenses ?? [];
+    const expenses = (activeCycle?.expenses ?? []).filter((e) => expenseScopeOf(e) === 'shared');
     const map = new Map<string, { name: string; total: number }>();
     for (const expense of expenses) {
       const key = expense.memberId ?? 'unknown';
@@ -57,6 +58,24 @@ export function SharedBudgetScreen({ navigation }: Props) {
     }
     return Array.from(map.values()).sort((a, b) => b.total - a.total);
   }, [activeCycle?.expenses]);
+
+  const scopeTotals = useMemo(() => {
+    let shared = 0;
+    let personal = 0;
+    for (const expense of activeCycle?.expenses ?? []) {
+      if (expenseScopeOf(expense) === 'personal') personal += expense.amount;
+      else shared += expense.amount;
+    }
+    return { shared, personal };
+  }, [activeCycle?.expenses]);
+
+  const recentChanges = useMemo(
+    () =>
+      [...(store.activityEvents ?? [])]
+        .sort((a, b) => b.at.localeCompare(a.at))
+        .slice(0, 12),
+    [store.activityEvents],
+  );
 
   if (!store.settings.isPremium) {
     return (
@@ -173,6 +192,14 @@ export function SharedBudgetScreen({ navigation }: Props) {
 
           <SoftCard>
             <Text style={styles.section}>Spending this cycle</Text>
+            <View style={styles.memberRow}>
+              <Text style={styles.memberName}>Shared pool</Text>
+              <Text style={styles.amount}>{formatMoney(scopeTotals.shared, currency)}</Text>
+            </View>
+            <View style={styles.memberRow}>
+              <Text style={styles.memberName}>Personal (not in pool)</Text>
+              <Text style={styles.amount}>{formatMoney(scopeTotals.personal, currency)}</Text>
+            </View>
             {spentByMember.length === 0 ? (
               <Text style={styles.hint}>No shared spending yet.</Text>
             ) : (
@@ -180,6 +207,20 @@ export function SharedBudgetScreen({ navigation }: Props) {
                 <View key={row.name} style={styles.memberRow}>
                   <Text style={styles.memberName}>{row.name}</Text>
                   <Text style={styles.amount}>{formatMoney(row.total, currency)}</Text>
+                </View>
+              ))
+            )}
+          </SoftCard>
+
+          <SoftCard>
+            <Text style={styles.section}>Recent changes</Text>
+            {recentChanges.length === 0 ? (
+              <Text style={styles.hint}>Changes show up here when either of you edits the budget.</Text>
+            ) : (
+              recentChanges.map((event) => (
+                <View key={event.id} style={styles.changeRow}>
+                  <Text style={styles.changeSummary}>{event.summary}</Text>
+                  <Text style={styles.hint}>{formatShortDate(event.at.slice(0, 10))}</Text>
                 </View>
               ))
             )}
@@ -298,6 +339,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     ...hudType.field,
   },
+  changeRow: {
+    gap: 2,
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  changeSummary: { ...hudType.body },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',

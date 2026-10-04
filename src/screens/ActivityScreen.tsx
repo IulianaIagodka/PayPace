@@ -19,6 +19,11 @@ import { colors } from '../theme/colors';
 import { hudType, tabScreen } from '../theme/hud';
 import { formatMoney, formatShortDate, toDateKey } from '../services/formatting';
 import { CONTROL_PANEL_COPY } from '../services/controlPanel';
+import {
+  filterExpenses,
+  partnerMemberId,
+  type PersonFilter,
+} from '../services/expenseFilters';
 import type { DailyExpense } from '../models/types';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 
@@ -34,12 +39,32 @@ export function ActivityScreen({ navigation }: Props) {
   const currency = store.settings.currencyCode;
   const tabClearance = useTabBarClearance(28);
   const todayKey = useMemo(() => toDateKey(new Date()), []);
+  const inHousehold = Boolean(store.household);
+  const partnerId = partnerMemberId(store.household, store.localMemberId);
+  const [personFilter, setPersonFilter] = useState<PersonFilter>('all');
 
   /** Dates the user has expanded; everything else stays collapsed. Today starts open. */
   const [expandedDates, setExpandedDates] = useState<Set<string>>(() => new Set([todayKey]));
 
+  const filteredExpenses = useMemo(
+    () =>
+      filterExpenses(activeCycle?.expenses ?? [], {
+        viewerMemberId: store.localMemberId,
+        partnerMemberId: partnerId,
+        person: inHousehold ? personFilter : 'all',
+      }),
+    [activeCycle?.expenses, store.localMemberId, partnerId, personFilter, inHousehold],
+  );
+
+  const recentChanges = useMemo(() => {
+    if (!inHousehold) return [];
+    return [...(store.activityEvents ?? [])]
+      .sort((a, b) => b.at.localeCompare(a.at))
+      .slice(0, 8);
+  }, [inHousehold, store.activityEvents]);
+
   const grouped = useMemo(() => {
-    const list = [...(activeCycle?.expenses ?? [])];
+    const list = [...filteredExpenses];
     list.sort((a, b) => {
       if (a.date !== b.date) return a.date < b.date ? 1 : -1;
       return (b.updatedAt ?? b.date).localeCompare(a.updatedAt ?? a.date);
@@ -51,7 +76,7 @@ export function ActivityScreen({ navigation }: Props) {
       map.set(expense.date, bucket);
     }
     return Array.from(map.entries());
-  }, [activeCycle?.expenses]);
+  }, [filteredExpenses]);
 
   const dates = useMemo(() => grouped.map(([date]) => date), [grouped]);
   const allExpanded = dates.length > 0 && dates.every((date) => expandedDates.has(date));
@@ -74,7 +99,9 @@ export function ActivityScreen({ navigation }: Props) {
     setExpandedDates(new Set());
   };
 
-  const count = activeCycle?.expenses.length ?? 0;
+  const count = filteredExpenses.length;
+  const totalVisible = filteredExpenses.reduce((s, e) => s + e.amount, 0);
+  const sharedTotal = snapshot.spentThisCycle;
 
   const onDelete = (expense: DailyExpense) => {
     Alert.alert('Delete this expense?', expense.name, [
@@ -112,6 +139,12 @@ export function ActivityScreen({ navigation }: Props) {
     );
   };
 
+  const personChips: Array<{ id: PersonFilter; label: string; disabled?: boolean }> = [
+    { id: 'all', label: copy.filterAll },
+    { id: 'mine', label: copy.filterMine },
+    { id: 'partner', label: copy.filterPartner, disabled: !partnerId },
+  ];
+
   return (
     <ScreenBackground edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={[tabScreen.pad, { paddingBottom: tabClearance }]}>
@@ -121,13 +154,62 @@ export function ActivityScreen({ navigation }: Props) {
         <Text style={hudType.meta}>{copy.sysTag}</Text>
 
         <HUDPanel variant="primary" label={copy.totalLabel}>
-          <HudValue>{formatMoney(snapshot.spentThisCycle, currency)}</HudValue>
+          <HudValue>
+            {formatMoney(personFilter === 'all' ? sharedTotal : totalVisible, currency)}
+          </HudValue>
           <HudMeta>
             {count === 0
-              ? 'Nothing logged this cycle'
-              : `${count} entr${count === 1 ? 'y' : 'ies'} · pay cycle`}
+              ? personFilter === 'all'
+                ? 'Nothing logged this cycle'
+                : copy.emptyFiltered
+              : personFilter === 'all'
+                ? `${count} entr${count === 1 ? 'y' : 'ies'} · shared pool`
+                : `${count} entr${count === 1 ? 'y' : 'ies'} · filter`}
           </HudMeta>
         </HUDPanel>
+
+        {inHousehold ? (
+          <View style={styles.filterRow}>
+            {personChips.map((chip) => {
+              const on = personFilter === chip.id;
+              return (
+                <Pressable
+                  key={chip.id}
+                  disabled={chip.disabled}
+                  onPress={() => setPersonFilter(chip.id)}
+                  style={[
+                    styles.filterChip,
+                    on && styles.filterChipOn,
+                    chip.disabled && styles.filterChipDisabled,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on, disabled: !!chip.disabled }}
+                >
+                  <Text
+                    style={[
+                      styles.filterText,
+                      on && styles.filterTextOn,
+                      chip.disabled && styles.filterTextDisabled,
+                    ]}
+                  >
+                    {chip.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
+
+        {recentChanges.length > 0 ? (
+          <HUDPanel variant="standard" label={copy.changesLabel}>
+            {recentChanges.map((event) => (
+              <View key={event.id} style={styles.changeRow}>
+                <Text style={styles.changeSummary}>{event.summary}</Text>
+                <HudMeta>{formatShortDate(event.at.slice(0, 10))}</HudMeta>
+              </View>
+            ))}
+          </HUDPanel>
+        ) : null}
 
         <View style={styles.feedHead}>
           <Text style={hudType.label}>{copy.feedLabel}</Text>
@@ -162,14 +244,15 @@ export function ActivityScreen({ navigation }: Props) {
 
         {grouped.length === 0 ? (
           <HUDPanel variant="standard">
-            <HudBody>{copy.empty}</HudBody>
+            <HudBody>
+              {(activeCycle?.expenses.length ?? 0) === 0 ? copy.empty : copy.emptyFiltered}
+            </HudBody>
             <HudButton title="+ ADD EXPENSE" onPress={() => navigation.navigate('AddExpense')} />
           </HUDPanel>
         ) : (
           grouped.map(([date, items]) => {
             const dayTotal = items.reduce((sum, e) => sum + e.amount, 0);
             const expanded = expandedDates.has(date);
-            // Same plate seed as TOTAL SPENT so grit/stars match exactly
             return (
               <HUDPanel key={date} variant="standard" seed={`primary:${copy.totalLabel}`}>
                 <View style={styles.dayHeader}>
@@ -232,6 +315,43 @@ export function ActivityScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  filterChip: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.panel,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  filterChipOn: {
+    borderColor: colors.resource,
+    backgroundColor: colors.resourceSoft,
+  },
+  filterChipDisabled: {
+    opacity: 0.4,
+  },
+  filterText: {
+    ...hudType.label,
+  },
+  filterTextOn: {
+    color: colors.resource,
+  },
+  filterTextDisabled: {
+    color: colors.textSecondary,
+  },
+  changeRow: {
+    gap: 2,
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  changeSummary: {
+    ...hudType.body,
+  },
   feedHead: {
     marginTop: 2,
     flexDirection: 'row',

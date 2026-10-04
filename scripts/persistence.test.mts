@@ -50,6 +50,7 @@ function shell(partial: Partial<AppStoreData> & { onboard?: boolean; cycles?: nu
     household: partial.household ?? null,
     localMemberId: null,
     periodReports: [],
+    activityEvents: partial.activityEvents ?? [],
   };
 }
 

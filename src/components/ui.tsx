@@ -544,6 +544,7 @@ export function ExpenseRow({
   onDelete?: () => void;
   compact?: boolean;
 }) {
+  const personal = expense.scope === 'personal';
   return (
     <View style={[styles.row, compact && styles.rowCompact]}>
       <View style={{ flex: 1, gap: compact ? 0 : 2 }}>
@@ -553,9 +554,12 @@ export function ExpenseRow({
         <Text style={styles.meta}>
           {formatShortDate(expense.date)}
           {expense.memberName ? ` · ${expense.memberName}` : ''}
+          {personal ? ' · personal' : ''}
         </Text>
       </View>
-      <Text style={styles.rowAmount}>{formatMoney(expense.amount, currencyCode)}</Text>
+      <Text style={[styles.rowAmount, personal && styles.rowAmountPersonal]}>
+        {formatMoney(expense.amount, currencyCode)}
+      </Text>
       {onDelete ? (
         <Pressable
           onPress={onDelete}
@@ -848,6 +852,7 @@ const styles = StyleSheet.create({
   },
   rowTitle: { ...hudType.bodyStrong },
   rowAmount: { ...hudType.valueMid },
+  rowAmountPersonal: { color: colors.textSecondary },
   meta: { ...hudType.body },
   deleteBtn: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 4 },
   deleteBtnCompact: { minHeight: 28 },

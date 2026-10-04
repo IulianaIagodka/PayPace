@@ -9,11 +9,14 @@
 
 import type {
   DailyExpense,
+  ExpenseScope,
   Household,
+  HouseholdActivityEvent,
   HouseholdMember,
   PayCycle,
   SharedHouseholdPayload,
 } from '../src/models/types.ts';
+import { buildActivityEvent, expenseAddedSummary } from '../src/services/householdActivity.ts';
 import { mergeSharedPayloads, toSharedPayload } from '../src/services/householdMerge.ts';
 import { generateInviteCode, normalizeInviteCode } from '../src/services/inviteCode.ts';
 
@@ -23,6 +26,7 @@ type DeviceStore = {
   localMemberId: string | null;
   household: Household | null;
   cycle: PayCycle;
+  activityEvents: HouseholdActivityEvent[];
 };
 
 const cloud = new Map<string, SharedHouseholdPayload>(); // by household id
@@ -109,11 +113,13 @@ function createHousehold(device: DeviceStore, name: string): void {
   device.displayName = name;
   device.localMemberId = memberId;
   device.household = household;
+  device.activityEvents = [];
   upsertCloud(
     toSharedPayload({
       household,
       currencyCode: 'UAH',
       cycles: [device.cycle],
+      activityEvents: device.activityEvents,
     }),
   );
 }
@@ -159,17 +165,25 @@ function joinHousehold(device: DeviceStore, inviteCode: string, name: string): v
   device.localMemberId = memberId;
   device.household = household;
   device.cycle = remote.cycles.find((c) => c.isActive) ?? remote.cycles[0] ?? device.cycle;
+  device.activityEvents = remote.activityEvents ?? [];
 
   upsertCloud(
     toSharedPayload({
       household,
       currencyCode: 'UAH',
       cycles: [device.cycle],
+      activityEvents: device.activityEvents,
     }),
   );
 }
 
-function addExpense(device: DeviceStore, name: string, amount: number, atMs: number): void {
+function addExpense(
+  device: DeviceStore,
+  name: string,
+  amount: number,
+  atMs: number,
+  scope: ExpenseScope = 'shared',
+): void {
   assert(device.household && device.localMemberId, 'must be in household');
   const expense: DailyExpense = {
     id: newId('exp'),
@@ -179,8 +193,20 @@ function addExpense(device: DeviceStore, name: string, amount: number, atMs: num
     category: 'other',
     memberId: device.localMemberId,
     memberName: device.displayName,
+    scope,
     updatedAt: nowIso(atMs),
   };
+  const event = buildActivityEvent({
+    id: newId('act'),
+    kind: 'expense_added',
+    at: nowIso(atMs),
+    memberId: device.localMemberId,
+    memberName: device.displayName,
+    expenseId: expense.id,
+    amount,
+    scope,
+    summary: expenseAddedSummary(name, amount, 'UAH', device.displayName, scope),
+  });
   device.cycle = {
     ...device.cycle,
     expenses: [expense, ...device.cycle.expenses],
@@ -191,11 +217,13 @@ function addExpense(device: DeviceStore, name: string, amount: number, atMs: num
     revision: device.household.revision + 1,
     updatedAt: nowIso(atMs),
   };
+  device.activityEvents = [event, ...device.activityEvents];
   upsertCloud(
     toSharedPayload({
       household: device.household,
       currencyCode: 'UAH',
       cycles: [device.cycle],
+      activityEvents: device.activityEvents,
     }),
   );
 }
@@ -209,10 +237,12 @@ function syncDevice(device: DeviceStore): void {
     household: device.household,
     currencyCode: 'UAH',
     cycles: [device.cycle],
+    activityEvents: device.activityEvents,
   });
   const merged = mergeSharedPayloads(localPayload, remote);
   device.household = merged.household;
   device.cycle = merged.cycles.find((c) => c.isActive) ?? merged.cycles[0];
+  device.activityEvents = merged.activityEvents ?? [];
   upsertCloud(merged);
 }
 
@@ -229,6 +259,7 @@ function run() {
     localMemberId: null,
     household: null,
     cycle: emptyCycle('cycle-ira'),
+    activityEvents: [],
   };
   const sasha: DeviceStore = {
     deviceId: 'device-sasha',
@@ -236,6 +267,7 @@ function run() {
     localMemberId: null,
     household: null,
     cycle: emptyCycle('cycle-sasha-local'),
+    activityEvents: [],
   };
   const stranger: DeviceStore = {
     deviceId: 'device-other',
@@ -243,6 +275,7 @@ function run() {
     localMemberId: null,
     household: null,
     cycle: emptyCycle('cycle-other'),
+    activityEvents: [],
   };
 
   // 1) Ira creates household and gets invite code
@@ -273,7 +306,21 @@ function run() {
   assert(spentBy(ira, 'Ira') === 42, 'Ira total');
   assert(spentBy(ira, 'Sasha') === 120, 'Sasha total on Ira phone');
   assert(spentBy(sasha, 'Ira') === 42, 'Ira total on Sasha phone');
+  assert(ira.activityEvents.length >= 2, 'activity events merged on Ira');
+  assert(sasha.activityEvents.length >= 2, 'activity events merged on Sasha');
   console.log('✓ Concurrent spends merged on both devices');
+
+  // 3b) Personal expense syncs but stays tagged personal
+  addExpense(ira, 'Gift', 200, 240_000, 'personal');
+  syncDevice(sasha);
+  syncDevice(ira);
+  const gift = sasha.cycle.expenses.find((e) => e.name === 'Gift');
+  assert(gift?.scope === 'personal', 'personal scope survives sync');
+  assert(
+    sasha.activityEvents.some((e) => e.summary.includes('personal')),
+    'personal activity note synced',
+  );
+  console.log('✓ Personal expense + activity synced');
 
   // 4) Third phone rejected
   let rejected = false;
@@ -292,6 +339,7 @@ function run() {
     localMemberId: null,
     household: null,
     cycle: emptyCycle('fresh'),
+    activityEvents: [],
   };
   joinHousehold(sasha2, code, 'Sasha');
   assert(sasha2.household?.members.length === 2, 'rejoin does not duplicate member');
@@ -304,6 +352,7 @@ function run() {
     localMemberId: null,
     household: null,
     cycle: emptyCycle('wiped'),
+    activityEvents: [],
   };
   joinHousehold(sashaWiped, code, 'Sasha');
   assert(sashaWiped.household?.members.length === 2, 'name reclaim keeps 2 members');
