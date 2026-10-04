@@ -121,7 +121,11 @@ function createHousehold(device: DeviceStore, name: string): void {
 function joinHousehold(device: DeviceStore, inviteCode: string, name: string): void {
   const remote = fetchByCode(inviteCode);
   assert(remote, 'invite code must resolve');
-  const existing = remote.household.members.find((m) => m.deviceId === device.deviceId);
+  const existing =
+    remote.household.members.find((m) => m.deviceId === device.deviceId) ??
+    remote.household.members.find(
+      (m) => m.displayName.trim().toLowerCase() === name.trim().toLowerCase(),
+    );
   assert(
     existing || remote.household.members.length < 2,
     'third person must be rejected',
@@ -138,6 +142,10 @@ function joinHousehold(device: DeviceStore, inviteCode: string, name: string): v
       role: 'partner',
       joinedAt: nowIso(60_000),
     });
+  } else {
+    members = members.map((m) =>
+      m.id === memberId ? { ...m, displayName: name, deviceId: device.deviceId } : m,
+    );
   }
 
   const household: Household = {
@@ -288,6 +296,22 @@ function run() {
   joinHousehold(sasha2, code, 'Sasha');
   assert(sasha2.household?.members.length === 2, 'rejoin does not duplicate member');
   console.log('✓ Same device re-join OK');
+
+  // 5b) Re-join after wipe with NEW device id — reclaim by same display name
+  const sashaWiped: DeviceStore = {
+    deviceId: 'device-sasha-new-install',
+    displayName: '',
+    localMemberId: null,
+    household: null,
+    cycle: emptyCycle('wiped'),
+  };
+  joinHousehold(sashaWiped, code, 'Sasha');
+  assert(sashaWiped.household?.members.length === 2, 'name reclaim keeps 2 members');
+  assert(
+    sashaWiped.household?.members.some((m) => m.deviceId === 'device-sasha-new-install'),
+    'name reclaim rebinds device id',
+  );
+  console.log('✓ Name-based reclaim after wipe OK');
 
   // 6) Invite code normalize
   assert(normalizeInviteCode(' ab-c12 ') === 'ABC12', 'normalize invite');

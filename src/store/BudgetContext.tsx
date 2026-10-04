@@ -29,6 +29,10 @@ import { asMoney, toDateKey } from '../services/formatting';
 import { findCycleForDate } from '../services/cycleMatching';
 import { getDeviceId } from '../services/deviceIdentity';
 import { generateInviteCode, normalizeInviteCode } from '../services/inviteCode';
+import {
+  findExistingHouseholdMember,
+  HOUSEHOLD_FULL_RECLAIM_HINT,
+} from '../services/householdJoin';
 import { mergeSharedPayloads, toSharedPayload } from '../services/householdMerge';
 import { ensureEnvelopes, categoryToEnvelopeKey, makeCustomEnvelope } from '../services/envelopes';
 import {
@@ -809,11 +813,15 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       const remote = await cloudFetchByInviteCode(code);
       if (!remote) throw new Error('That code wasn’t found. Double-check it with your partner.');
       const deviceId = await getDeviceId();
-      const existingOnDevice = remote.household.members.find((m) => m.deviceId === deviceId);
-      if (!existingOnDevice && remote.household.members.length >= 2) {
-        throw new Error('This shared budget already has two people.');
+      const existingMember = findExistingHouseholdMember(
+        remote.household.members,
+        deviceId,
+        trimmed,
+      );
+      if (!existingMember && remote.household.members.length >= 2) {
+        throw new Error(HOUSEHOLD_FULL_RECLAIM_HINT);
       }
-      let memberId = existingOnDevice?.id;
+      let memberId = existingMember?.id;
       let members = [...remote.household.members];
       if (!memberId) {
         memberId = newId();
@@ -828,8 +836,9 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           },
         ];
       } else {
+        // Reclaim seat after reinstall / data wipe: bind this phone to the old member.
         members = members.map((m) =>
-          m.id === memberId ? { ...m, displayName: trimmed } : m,
+          m.id === memberId ? { ...m, displayName: trimmed, deviceId } : m,
         );
       }
       const household: Household = {
@@ -844,13 +853,13 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           ...store.settings,
           displayName: trimmed,
           currencyCode: remote.settings.currencyCode || store.settings.currencyCode,
+          customCategories:
+            remote.settings.customCategories ?? store.settings.customCategories ?? [],
           hasCompletedOnboarding: true,
         },
         household,
         localMemberId: memberId,
-        cycles: remote.cycles.length
-          ? remote.cycles
-          : store.cycles,
+        cycles: remote.cycles.length ? remote.cycles : store.cycles,
       };
       await persist(next);
       await cloudUpsertPayload(

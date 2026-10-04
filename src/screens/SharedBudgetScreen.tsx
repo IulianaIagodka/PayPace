@@ -264,6 +264,9 @@ export function SharedBudgetScreen({ navigation }: Props) {
             onPress={() => run(() => joinHousehold(code, name))}
             variant="secondary"
           />
+          <Text style={styles.hint}>
+            Lost your data? Use the same name as before — that reclaims your seat (max 2 people).
+          </Text>
           {!cloudSyncReady ? (
             <Text style={styles.hint}>
               Joining needs cloud sync. Add your Supabase URL and anon key, then rebuild (see
