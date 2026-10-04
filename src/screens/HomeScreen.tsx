@@ -216,6 +216,13 @@ export function HomeScreen({ navigation }: Props) {
                       periodShare={periodShare}
                       horizonLabel={horizonLabel}
                       layout="rail"
+                      onPress={() =>
+                        navigation.navigate('Activity', {
+                          groupBy: 'category',
+                          category: mod.envelope.category,
+                          envelopeKey: mod.envelope.key,
+                        })
+                      }
                     />
                   ))}
                 </ScrollView>
