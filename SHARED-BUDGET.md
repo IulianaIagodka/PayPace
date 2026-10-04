@@ -9,7 +9,9 @@ PayPace can sync one household budget between two phones (you + partner). **Shar
 3. Shares the invite code
 4. Partner opens **Join**, enters name + code
 5. Both see the same balance, payday, bills, and spending
-6. Each expense is tagged with who logged it
+6. Each expense is tagged with who logged it (filter All / Mine / Partner on Spend)
+7. Log expenses as **Shared** (counts toward safe-to-spend) or **Personal** (visible, not in the pool)
+8. **Recent changes** feed shows who added expenses, changed balance, or edited bills
 
 Sync needs a free [Supabase](https://supabase.com) project (a few minutes).
 

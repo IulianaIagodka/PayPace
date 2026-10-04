@@ -48,8 +48,13 @@ export interface Bill {
   category?: ExpenseCategory;
   isRecurring: boolean;
   isPaid: boolean;
+  memberId?: string;
+  memberName?: string;
   updatedAt?: string;
 }
+
+/** Shared = draws from the household safe-to-spend pool. Personal = logged but excluded. */
+export type ExpenseScope = 'shared' | 'personal';
 
 export interface DailyExpense {
   id: string;
@@ -60,7 +65,33 @@ export interface DailyExpense {
   envelopeKey?: EnvelopeKey;
   memberId?: string;
   memberName?: string;
+  /** Defaults to shared when missing (back-compat). */
+  scope?: ExpenseScope;
   updatedAt?: string;
+}
+
+export type HouseholdActivityKind =
+  | 'expense_added'
+  | 'expense_deleted'
+  | 'balance_changed'
+  | 'bill_added'
+  | 'bill_updated'
+  | 'bill_deleted';
+
+/** Append-only shared ledger of who changed what (synced with the household). */
+export interface HouseholdActivityEvent {
+  id: string;
+  kind: HouseholdActivityKind;
+  at: string;
+  memberId?: string;
+  memberName?: string;
+  summary: string;
+  expenseId?: string;
+  billId?: string;
+  amount?: number;
+  beforeAmount?: number;
+  afterAmount?: number;
+  scope?: ExpenseScope;
 }
 
 export interface PayCycle {
@@ -165,12 +196,15 @@ export interface AppStoreData {
   localMemberId: string | null;
   /** Local-only weekly/monthly category reports (not cloud-synced). */
   periodReports: PeriodReport[];
+  /** Shared household change feed (synced when in a household). */
+  activityEvents: HouseholdActivityEvent[];
 }
 
 export interface SharedHouseholdPayload {
   household: Household;
   settings: Pick<AppSettings, 'currencyCode' | 'customCategories'>;
   cycles: PayCycle[];
+  activityEvents: HouseholdActivityEvent[];
   revision: number;
   updatedAt: string;
 }
@@ -237,4 +271,5 @@ export const emptyStore: AppStoreData = {
   household: null,
   localMemberId: null,
   periodReports: [],
+  activityEvents: [],
 };

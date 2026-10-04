@@ -16,7 +16,9 @@ import {
   type AppStoreData,
   type Bill,
   type DailyExpense,
+  type ExpenseScope,
   type Household,
+  type HouseholdActivityEvent,
   type HouseholdMember,
   type PayCycle,
   type PeriodReport,
@@ -33,7 +35,20 @@ import {
   findExistingHouseholdMember,
   HOUSEHOLD_FULL_RECLAIM_HINT,
 } from '../services/householdJoin';
-import { mergeSharedPayloads, toSharedPayload } from '../services/householdMerge';
+import {
+  balanceChangedSummary,
+  billAddedSummary,
+  billDeletedSummary,
+  billUpdatedSummary,
+  buildActivityEvent,
+  expenseAddedSummary,
+  expenseDeletedSummary,
+} from '../services/householdActivity';
+import {
+  mergeSharedPayloads,
+  toSharedPayload,
+  trimActivityEvents,
+} from '../services/householdMerge';
 import { ensureEnvelopes, categoryToEnvelopeKey, makeCustomEnvelope } from '../services/envelopes';
 import {
   cloudFetchById,
@@ -132,6 +147,19 @@ function withCycleTouch(cycle: PayCycle): PayCycle {
   return { ...cycle, updatedAt: stamp() };
 }
 
+function appendActivity(
+  store: AppStoreData,
+  events: HouseholdActivityEvent | HouseholdActivityEvent[],
+): AppStoreData {
+  if (!store.household) return store;
+  const batch = Array.isArray(events) ? events : [events];
+  if (!batch.length) return store;
+  return {
+    ...store,
+    activityEvents: trimActivityEvents([...batch, ...(store.activityEvents ?? [])]),
+  };
+}
+
 export function BudgetProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [store, setStore] = useState<AppStoreData>(emptyStore);
@@ -162,6 +190,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       currencyCode: next.settings.currencyCode,
       cycles: next.cycles,
       customCategories: next.settings.customCategories,
+      activityEvents: next.activityEvents,
     });
     return cloudUpsertPayload(payload);
   }, []);
@@ -212,6 +241,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         currencyCode: current.settings.currencyCode,
         cycles: current.cycles,
         customCategories: current.settings.customCategories,
+        activityEvents: current.activityEvents,
       });
       const merged = mergeSharedPayloads(localPayload, remote);
       const next: AppStoreData = {
@@ -230,6 +260,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           hasCompletedOnboarding: true,
         },
         cycles: merged.cycles.length ? merged.cycles : current.cycles,
+        activityEvents: merged.activityEvents ?? [],
       };
       if (
         next.localMemberId &&
@@ -458,6 +489,11 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     };
   }, [localMember, store.settings.displayName]);
 
+  const actor = useCallback(() => {
+    const attr = attribution();
+    return { memberId: attr.memberId, memberName: attr.memberName };
+  }, [attribution]);
+
   const value: BudgetContextValue = {
     ready,
     store,
@@ -504,34 +540,82 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     },
     updateActiveCycle: async (mutate) => {
       if (!activeCycle) return;
+      const beforeBalance = asMoney(activeCycle.currentBalance);
       const updated = withCycleTouch(mutate(activeCycle));
-      await commit({
+      const afterBalance = asMoney(updated.currentBalance);
+      let nextStore: AppStoreData = {
         ...store,
         cycles: store.cycles.map((c) => (c.id === updated.id ? updated : c)),
-      });
+      };
+      if (store.household && afterBalance !== beforeBalance) {
+        const who = actor();
+        nextStore = appendActivity(
+          nextStore,
+          buildActivityEvent({
+            kind: 'balance_changed',
+            ...who,
+            beforeAmount: beforeBalance,
+            afterAmount: afterBalance,
+            amount: afterBalance,
+            summary: balanceChangedSummary(
+              beforeBalance,
+              afterBalance,
+              store.settings.currencyCode,
+              who.memberName,
+            ),
+          }),
+        );
+      }
+      await commit(nextStore);
     },
     addBill: async (bill) => {
       if (!activeCycle) return;
+      const who = actor();
       const nextBill: Bill = {
         ...bill,
         id: bill.id ?? newId(),
         isRecurring: bill.isRecurring ?? false,
         isPaid: bill.isPaid ?? false,
+        memberId: bill.memberId ?? who.memberId,
+        memberName: bill.memberName ?? who.memberName,
         updatedAt: stamp(),
       };
-      await commit({
+      let nextStore: AppStoreData = {
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id
             ? withCycleTouch({ ...c, bills: [...c.bills, nextBill] })
             : c,
         ),
-      });
+      };
+      nextStore = appendActivity(
+        nextStore,
+        buildActivityEvent({
+          kind: 'bill_added',
+          ...who,
+          billId: nextBill.id,
+          amount: asMoney(nextBill.amount),
+          summary: billAddedSummary(
+            nextBill.name,
+            nextBill.amount,
+            store.settings.currencyCode,
+            who.memberName,
+          ),
+        }),
+      );
+      await commit(nextStore);
     },
     updateBill: async (bill) => {
       if (!activeCycle) return;
-      const nextBill = { ...bill, updatedAt: stamp() };
-      await commit({
+      const who = actor();
+      const prev = activeCycle.bills.find((b) => b.id === bill.id);
+      const nextBill = {
+        ...bill,
+        memberId: bill.memberId ?? who.memberId,
+        memberName: bill.memberName ?? who.memberName,
+        updatedAt: stamp(),
+      };
+      let nextStore: AppStoreData = {
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id
@@ -541,35 +625,74 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
               })
             : c,
         ),
-      });
+      };
+      nextStore = appendActivity(
+        nextStore,
+        buildActivityEvent({
+          kind: 'bill_updated',
+          ...who,
+          billId: nextBill.id,
+          amount: asMoney(nextBill.amount),
+          summary: billUpdatedSummary(
+            nextBill.name,
+            nextBill.amount,
+            store.settings.currencyCode,
+            who.memberName,
+            Boolean(nextBill.isPaid && !prev?.isPaid),
+          ),
+        }),
+      );
+      await commit(nextStore);
     },
     deleteBill: async (id) => {
       if (!activeCycle) return;
-      await commit({
+      const who = actor();
+      const removed = activeCycle.bills.find((b) => b.id === id);
+      let nextStore: AppStoreData = {
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id
             ? withCycleTouch({ ...c, bills: c.bills.filter((b) => b.id !== id) })
             : c,
         ),
-      });
+      };
+      if (removed) {
+        nextStore = appendActivity(
+          nextStore,
+          buildActivityEvent({
+            kind: 'bill_deleted',
+            ...who,
+            billId: removed.id,
+            amount: asMoney(removed.amount),
+            summary: billDeletedSummary(
+              removed.name,
+              removed.amount,
+              store.settings.currencyCode,
+              who.memberName,
+            ),
+          }),
+        );
+      }
+      await commit(nextStore);
     },
     addExpense: async (expense) => {
       if (!activeCycle) return;
       const amount = Math.max(asMoney(expense.amount), 0);
       if (amount <= 0) return;
       const attr = attribution();
+      const scope: ExpenseScope = expense.scope === 'personal' ? 'personal' : 'shared';
       const envelopeKey = expense.envelopeKey ?? categoryToEnvelopeKey(expense.category);
       const next: DailyExpense = {
         ...expense,
         ...attr,
+        scope,
         amount,
         envelopeKey,
         id: expense.id ?? newId(),
         date: expense.date ?? toDateKey(new Date()),
         updatedAt: stamp(),
       };
-      await commit({
+      let nextStore: AppStoreData = {
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id
@@ -580,7 +703,26 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
               })
             : c,
         ),
-      });
+      };
+      nextStore = appendActivity(
+        nextStore,
+        buildActivityEvent({
+          kind: 'expense_added',
+          memberId: next.memberId,
+          memberName: next.memberName,
+          expenseId: next.id,
+          amount: next.amount,
+          scope: next.scope,
+          summary: expenseAddedSummary(
+            next.name,
+            next.amount,
+            store.settings.currencyCode,
+            next.memberName,
+            next.scope,
+          ),
+        }),
+      );
+      await commit(nextStore);
     },
     addExpenses: async (expenses) => {
       if (!activeCycle || expenses.length === 0) return;
@@ -589,9 +731,11 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         .map((expense) => {
           const amount = Math.max(asMoney(expense.amount), 0);
           if (amount <= 0) return null;
+          const scope: ExpenseScope = expense.scope === 'personal' ? 'personal' : 'shared';
           return {
             ...expense,
             ...attr,
+            scope,
             amount,
             envelopeKey: expense.envelopeKey ?? categoryToEnvelopeKey(expense.category),
             id: expense.id ?? newId(),
@@ -601,20 +745,42 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         })
         .filter(Boolean) as DailyExpense[];
       if (!nextItems.length) return;
-      await commit({
+      let nextStore: AppStoreData = {
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id
             ? withCycleTouch({ ...c, expenses: [...nextItems, ...c.expenses] })
             : c,
         ),
-      });
+      };
+      nextStore = appendActivity(
+        nextStore,
+        nextItems.map((item) =>
+          buildActivityEvent({
+            kind: 'expense_added',
+            memberId: item.memberId,
+            memberName: item.memberName,
+            expenseId: item.id,
+            amount: item.amount,
+            scope: item.scope,
+            summary: expenseAddedSummary(
+              item.name,
+              item.amount,
+              store.settings.currencyCode,
+              item.memberName,
+              item.scope,
+            ),
+          }),
+        ),
+      );
+      await commit(nextStore);
     },
     importExpensesByDate: async (expenses) => {
       if (expenses.length === 0) return { cycleCount: 0, itemCount: 0 };
       const attr = attribution();
       const fallback = activeCycle ?? store.cycles[0] ?? null;
       const byCycle = new Map<string, DailyExpense[]>();
+      const created: DailyExpense[] = [];
 
       for (const expense of expenses) {
         const amount = Math.max(asMoney(expense.amount), 0);
@@ -622,9 +788,11 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         const date = expense.date ?? toDateKey(new Date());
         const target = findCycleForDate(store.cycles, date, fallback);
         if (!target) continue;
+        const scope: ExpenseScope = expense.scope === 'personal' ? 'personal' : 'shared';
         const next: DailyExpense = {
           ...expense,
           ...attr,
+          scope,
           amount,
           envelopeKey: expense.envelopeKey ?? categoryToEnvelopeKey(expense.category),
           id: expense.id ?? newId(),
@@ -634,6 +802,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         const list = byCycle.get(target.id) ?? [];
         list.push(next);
         byCycle.set(target.id, list);
+        created.push(next);
       }
 
       if (!byCycle.size) return { cycleCount: 0, itemCount: 0 };
@@ -650,12 +819,35 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         });
       });
 
-      await commit({ ...store, cycles });
+      let nextStore: AppStoreData = { ...store, cycles };
+      nextStore = appendActivity(
+        nextStore,
+        created.map((item) =>
+          buildActivityEvent({
+            kind: 'expense_added',
+            memberId: item.memberId,
+            memberName: item.memberName,
+            expenseId: item.id,
+            amount: item.amount,
+            scope: item.scope,
+            summary: expenseAddedSummary(
+              item.name,
+              item.amount,
+              store.settings.currencyCode,
+              item.memberName,
+              item.scope,
+            ),
+          }),
+        ),
+      );
+      await commit(nextStore);
       return { cycleCount: byCycle.size, itemCount };
     },
     deleteExpense: async (id) => {
       if (!activeCycle) return;
-      await commit({
+      const who = actor();
+      const removed = activeCycle.expenses.find((e) => e.id === id);
+      let nextStore: AppStoreData = {
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id
@@ -665,11 +857,32 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
               })
             : c,
         ),
-      });
+      };
+      if (removed) {
+        nextStore = appendActivity(
+          nextStore,
+          buildActivityEvent({
+            kind: 'expense_deleted',
+            ...who,
+            expenseId: removed.id,
+            amount: asMoney(removed.amount),
+            scope: removed.scope === 'personal' ? 'personal' : 'shared',
+            summary: expenseDeletedSummary(
+              removed.name,
+              removed.amount,
+              store.settings.currencyCode,
+              who.memberName,
+            ),
+          }),
+        );
+      }
+      await commit(nextStore);
     },
     deleteExpensesByDate: async (date) => {
       if (!activeCycle) return;
-      await commit({
+      const who = actor();
+      const removed = activeCycle.expenses.filter((e) => e.date === date);
+      let nextStore: AppStoreData = {
         ...store,
         cycles: store.cycles.map((c) =>
           c.id === activeCycle.id
@@ -679,7 +892,26 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
               })
             : c,
         ),
-      });
+      };
+      nextStore = appendActivity(
+        nextStore,
+        removed.map((item) =>
+          buildActivityEvent({
+            kind: 'expense_deleted',
+            ...who,
+            expenseId: item.id,
+            amount: asMoney(item.amount),
+            scope: item.scope === 'personal' ? 'personal' : 'shared',
+            summary: expenseDeletedSummary(
+              item.name,
+              item.amount,
+              store.settings.currencyCode,
+              who.memberName,
+            ),
+          }),
+        ),
+      );
+      await commit(nextStore);
     },
     replaceActiveCycle: async (cycle) => {
       const withEnv = {
@@ -793,6 +1025,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         settings: { ...store.settings, displayName: trimmed },
         household,
         localMemberId: memberId,
+        activityEvents: store.activityEvents ?? [],
       };
       await commit(next);
       return household;
@@ -860,6 +1093,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         household,
         localMemberId: memberId,
         cycles: remote.cycles.length ? remote.cycles : store.cycles,
+        activityEvents: remote.activityEvents ?? [],
       };
       await persist(next);
       await cloudUpsertPayload(
@@ -868,6 +1102,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           currencyCode: next.settings.currencyCode,
           cycles: next.cycles,
           customCategories: next.settings.customCategories,
+          activityEvents: next.activityEvents,
         }),
       );
       return household;
@@ -878,6 +1113,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           ...store,
           household: null,
           localMemberId: null,
+          activityEvents: [],
         },
         { skipPush: true },
       );

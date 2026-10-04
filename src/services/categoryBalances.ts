@@ -22,6 +22,7 @@ export function spendingByCategory(
   for (const id of ids) totals.set(id, 0);
 
   for (const expense of cycle.expenses) {
+    if (expense.scope === 'personal') continue;
     const category = normalizeCategory(expense.category);
     totals.set(category, (totals.get(category) ?? 0) + Math.max(asMoney(expense.amount), 0));
   }
