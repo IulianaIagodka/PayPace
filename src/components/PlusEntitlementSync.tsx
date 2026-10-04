@@ -12,6 +12,8 @@ export function PlusEntitlementSync() {
 
   useEffect(() => {
     if (!ready || allowDemoPremiumUnlock()) return;
+    // Do not touch disk until a real budget exists (guards against wipe after crash recovery).
+    if (!store.settings.hasCompletedOnboarding) return;
     let cancelled = false;
     void (async () => {
       await configurePlusBilling();
@@ -22,7 +24,7 @@ export function PlusEntitlementSync() {
     return () => {
       cancelled = true;
     };
-  }, [ready, setPremium, store.settings.isPremium]);
+  }, [ready, setPremium, store.settings.hasCompletedOnboarding, store.settings.isPremium]);
 
   return null;
 }

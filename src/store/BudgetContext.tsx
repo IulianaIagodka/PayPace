@@ -140,10 +140,15 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
   const syncHouseholdNowRef = useRef<(() => Promise<void>) | null>(null);
   const reportCheckBusyRef = useRef(false);
 
-  const persist = useCallback(async (next: AppStoreData) => {
+  const persist = useCallback(async (next: AppStoreData, opts?: { allowEmpty?: boolean }) => {
+    const wrote = await saveStore(next, opts);
+    if (!wrote) {
+      // Empty overwrite blocked — keep the in-memory budget that is still on disk.
+      return false;
+    }
     setStore(next);
     storeRef.current = next;
-    await saveStore(next);
+    return true;
   }, []);
 
   const pushIfShared = useCallback(async (next: AppStoreData) => {
@@ -158,7 +163,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const commit = useCallback(
-    async (next: AppStoreData, opts?: { skipPush?: boolean }) => {
+    async (next: AppStoreData, opts?: { skipPush?: boolean; allowEmpty?: boolean }) => {
       let payload = next;
       if (payload.household && !opts?.skipPush) {
         payload = {
@@ -170,7 +175,8 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           },
         };
       }
-      await persist(payload);
+      const wrote = await persist(payload, { allowEmpty: opts?.allowEmpty });
+      if (!wrote) return;
       if (!opts?.skipPush) {
         try {
           const result = await pushIfShared(payload);
@@ -683,8 +689,11 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         cycles: [withCycleTouch(withEnv)],
       });
     },
-    resetAll: async () => commit(emptyStore, { skipPush: true }),
+    resetAll: async () => commit(emptyStore, { skipPush: true, allowEmpty: true }),
     setPremium: async (enabled) => {
+      // Never persist Plus onto a blank shell — that used to overwrite a real budget
+      // after a corrupt/failed load returned freshStore().
+      if (!store.settings.hasCompletedOnboarding && !store.cycles.length) return;
       await commit({ ...store, settings: { ...store.settings, isPremium: enabled } });
     },
     recordReceiptScan: async () => {
