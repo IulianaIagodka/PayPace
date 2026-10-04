@@ -11,7 +11,8 @@ import {
   cleanMerchantName,
   splitDelimitedLine,
   parseAmountTokenSigned,
-  type ParsedStatementRow,
+  normalizeStatementAiItems,
+  type StatementAiRow,
 } from './statementParse';
 import {
   extractPdfText,
@@ -34,6 +35,7 @@ export type StatementImportResult = {
 };
 
 export {
+  normalizeStatementAiItems,
   parseStatementDate,
   cleanMerchantName,
   splitDelimitedLine,
@@ -123,21 +125,6 @@ async function analyzePdfStatement(
   return { sourceName: fileName || 'statement.pdf', items: parsed, source: 'parsed' };
 }
 
-/** Normalize OpenAI statement JSON into expense rows (exported for tests). */
-export function normalizeStatementAiItems(
-  raw: Array<{ name?: string; amount?: number; date?: string; category?: string }>,
-): ParsedStatementRow[] {
-  const items: ParsedStatementRow[] = [];
-  for (const row of raw) {
-    const name = cleanMerchantName(String(row.name ?? '').trim()).name;
-    const amount = roundMoney(Math.abs(Number(row.amount)));
-    if (!name || name === 'Transaction' || !Number.isFinite(amount) || amount <= 0) continue;
-    const date = row.date ? parseStatementDate(String(row.date)) ?? undefined : undefined;
-    items.push({ name: name.slice(0, 80), amount, date });
-  }
-  return items;
-}
-
 async function readImageBase64(uri: string): Promise<string> {
   return readAsStringAsync(uri, { encoding: EncodingType.Base64 });
 }
@@ -157,7 +144,7 @@ async function recognizeStatementImage(
   apiKey: string,
 ): Promise<StatementLineItem[]> {
   const prompt = `Extract EVERY debit (expense) from this bank statement photo into JSON only:
-{"items":[{"name":"string","amount":number,"date":"YYYY-MM-DD","category":"home|groceries|food|transport|shopping|kids|health|fun|travel|subscriptions|other"}]}
+{"items":[{"name":"string","amount":number,"date":"YYYY-MM-DD","category":"home|groceries|food|transport|shopping|kids|health|fun|travel|subscriptions|other","status":"completed"}]}
 
 Rules:
 - This is a multi-day BANK STATEMENT, not a single store receipt.
@@ -166,6 +153,7 @@ Rules:
 - Dates must be YYYY-MM-DD. Example: "02 oct 2026" → "2026-10-02", "30 sep 2026" → "2026-09-30".
 - Amount is the PLN (or statement currency) debit as a positive number (ignore the minus sign). Prefer the Amount column, not Balance / Saldo.
 - name = merchant / payee (e.g. Apple, Lidl, Copenhagen Island) — not "Visa" / "Płatność Kartą" / card number.
+- Skip rejected, declined, failed, cancelled, reversed or otherwise unsuccessful transactions: they are not expenses. Read status labels/icons in every row; never treat an attempted amount as money spent. Include the printed status in "status" (use "completed" when booked with no failure marker).
 - Skip credits, incoming transfers, opening/closing balance, headers, footers, page numbers.
 - Include all visible debit rows across the photo (every day shown).`;
 
@@ -217,15 +205,15 @@ Rules:
   if (!content) throw new Error('Empty AI response — try a clearer photo of the statement.');
 
   const parsed = JSON.parse(content) as {
-    items?: Array<{ name?: string; amount?: number; date?: string; category?: string }>;
+    items?: StatementAiRow[];
   };
   const rows = normalizeStatementAiItems(parsed.items ?? []);
   if (!rows.length) {
     throw new Error('No expenses found on that statement photo. Try a sharper full-page shot.');
   }
 
-  return rows.map((row, index) => {
-    const aiCat = parsed.items?.[index]?.category;
+  return rows.map((row) => {
+    const aiCat = row.category;
     const guessed = guessCategory(row.name);
     const category =
       guessed !== 'other' ? guessed : isCategory(aiCat) ? aiCat : 'other';

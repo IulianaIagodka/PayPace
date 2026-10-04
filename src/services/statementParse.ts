@@ -10,6 +10,39 @@ export type ParsedStatementRow = {
   date?: string;
 };
 
+/** Recognize explicit unsuccessful bank statuses, including localized exports. */
+export function isRejectedTransactionStatus(raw: string): boolean {
+  const text = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  const status = /\b(?:rejected|declined|failed|cancelled|canceled|reversed|unsuccessful|odrzucon[aye]|anulowan[aye]|nieudana|abgelehnt|storniert)\b|відхилен|відмов|скасован|отклонен|отменен/;
+  return status.test(text);
+}
+
+/** Only explicit status labels or standalone status text; merchant names are not statuses. */
+function hasRejectedStatusLabel(raw: string): boolean {
+  const withoutAmount = raw.replace(/[-+]?\d[\d .,]*[.,]\d{2}\s*(?:PLN|EUR|USD|GBP|zł|zl)?\s*$/i, '').trim();
+  return isRejectedTransactionStatus(raw) && (
+    /\b(?:rejected|declined|failed|cancelled|canceled|reversed|unsuccessful|odrzucona|odrzucony|odrzucone|anulowana|anulowany|anulowane)$/i.test(withoutAmount) ||
+    /^(?:status\s*[:=-]?\s*)?(?:rejected|declined|failed|cancelled|canceled|reversed|unsuccessful|odrzucona|odrzucony|odrzucone|anulowana|anulowany|anulowane|nieudana|abgelehnt|storniert|відхилена|відхилено|скасована|скасовано|отклонена|отменена)[.!]?$/i.test(raw.trim()) ||
+    /status\s*[:=-]|(?:transaction|payment|card|visa|mastercard|transakcj|płatność|platnosc|транзакц|платіж).*?(?:rejected|declined|failed|cancelled|canceled|odrzucon|anulowan|відхилен|скасован)|(?:rejected|declined|failed|cancelled|canceled)\s+(?:transaction|payment)/i.test(raw)
+  );
+}
+
+export type StatementAiRow = { name?: string; amount?: number; date?: string; category?: string; status?: string };
+
+/** Keep status filtering and categories aligned even when AI rows are discarded. */
+export function normalizeStatementAiItems(raw: StatementAiRow[]): Array<ParsedStatementRow & { category?: string }> {
+  const items: Array<ParsedStatementRow & { category?: string }> = [];
+  for (const row of raw) {
+    if (isRejectedTransactionStatus(String(row.status ?? '')) || hasRejectedStatusLabel(String(row.name ?? ''))) continue;
+    const name = cleanMerchantName(String(row.name ?? '').trim()).name;
+    const amount = Math.round(Math.abs(Number(row.amount)) * 100) / 100;
+    if (!name || name === 'Transaction' || !Number.isFinite(amount) || amount <= 0) continue;
+    const date = row.date ? parseStatementDate(String(row.date)) ?? undefined : undefined;
+    items.push({ name: name.slice(0, 80), amount, date, category: row.category });
+  }
+  return items;
+}
+
 function toDateKey(date: Date): string {
   const d = startOfDay(date);
   const y = d.getFullYear();
@@ -237,11 +270,13 @@ type ColumnRole =
   | 'counterparty'
   | 'amount'
   | 'balance'
+  | 'status'
   | 'ignore';
 
 function classifyHeader(cell: string): ColumnRole {
   const h = normalizeHeader(cell);
   if (!h) return 'ignore';
+  if (/\b(status|state|result|stan)\b/.test(h)) return 'status';
   if (h.includes('saldo') || h.includes('balance after') || h.includes('running balance')) {
     return 'balance';
   }
@@ -347,6 +382,10 @@ function pickMerchant(cols: string[], roles: ColumnRole[] | null): string {
 }
 
 function rowToItem(cols: string[], roles: ColumnRole[] | null): ParsedStatementRow | null {
+  if (roles) {
+    if (cols.some((value, index) => roles[index] === 'status' && isRejectedTransactionStatus(value))) return null;
+    if (cols.some((value, index) => ['title', 'description'].includes(roles[index] ?? '') && hasRejectedStatusLabel(value))) return null;
+  } else if (cols.some(hasRejectedStatusLabel)) return null;
   let amountSigned: number | null = null;
   let date: string | undefined;
   let titleDate: string | undefined;
@@ -629,6 +668,7 @@ export function parseNarrativeStatementText(text: string): ParsedStatementRow[] 
     currentBookingDate;
 
   const flushAmount = (amount: number, descRaw: string, date: string | undefined) => {
+    if (hasRejectedStatusLabel(descRaw)) return;
     if (!looksLikeErsteExpenseDescription(descRaw)) return;
     if (ERSTE_CREDIT_HINT_RE.test(descRaw)) return;
     const name = merchantFromErsteLine(descRaw);
@@ -641,8 +681,19 @@ export function parseNarrativeStatementText(text: string): ParsedStatementRow[] 
     });
   };
 
+  const trailingStatus = (index: number) => {
+    for (const line of lines.slice(index + 1, index + 3)) {
+      if (hasRejectedStatusLabel(line)) return `Status: ${line}`;
+      if (parseAmountOnlyLine(line) == null) break;
+    }
+    return '';
+  };
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]!;
+    if (hasRejectedStatusLabel(line) && parseAmountOnlyLine(line) == null && extractDebitAmount(line) == null) {
+      if (pendingDesc.length) pendingDesc.push(`Status: ${line}`);
+      continue;
+    }
     if (/^page\s+\d+/i.test(line)) continue;
     if (
       /list of transactions|transaction list|erste bank|account number|^account$|^transaction$|^amount$|^balance$|^transaction date$/i.test(
@@ -683,7 +734,7 @@ export function parseNarrativeStatementText(text: string): ParsedStatementRow[] 
     // Amount-only line after a multi-line description (unsigned Erste PDF layout).
     const amountOnly = parseAmountOnlyLine(line);
     if (amountOnly != null && pendingDesc.length) {
-      const desc = pendingDesc.join(' ');
+      const desc = [...pendingDesc, trailingStatus(i)].join(' ');
       const date = resolveDate(amountOnly, desc, currentDate);
       flushAmount(amountOnly, desc, date);
       // Optional balance line immediately after.
@@ -699,7 +750,7 @@ export function parseNarrativeStatementText(text: string): ParsedStatementRow[] 
     const inlineAmount = extractDebitAmount(line);
     if (inlineAmount != null && !parseAmountOnlyLine(line)) {
       const leading = parseStatementDate(line.split(/\s{2,}|\t/)[0] ?? '');
-      const desc = [...pendingDesc, line].join(' ');
+      const desc = [...pendingDesc, line, trailingStatus(i)].join(' ');
       const date = resolveDate(inlineAmount, desc, leading ?? currentDate);
       flushAmount(inlineAmount, desc, date);
       pendingDesc = [];
@@ -726,7 +777,8 @@ function parseLooseText(text: string): ParsedStatementRow[] {
   const items: ParsedStatementRow[] = [];
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const amountTail = String.raw`([+-]?\d+[.,]\d{2}[+-]?|[+-]?\d+[.,]\d{2}\s*(?:PLN|EUR|USD|GBP|zł|zl)?)`;
-  for (const line of lines) {
+  for (const [index, line] of lines.entries()) {
+    if (hasRejectedStatusLabel(line) || hasRejectedStatusLabel(lines[index + 1] ?? '')) continue;
     const withDate = line.match(
       new RegExp(
         String.raw`^(\d{1,2}[./-]\d{1,2}[./-]\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}\s+[A-Za-zÀ-ž.]+\s+\d{4})\s+(.+?)\s+${amountTail}\s*$`,
@@ -795,6 +847,6 @@ export function parseStatementText(text: string): ParsedStatementRow[] {
     if (item) items.push(item);
   }
 
-  if (items.length) return items;
+  if (items.length || roles) return items;
   return parseLooseText(text);
 }
