@@ -116,4 +116,27 @@ assert(
   'Erste spans 3+ days',
 );
 
+// Real Erste Bank Polska PDF extract: unsigned amounts on their own lines,
+// booking dates split across lines, Polish card label broken by font encoding.
+const erstePdfExtract = readFileSync(join(here, 'fixtures/erste-pdf-extract.txt'), 'utf8');
+const erstePdfRows = parseNarrativeStatementText(erstePdfExtract);
+assert(erstePdfRows.length >= 14, `Erste PDF extract rows (>=14, got ${erstePdfRows.length})`);
+assert(
+  erstePdfRows.some((r) => r.name.includes('Appleads') && r.amount === 39.26 && r.date === '2026-10-02'),
+  'Appleads 39.26 on transaction date',
+);
+assert(
+  erstePdfRows.some((r) => r.amount === 2485 && r.date === '2026-10-03'),
+  'BLIK 2485 on 03 oct',
+);
+assert(
+  erstePdfRows.some((r) => r.name.includes('Uniqlo') && r.amount === 350.74),
+  'Uniqlo from page 2',
+);
+assert(
+  !erstePdfRows.some((r) => r.name.toLowerCase().includes('platnosc')),
+  'card chrome stripped from merchant',
+);
+assertEq(parseStatementText(erstePdfExtract).length, erstePdfRows.length, 'main path = narrative');
+
 console.log(`statementParse.test.mts: ok (${passed} asserts)`);

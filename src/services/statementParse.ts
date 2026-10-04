@@ -422,73 +422,181 @@ function isStandaloneDateLine(line: string): string | null {
   return parseStatementDate(trimmed);
 }
 
+const MONEY_TOKEN_RE =
+  /([-+]?\d{1,3}(?:[ \u00a0]?\d{3})*[.,]\d{2})\s*(?:PLN|zł|zl)?/gi;
+
+const ERSTE_EXPENSE_HINT_RE =
+  /visa|mastercard|blik|zakup|płatność|platnosc|p\s*atno|debit|card|apple\.com|itunes|ref:\s*\d+/i;
+
+const ERSTE_CREDIT_HINT_RE =
+  /przychodz|incoming|salary|wynagrodzenie|wpływ|wplyw|credit transfer|przelew przychod/i;
+
 function extractDebitAmount(line: string): number | null {
   // Prefer "… -39.26 PLN" / "… -39,26" near the end (Erste amount column).
-  const matches = [
-    ...line.matchAll(/([-+]?\d{1,3}(?:[ \u00a0]?\d{3})*[.,]\d{2})\s*(?:PLN|zł|zl)?/gi),
-  ];
+  const matches = [...line.matchAll(MONEY_TOKEN_RE)];
   for (let i = matches.length - 1; i >= 0; i--) {
     const signed = parseAmountTokenSigned(matches[i]![1]!);
     if (signed != null && signed < 0) return Math.abs(signed);
   }
   // Some exports omit the minus for debit-only lists — take last money token if line looks like a card spend.
-  if (/płatność|platnosc|visa|mastercard|debit|card/i.test(line) && matches.length) {
+  if (ERSTE_EXPENSE_HINT_RE.test(line) && matches.length) {
     const signed = parseAmountTokenSigned(matches[matches.length - 1]![1]!);
     if (signed != null) return Math.abs(signed);
   }
   return null;
 }
 
+/** True when the whole line is a money amount (optional currency), e.g. "39,26 PLN". */
+function parseAmountOnlyLine(line: string): number | null {
+  const trimmed = line.trim();
+  if (!trimmed) return null;
+  const m = trimmed.match(
+    /^[-+]?\d{1,3}(?:[ \u00a0]?\d{3})*[.,]\d{2}\s*(?:PLN|zł|zl)?$/i,
+  );
+  if (!m) return null;
+  const signed = parseAmountTokenSigned(trimmed);
+  if (signed == null) return null;
+  return Math.abs(signed);
+}
+
 function merchantFromErsteLine(line: string): string {
   let text = line.replace(/\s+/g, ' ').trim();
   text = text.replace(/^visa\s+\w+\s+\d+\*{4,}\d+\s*/i, '');
   text = text.replace(/^mastercard\s+\w*\s*\d*\*{0,}\d*\s*/i, '');
-  text = text.replace(/płatność\s+kartą|platnosc\s+karta/gi, ' ');
+  text = text.replace(/płatność\s+kartą?|platnosc\s+kart\w*|p\s*atno\s*kart\w*/gi, ' ');
   text = text.replace(/\d+[.,]\d+\s*(eur|usd|dkk|gbp|chf|nok|sek)\b[^]*?(?:pln|zł)?/gi, ' ');
   text = text.replace(/\d+\s+\w+\s*=\s*[\d.,]+\s*\w+/gi, ' ');
   text = text.replace(/[-+]?\d{1,3}(?:[ \u00a0]?\d{3})*[.,]\d{2}\s*(?:PLN|zł|zl)?/gi, ' ');
   text = text.replace(/\b\d{2}\s+[A-Za-zÀ-ž.]+\s+\d{4}\b/g, ' ');
   text = text.replace(/\bbooking\s+date\b/gi, ' ');
+  text = text.replace(/\bref:\s*\d+/gi, ' ');
+  // FX leftovers left on their own when the rate line was split across PDF Tj ops.
+  text = text.replace(/\b(?:eur|usd|dkk|gbp|chf|nok|sek|pln|zł|zl)\b/gi, ' ');
+  text = text.replace(/\b\d{6,}\b/g, ' '); // phone / long refs
   text = text.replace(/\s+/g, ' ').trim();
   const { name } = cleanMerchantName(text);
   return name;
 }
 
 /**
+ * Erste PDF text extract often splits booking dates and Polish card labels across lines,
+ * and prints debit amounts without a leading minus on their own line.
+ */
+export function normalizeNarrativeStatementText(text: string): string {
+  let out = text.replace(/\r\n/g, '\n');
+  // "Booking date 04\noct 2026" → one labeled line (still ignored as spend date).
+  out = out.replace(
+    /Booking date\s+(\d{1,2})\s*\n\s*([A-Za-zÀ-ž.]+)\s+(\d{4})/gi,
+    'Booking date $1 $2 $3',
+  );
+  // Custom-font loss: "Płatność Kartą" → "P" / "atno" / "Kart"
+  out = out.replace(/\bP\s*\n\s*atno\s*\n\s*Kart\b/gi, 'Platnosc Kart');
+  out = out.replace(/\bP\s+atno\s+Kart\b/gi, 'Platnosc Kart');
+  return out;
+}
+
+function looksLikeErsteExpenseDescription(desc: string): boolean {
+  const t = desc.replace(/\s+/g, ' ').trim();
+  if (t.length < 6) return false;
+  if (ERSTE_CREDIT_HINT_RE.test(t)) return false;
+  if (ERSTE_EXPENSE_HINT_RE.test(t)) return true;
+  // Merchant-looking leftover after card chrome was stripped elsewhere.
+  return /[a-zA-Zà-ž]{3,}/i.test(t) && !/^[\d\s.,PLNzł-]+$/i.test(t);
+}
+
+/**
  * Erste / multi-line PDF text: date on its own line, then description+amount.
  * Uses Transaction date lines; ignores "Booking date" and "Document on".
+ * Real Erste PDFs often put unsigned amount + balance on following lines.
  */
 export function parseNarrativeStatementText(text: string): ParsedStatementRow[] {
   const items: ParsedStatementRow[] = [];
-  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const lines = normalizeNarrativeStatementText(text)
+    .split(/\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
   let currentDate: string | undefined;
+  let pendingDesc: string[] = [];
 
-  for (const line of lines) {
-    if (/^page\s+\d+/i.test(line)) continue;
-    if (/list of transactions|erste bank|account number/i.test(line)) continue;
-    if (isNonTransactionDateLabel(line)) continue;
-
-    const alone = isStandaloneDateLine(line);
-    if (alone) {
-      currentDate = alone;
-      continue;
-    }
-
-    const amount = extractDebitAmount(line);
-    if (amount == null) continue;
-
-    const leading = parseStatementDate(line.split(/\s{2,}|\t/)[0] ?? '');
-    const date = leading ?? currentDate;
-    const name = merchantFromErsteLine(line);
-    if (!name || name === 'Transaction') {
-      // Amount-only line after a merchant line — skip if no usable name.
-      if (name === 'Transaction' && !/[a-zA-Zа-яА-ЯіІїЇєЄęółąśżźćń]/i.test(line)) continue;
-    }
+  const flushAmount = (amount: number, descRaw: string, date: string | undefined) => {
+    if (!looksLikeErsteExpenseDescription(descRaw)) return;
+    if (ERSTE_CREDIT_HINT_RE.test(descRaw)) return;
+    const name = merchantFromErsteLine(descRaw);
+    if (!name || name === 'Transaction') return;
+    if (!/[a-zA-Zа-яА-ЯіІїЇєЄęółąśżźćń]/i.test(name)) return;
     items.push({
       name: name.slice(0, 80),
       amount,
       date,
     });
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    if (/^page\s+\d+/i.test(line)) continue;
+    if (
+      /list of transactions|transaction list|erste bank|account number|^account$|^transaction$|^amount$|^balance$|^transaction date$/i.test(
+        line,
+      )
+    ) {
+      // Chart / header blocks before the real list must not keep a chart date.
+      if (/transaction list|list of transactions|^transaction date$/i.test(line)) {
+        currentDate = undefined;
+        pendingDesc = [];
+      }
+      continue;
+    }
+    // Chart / glyph junk from Erste PDF extracts.
+    if (/^[!"#$%&'*+,./:;<=>?@\\^_`{|}~-]+$/.test(line) || line === '!') continue;
+
+    if (isNonTransactionDateLabel(line) || /^booking date\b/i.test(line)) {
+      continue;
+    }
+
+    const alone = isStandaloneDateLine(line);
+    if (alone) {
+      // Date belongs to the next transaction only — do not carry across rows.
+      currentDate = alone;
+      pendingDesc = [];
+      continue;
+    }
+
+    // Amount-only line after a multi-line description (unsigned Erste PDF layout).
+    const amountOnly = parseAmountOnlyLine(line);
+    if (amountOnly != null && pendingDesc.length) {
+      const desc = pendingDesc.join(' ');
+      const date = currentDate;
+      flushAmount(amountOnly, desc, date);
+      // Optional balance line immediately after.
+      const next = lines[i + 1];
+      if (next && parseAmountOnlyLine(next) != null) i += 1;
+      pendingDesc = [];
+      currentDate = undefined;
+      continue;
+    }
+
+    // Single-line "desc … -39.26 PLN" (fixture / text exports).
+    const inlineAmount = extractDebitAmount(line);
+    if (inlineAmount != null && !parseAmountOnlyLine(line)) {
+      const leading = parseStatementDate(line.split(/\s{2,}|\t/)[0] ?? '');
+      const date = leading ?? currentDate;
+      const desc = [...pendingDesc, line].join(' ');
+      flushAmount(inlineAmount, desc, date);
+      pendingDesc = [];
+      currentDate = undefined;
+      continue;
+    }
+
+    // Accumulate description fragments for the current transaction.
+    if (
+      pendingDesc.length ||
+      ERSTE_EXPENSE_HINT_RE.test(line) ||
+      /zakup|blik|przelew|platnosc|płatność|visa|mastercard/i.test(line)
+    ) {
+      pendingDesc.push(line);
+      // Cap runaway junk from chart streams.
+      if (pendingDesc.length > 12) pendingDesc = pendingDesc.slice(-12);
+    }
   }
   return items;
 }

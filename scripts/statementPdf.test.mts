@@ -59,6 +59,24 @@ async function checkPdf(file: string, expectMerchant: string, expectCount: numbe
 await checkPdf('statement-sample.pdf', 'Biedronka', 5);
 await checkPdf('statement-sample-flate.pdf', 'Biedronka', 5);
 
+{
+  const erstePdf = new Uint8Array(
+    readFileSync(join(here, 'fixtures/erste-transactions-history.pdf')),
+  );
+  const ersteText = await extractPdfText(erstePdf);
+  assert(ersteText.includes('Appleads') || ersteText.includes('Visa Plat'), 'Erste PDF has card rows');
+  const ersteItems = parseStatementText(ersteText);
+  assert(ersteItems.length >= 14, `Erste PDF expenses (>=14, got ${ersteItems.length})`);
+  assert(
+    ersteItems.some((r) => Math.abs(r.amount - 39.26) < 0.001 && r.date === '2026-10-02'),
+    'Erste PDF Appleads debit dated',
+  );
+  assert(
+    ersteItems.some((r) => Math.abs(r.amount - 2485) < 0.001),
+    'Erste PDF BLIK amount',
+  );
+}
+
 const trailing = parseStatementText('2026-09-25 Biedronka 86,40-\n2026-09-26 Salary 5000,00+');
 assertEq(trailing.length, 1, 'only debit from trailing-sign PDF lines');
 assertEq(trailing[0]!.amount, 86.4, 'trailing minus amount');
