@@ -1,15 +1,30 @@
-import type { EnvelopeKey } from '../models/types';
+import type { EnvelopeKey, ExpenseCategory } from '../models/types';
+import type { SpendGroupMode } from '../services/spendGrouping';
+
+export type ActivityTabParams = {
+  /** Open Spend grouped by day or category. */
+  groupBy?: SpendGroupMode;
+  /** Focus / filter to this category (from Home rail). */
+  category?: ExpenseCategory;
+  /** Prefer envelope key when present (matches Home modules). */
+  envelopeKey?: EnvelopeKey;
+};
 
 export type MainTabParamList = {
   Home: undefined;
-  Activity: undefined;
+  Activity: ActivityTabParams | undefined;
   Status: undefined;
   Settings: undefined;
 };
 
 export type RootStackParamList = {
   Onboarding: undefined;
-  MainTabs: { screen?: keyof MainTabParamList; params?: undefined } | undefined;
+  MainTabs:
+    | {
+        screen?: keyof MainTabParamList;
+        params?: MainTabParamList[keyof MainTabParamList];
+      }
+    | undefined;
   AddExpense: { envelopeKey?: EnvelopeKey } | undefined;
   Bills: undefined;
   PayCycle: undefined;
