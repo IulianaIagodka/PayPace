@@ -19,7 +19,7 @@ import { asMoney, currencySymbol, formatMoney, fromDateKey, parseAmount, toDateK
 import { defaultEnvelopes } from '../services/envelopes';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { hudType } from '../theme/hud';
+import { formScreen, hudType } from '../theme/hud';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PayCycle'>;
@@ -118,7 +118,7 @@ export function PayCycleScreen({ navigation }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <FormScroll contentContainerStyle={styles.pad}>
+      <FormScroll contentContainerStyle={formScreen.pad}>
         <Text style={styles.title}>EDIT BUDGET</Text>
         <Text style={styles.sub}>
           Update your balance, payday, or buffers — safe-to-spend recalculates right away.
@@ -133,24 +133,24 @@ export function PayCycleScreen({ navigation }: Props) {
           <Row label="Left until payday" value={formatMoney(snapshot.remainingUntilPayday, store.settings.currencyCode)} />
           <Row label="Spent this cycle" value={formatMoney(snapshot.spentThisCycle, store.settings.currencyCode)} />
         </SoftCard>
-        <AmountField label="Current balance" value={balance} onChangeText={setBalance} suffix={suffix} />
+        <AmountField label="CURRENT BALANCE" value={balance} onChangeText={setBalance} suffix={suffix} />
         <AmountField
-          label="Days until payday"
+          label="DAYS UNTIL PAYDAY"
           value={daysUntil}
           onChangeText={setDaysUntil}
           suffix="days"
           keyboardType="number-pad"
         />
-        <AmountField label="Expected paycheck" value={paycheck} onChangeText={setPaycheck} suffix={suffix} />
+        <AmountField label="EXPECTED PAYCHECK" value={paycheck} onChangeText={setPaycheck} suffix={suffix} />
         <HudSelect
           label="PAY SCHEDULE"
           value={schedule}
           options={scheduleOptions.map((item) => ({ value: item.id, label: item.title }))}
           onChange={setSchedule}
         />
-        <AmountField label="Savings" value={savings} onChangeText={setSavings} suffix={suffix} />
-        <AmountField label="Emergency buffer" value={emergency} onChangeText={setEmergency} suffix={suffix} />
-        <AmountField label="Spending buffer" value={buffer} onChangeText={setBuffer} suffix={suffix} />
+        <AmountField label="SAVINGS" value={savings} onChangeText={setSavings} suffix={suffix} />
+        <AmountField label="EMERGENCY BUFFER" value={emergency} onChangeText={setEmergency} suffix={suffix} />
+        <AmountField label="SPENDING BUFFER" value={buffer} onChangeText={setBuffer} suffix={suffix} />
         <PrimaryButton title="Save changes" onPress={save} />
         <PrimaryButton title="Start next pay cycle" onPress={startNext} />
         {saved && <Text style={styles.ok}>Updated — safe-to-spend refreshed.</Text>}
@@ -169,7 +169,6 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 12, paddingBottom: 40 },
   title: { ...hudType.screenTitle },
   sub: { ...hudType.body },
   ok: { ...hudType.body, color: colors.resource },

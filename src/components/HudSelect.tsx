@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { hud, hudType } from '../theme/hud';
+import { fieldChrome, hud, hudType } from '../theme/hud';
 
 export type HudSelectOption<T extends string | number> = {
   value: T;
@@ -29,15 +29,15 @@ export function HudSelect<T extends string | number>({
   const selected = options.find((o) => o.value === value) ?? options[0];
 
   return (
-    <View style={[styles.wrap, compact && styles.wrapCompact]}>
+    <View style={[fieldChrome.wrap, compact && styles.wrapCompact]}>
       <Text style={hudType.label}>{label}</Text>
       {!compact && hint ? <Text style={hudType.body}>{hint}</Text> : null}
       <Pressable
         onPress={() => setOpen((v) => !v)}
         style={[
-          styles.trigger,
+          fieldChrome.box,
           compact && styles.triggerCompact,
-          open && styles.triggerOpen,
+          open && fieldChrome.boxFocused,
         ]}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
@@ -76,28 +76,11 @@ export function HudSelect<T extends string | number>({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: 8 },
   wrapCompact: { gap: 4 },
-  trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    borderWidth: hud.stroke,
-    borderColor: colors.border,
-    backgroundColor: colors.panelDeep,
-    borderRadius: 0,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-  },
   triggerCompact: {
     paddingHorizontal: 10,
     paddingVertical: 7,
     minHeight: 36,
-  },
-  triggerOpen: {
-    borderColor: colors.borderBright,
-    backgroundColor: colors.panelAlt,
   },
   triggerText: {
     flex: 1,
@@ -118,7 +101,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
+    paddingHorizontal: hud.pad,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,

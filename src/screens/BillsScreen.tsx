@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { addDays } from 'date-fns';
-import { AmountField, BillRow, PrimaryButton, ScreenBackground, SoftCard } from '../components/ui';
+import {
+  AmountField,
+  BillRow,
+  HudTextField,
+  PrimaryButton,
+  ScreenBackground,
+  SoftCard,
+} from '../components/ui';
 import { FormScroll } from '../components/FormScroll';
 import { currencySymbol, formatMoney, parsePositiveAmount, toDateKey } from '../services/formatting';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { hudType } from '../theme/hud';
+import { formScreen, hudType } from '../theme/hud';
 
 export function BillsScreen() {
   const { activeCycle, addBill, updateBill, deleteBill, store } = useBudget();
@@ -21,7 +28,7 @@ export function BillsScreen() {
 
   return (
     <ScreenBackground>
-      <FormScroll contentContainerStyle={styles.pad}>
+      <FormScroll contentContainerStyle={formScreen.pad}>
         <Text style={styles.title}>UPCOMING BILLS</Text>
         <Text style={styles.sub}>
           Total reserved: {formatMoney(upcoming.reduce((s, b) => s + b.amount, 0), currency)}
@@ -61,17 +68,15 @@ export function BillsScreen() {
         )}
 
         <Text style={styles.section}>Add a bill</Text>
-        <TextInput
+        <HudTextField
+          label="NAME"
           value={name}
           onChangeText={setName}
           placeholder="Name"
-          placeholderTextColor={colors.textDim}
-          style={styles.textField}
           returnKeyType="done"
           blurOnSubmit
-          onSubmitEditing={Keyboard.dismiss}
         />
-        <AmountField label="Amount" value={amount} onChangeText={setAmount} suffix={suffix} />
+        <AmountField label="AMOUNT" value={amount} onChangeText={setAmount} suffix={suffix} />
         <PrimaryButton
           title="Save bill"
           onPress={async () => {
@@ -94,18 +99,8 @@ export function BillsScreen() {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 12 },
   title: { ...hudType.screenTitle },
   sub: { ...hudType.body },
   section: { ...hudType.label, color: colors.text, marginTop: 8 },
   link: { ...hudType.link },
-  textField: {
-    backgroundColor: colors.panelDeep,
-    borderRadius: 0,
-    borderWidth: 2,
-    borderColor: colors.border,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    ...hudType.field,
-  },
 });

@@ -156,3 +156,67 @@ export const tabScreen = StyleSheet.create({
     gap: hud.stackGap,
   },
 });
+
+/** Stack / modal form screens — Edit Cycle, Add, Bills, Allocate, … */
+export const formScreen = StyleSheet.create({
+  pad: {
+    padding: 20,
+    gap: hud.stackGap,
+    paddingBottom: 40,
+  },
+});
+
+/**
+ * One chrome for every text / amount / select control.
+ * Box size stays identical; only the inner typeface changes (amount vs text).
+ */
+export const fieldChrome = StyleSheet.create({
+  wrap: {
+    gap: hud.gap,
+  },
+  box: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.panelDeep,
+    borderRadius: 0,
+    borderWidth: hud.stroke,
+    borderColor: colors.border,
+    paddingHorizontal: hud.pad,
+    paddingVertical: 12,
+    minHeight: 52,
+  },
+  boxFocused: {
+    borderColor: colors.borderBright,
+    backgroundColor: colors.panelAlt,
+  },
+  textInput: {
+    flex: 1,
+    padding: 0,
+    margin: 0,
+    color: colors.text,
+    fontSize: 16,
+    lineHeight: 20,
+    fontFamily: fonts.body,
+    fontWeight: '600',
+  },
+  amountInput: {
+    flex: 1,
+    padding: 0,
+    margin: 0,
+    color: colors.ammo,
+    fontSize: 22,
+    lineHeight: 26,
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    letterSpacing: -0.4,
+  },
+  suffix: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontFamily: fonts.label,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    marginLeft: 8,
+  },
+});

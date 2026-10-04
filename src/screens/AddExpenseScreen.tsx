@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AmountField, HudButton, Panel, ScreenBackground } from '../components/ui';
+import { AmountField, HudButton, HudTextField, ScreenBackground } from '../components/ui';
 import { FormScroll } from '../components/FormScroll';
 import { currencySymbol, parsePositiveAmount, toDateKey } from '../services/formatting';
 import {
@@ -11,7 +11,7 @@ import {
 } from '../services/receiptScanQuota';
 import { useBudget } from '../store/BudgetContext';
 import { colors } from '../theme/colors';
-import { hudType } from '../theme/hud';
+import { formScreen, hud, hudType } from '../theme/hud';
 import { ensureEnvelopes } from '../services/envelopes';
 import type { EnvelopeKey } from '../models/types';
 import type { RootStackParamList } from '../navigation/types';
@@ -67,7 +67,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
 
   return (
     <ScreenBackground edges={['left', 'right', 'bottom']}>
-      <FormScroll contentContainerStyle={styles.pad}>
+      <FormScroll contentContainerStyle={formScreen.pad}>
         <Text style={styles.title}>ADD EXPENSE</Text>
         <Text style={styles.sub}>
           Log it yourself anytime. Free includes {FREE_RECEIPT_SCAN_LIMIT} receipt scans; bank
@@ -117,19 +117,14 @@ export function AddExpenseScreen({ navigation, route }: Props) {
           })}
         </View>
 
-        <Panel>
-          <Text style={styles.label}>NOTE (OPTIONAL)</Text>
-          <TextInput
-            value={note}
-            onChangeText={setNote}
-            placeholder="Coffee, groceries…"
-            placeholderTextColor={colors.textDim}
-            style={styles.note}
-            returnKeyType="done"
-            blurOnSubmit
-            onSubmitEditing={Keyboard.dismiss}
-          />
-        </Panel>
+        <HudTextField
+          label="NOTE (OPTIONAL)"
+          value={note}
+          onChangeText={setNote}
+          placeholder="Coffee, groceries…"
+          returnKeyType="done"
+          blurOnSubmit
+        />
 
         <HudButton
           title={busy ? 'LOGGING…' : 'LOG EXPENSE'}
@@ -143,17 +138,16 @@ export function AddExpenseScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  pad: { padding: 20, gap: 14, paddingBottom: 40 },
   title: { ...hudType.screenTitle },
   sub: { ...hudType.body },
   importRow: { flexDirection: 'row', gap: 10 },
   importCard: {
     flex: 1,
-    borderWidth: 1,
+    borderWidth: hud.stroke,
     borderColor: colors.resource,
     backgroundColor: colors.resourceSoft,
     borderRadius: 0,
-    padding: 14,
+    padding: hud.pad,
     gap: 6,
     minHeight: 96,
   },
@@ -163,7 +157,7 @@ const styles = StyleSheet.create({
   label: { ...hudType.label },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   cat: {
-    borderWidth: 1,
+    borderWidth: hud.stroke,
     borderColor: colors.border,
     backgroundColor: colors.panel,
     paddingHorizontal: 12,
@@ -174,5 +168,4 @@ const styles = StyleSheet.create({
   catOn: { borderColor: colors.resource, backgroundColor: '#14301A' },
   catText: { ...hudType.label },
   catTextOn: { color: colors.resource },
-  note: { ...hudType.field, paddingVertical: 4 },
 });
