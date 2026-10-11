@@ -19,6 +19,14 @@
       "env": {
         "EAS_BUILD_NO_EXPO_GO_WARNING": "true"
       }
+    },
+    "secure-staging": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "env": {
+        "EAS_BUILD_NO_EXPO_GO_WARNING": "true",
+        "EXPO_PUBLIC_SECURE_SHARED_BUDGET": "true"
+      }
     }
   },
   "submit": {
