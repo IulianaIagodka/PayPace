@@ -28,6 +28,7 @@ import { loadStore, saveStore } from '../services/persistence';
 import { asMoney, toDateKey } from '../services/formatting';
 import { findCycleForDate } from '../services/cycleMatching';
 import { getDeviceId } from '../services/deviceIdentity';
+import { isSecureSharedBudgetEnabled } from '../services/featureFlags';
 import { generateInviteCode, normalizeInviteCode } from '../services/inviteCode';
 import {
   findExistingHouseholdMember,
@@ -763,6 +764,9 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       });
     },
     createHousehold: async (displayName, householdName) => {
+      if (isSecureSharedBudgetEnabled()) {
+        throw new Error('Secure shared budgets are not yet enabled for this build.');
+      }
       if (!store.settings.isPremium) {
         throw new Error('Shared budget is a Plus feature.');
       }
@@ -798,6 +802,9 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       return household;
     },
     joinHousehold: async (inviteCode, displayName) => {
+      if (isSecureSharedBudgetEnabled()) {
+        throw new Error('Secure shared budgets are not yet enabled for this build.');
+      }
       if (!store.settings.isPremium) {
         throw new Error('Shared budget is a Plus feature.');
       }
