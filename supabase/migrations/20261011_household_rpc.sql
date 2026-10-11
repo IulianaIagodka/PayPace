@@ -16,8 +16,14 @@ begin
   if v_id is null or length(v_code) < 8 or length(v_code) > 64 then
     raise exception 'Invalid household';
   end if;
+  if jsonb_typeof(p_payload #> '{household,members}') is distinct from 'array' then
+    raise exception 'Invalid members';
+  end if;
   if jsonb_array_length(p_payload #> '{household,members}') <> 1 then
     raise exception 'A new household must have one owner';
+  end if;
+  if p_payload #>> '{household,members,0,role}' <> 'owner' then
+    raise exception 'Invalid owner role';
   end if;
   insert into public.households(id, invite_code, payload, revision, updated_at)
   values (v_id, v_code, p_payload, 1, now());
@@ -46,6 +52,7 @@ begin
   select count(*) into v_count from public.household_members
   where household_id = v_row.id;
   if v_count >= 2 then raise exception 'Household already has two members'; end if;
+  -- Do not return household data until the caller is a member.
   insert into public.household_members(household_id, user_id, role)
   values(v_row.id, v_user, 'partner');
   return v_row.payload;
