@@ -29,6 +29,7 @@ module.exports = ({ config }) => {
   const supportUrl =
     process.env.EXPO_PUBLIC_SUPPORT_URL?.trim() ||
     'https://iulianaiagodka.github.io/PayPace/support.html';
+  const secureSharedBudget = process.env.EXPO_PUBLIC_SECURE_SHARED_BUDGET === 'true';
   const plusProductId = process.env.EXPO_PUBLIC_PLUS_PRODUCT_ID?.trim() || 'app.paypace.plus';
   const plusMonthlyProductId =
     process.env.EXPO_PUBLIC_PLUS_MONTHLY_PRODUCT_ID?.trim() || 'app.paypace.plus.monthly';
@@ -44,6 +45,7 @@ module.exports = ({ config }) => {
       openaiApiKey,
       supabaseUrl,
       supabaseAnonKey,
+      secureSharedBudget,
       privacyPolicyUrl,
       termsOfUseUrl,
       supportUrl,
@@ -53,6 +55,7 @@ module.exports = ({ config }) => {
       EXPO_PUBLIC_OPENAI_API_KEY: openaiApiKey,
       EXPO_PUBLIC_SUPABASE_URL: supabaseUrl,
       EXPO_PUBLIC_SUPABASE_ANON_KEY: supabaseAnonKey,
+      EXPO_PUBLIC_SECURE_SHARED_BUDGET: String(secureSharedBudget),
     },
   };
 };
