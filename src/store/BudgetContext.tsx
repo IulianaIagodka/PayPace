@@ -276,8 +276,9 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       if (remote) {
         await applyRemotePayload(remote, current.localMemberId);
         const after = storeRef.current;
-        if (after.household) {
-          // Only push when we are not behind — otherwise wait for the next pull.
+        if (after.household && !isSecureSharedBudgetEnabled()) {
+          // Legacy reconciliation may write merged state. Secure mode only writes
+          // from explicit local edits using a revision-checked RPC.
           if (after.household.revision >= remote.revision) {
             await pushIfShared(after);
           }
