@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {
   createContext,
   useCallback,
@@ -119,6 +120,7 @@ type BudgetContextValue = {
   addCustomCategory: (title: string) => Promise<void>;
   removeCustomCategory: (id: string) => Promise<void>;
   createHousehold: (displayName: string, householdName?: string) => Promise<Household>;
+  migrateLegacyHousehold: () => Promise<Household>;
   joinHousehold: (inviteCode: string, displayName: string) => Promise<Household>;
   leaveHousehold: () => Promise<void>;
   renameLocalMember: (displayName: string) => Promise<void>;
@@ -160,6 +162,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
 
   const pushIfShared = useCallback(async (next: AppStoreData) => {
     if (!next.household || !isCloudSyncConfigured()) return 'disabled' as const;
+    if (isSecureSharedBudgetEnabled() && next.household.inviteCode.length < 12) return 'disabled' as const;
     const payload = toSharedPayload({
       household: next.household,
       currencyCode: next.settings.currencyCode,
@@ -263,6 +266,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
   const syncHouseholdNow = useCallback(async () => {
     const current = storeRef.current;
     if (!current.household || !isCloudSyncConfigured() || syncingRef.current) return;
+    if (isSecureSharedBudgetEnabled() && current.household.inviteCode.length < 12) return;
     syncingRef.current = true;
     setSyncStatus('syncing');
     try {
@@ -774,6 +778,38 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           }),
         ),
       });
+    },
+    migrateLegacyHousehold: async () => {
+      if (!isSecureSharedBudgetEnabled()) throw new Error('Staging only.');
+      await requireHouseholdUserId();
+      const current = storeRef.current;
+      if (!current.household || !current.localMemberId) throw new Error('No legacy household on this device.');
+      const local = current.household.members.find(m => m.id === current.localMemberId);
+      if (!local) throw new Error('Local member not found.');
+      // Keep a separate immutable snapshot before changing the primary store.
+      const backupKey = 'paypace.secureMigration.legacy.' + current.household.id;
+      await AsyncStorage.setItem(backupKey, JSON.stringify(current));
+      const now = stamp();
+      const memberId = newId();
+      const household: Household = {
+        id: newId(),
+        name: current.household.name,
+        inviteCode: generateInviteCode(16),
+        members: [{ id: memberId, displayName: local.displayName, deviceId: await getDeviceId(), role: 'owner', joinedAt: now }],
+        createdAt: now,
+        updatedAt: now,
+        revision: 1,
+      };
+      const next: AppStoreData = { ...current, household, localMemberId: memberId };
+      const remote = await secureCreateHousehold(toSharedPayload({
+        household, currencyCode: next.settings.currencyCode,
+        cycles: next.cycles, customCategories: next.settings.customCategories,
+      }));
+      if (remote.household.id !== household.id || remote.cycles.length !== next.cycles.length) {
+        throw new Error('Migration verification failed; local budget unchanged.');
+      }
+      await persist(next);
+      return household;
     },
     createHousehold: async (displayName, householdName) => {
       if (isSecureSharedBudgetEnabled()) await requireHouseholdUserId();
