@@ -37,7 +37,8 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
-    plugins: [...(config.plugins ?? []), withLocalNotificationsOnly],
+    plugins: [...(config.plugins ?? []), 'expo-apple-authentication', withLocalNotificationsOnly],
+    ios: { ...(config.ios ?? {}), usesAppleSignIn: true },
     extra: {
       ...(config.extra ?? {}),
       openaiApiKey,
