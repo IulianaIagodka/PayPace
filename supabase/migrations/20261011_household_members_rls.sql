@@ -48,6 +48,7 @@ create policy "households_member_update" on public.households
 -- Clients must create households through an authenticated RPC (not direct INSERT).
 -- Do not grant direct inserts: membership must be established atomically.
 revoke all on public.households from anon;
-revoke insert, delete on public.households from authenticated;
+revoke insert, update, delete on public.households from authenticated;
+-- All writes must go through SECURITY DEFINER RPC with membership and revision checks.
 
 commit;
