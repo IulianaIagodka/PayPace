@@ -1,5 +1,6 @@
 import type { SharedHouseholdPayload, HouseholdMember } from '../models/types';
 import { getAuthenticatedSupabaseClient, requireHouseholdUserId } from './householdAuthClient';
+import { getSupabaseConfig } from './householdCloud';
 
 /**
  * Member-scoped cloud transport. Never falls back to the anonymous client.
@@ -21,7 +22,10 @@ export async function secureCreateHousehold(payload: SharedHouseholdPayload): Pr
   const { data, error } = await getAuthenticatedSupabaseClient().rpc('create_household_secure', {
     p_payload: payload,
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    const configuredHost = getSupabaseConfig()?.url ?? 'missing Supabase URL';
+    throw new Error(`Secure household create failed [${error.code ?? 'unknown'}] at ${configuredHost}: ${error.message}`);
+  }
   return data as SharedHouseholdPayload;
 }
 
