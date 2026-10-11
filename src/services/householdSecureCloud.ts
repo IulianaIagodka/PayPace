@@ -1,4 +1,4 @@
-import type { SharedHouseholdPayload } from '../models/types';
+import type { SharedHouseholdPayload, HouseholdMember } from '../models/types';
 import { getAuthenticatedSupabaseClient, requireHouseholdUserId } from './householdAuthClient';
 
 /**
@@ -25,10 +25,11 @@ export async function secureCreateHousehold(payload: SharedHouseholdPayload): Pr
   return data as SharedHouseholdPayload;
 }
 
-export async function secureJoinHousehold(code: string): Promise<SharedHouseholdPayload> {
+export async function secureJoinHousehold(code: string, member: HouseholdMember): Promise<SharedHouseholdPayload> {
   await requireHouseholdUserId();
   const { data, error } = await getAuthenticatedSupabaseClient().rpc('join_household_secure', {
     p_invite_code: code,
+    p_member: member,
   });
   if (error) throw new Error(error.message);
   return data as SharedHouseholdPayload;
