@@ -63,3 +63,43 @@ revoke all on function public.create_household_secure(jsonb) from public;
 revoke all on function public.join_household_secure(text) from public;
 grant execute on function public.create_household_secure(jsonb) to authenticated;
 grant execute on function public.join_household_secure(text) to authenticated;
+
+-- Secure updates preserve the server-controlled membership list and invite code.
+-- Clients cannot change identities/roles via arbitrary JSON updates.
+create or replace function public.update_household_secure(
+  p_household_id uuid,
+  p_payload jsonb,
+  p_expected_revision integer
+) returns jsonb language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_row public.households%rowtype;
+  v_payload jsonb;
+begin
+  if v_user is null then raise exception 'Authentication required' using errcode = '28000'; end if;
+  select * into v_row from public.households where id = p_household_id for update;
+  if not found or not public.is_household_member(p_household_id) then
+    raise exception 'Household not found or access denied' using errcode = '42501';
+  end if;
+  if v_row.revision <> p_expected_revision then
+    raise exception 'Stale household revision' using errcode = '40001';
+  end if;
+  if p_payload #>> '{household,id}' is distinct from p_household_id::text then
+    raise exception 'Household ID mismatch';
+  end if;
+  -- Preserve membership and invite data from the server. Never trust client metadata.
+  v_payload := jsonb_set(p_payload, '{household,members}', v_row.payload #> '{household,members}');
+  v_payload := jsonb_set(v_payload, '{household,inviteCode}', v_row.payload #> '{household,inviteCode}');
+  v_payload := jsonb_set(v_payload, '{household,revision}', to_jsonb(v_row.revision + 1));
+  v_payload := jsonb_set(v_payload, '{revision}', to_jsonb(v_row.revision + 1));
+  update public.households set
+    payload = v_payload,
+    revision = v_row.revision + 1,
+    updated_at = now()
+  where id = p_household_id;
+  return v_payload;
+end;
+$$;
+revoke all on function public.update_household_secure(uuid,jsonb,integer) from public;
+grant execute on function public.update_household_secure(uuid,jsonb,integer) to authenticated;
