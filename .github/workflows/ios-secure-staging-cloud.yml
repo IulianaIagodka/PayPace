@@ -1,0 +1,48 @@
+name: Secure staging iOS EAS cloud build and TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: Submit successful build to TestFlight
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paypace-secure-staging-ios
+  cancel-in-progress: false
+
+jobs:
+  cloud-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_NO_TELEMETRY: '1'
+      CI: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Validate Expo authentication
+        run: |
+          test -n "$EXPO_TOKEN" || { echo "::error::Configure EXPO_TOKEN in repository Actions secrets"; exit 1; }
+      - name: Install dependencies
+        run: npm ci
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Install EAS CLI
+        run: npm install --global eas-cli
+      - name: Cloud build (secure staging)
+        id: build
+        run: |
+          eas build --platform ios --profile secure-staging --non-interactive --wait --json > eas-build.json
+          node -e "const fs=require('fs');const b=JSON.parse(fs.readFileSync('eas-build.json','utf8'));const x=Array.isArray(b)?b[0]:b;if(!x||!x.id)throw Error('EAS build ID missing');fs.appendFileSync(process.env.GITHUB_OUTPUT,'build_id='+x.id+'\n');"
+      - name: Submit build to TestFlight
+        if: ${{ inputs.submit }}
+        run: eas submit --platform ios --profile production --id "${{ steps.build.outputs.build_id }}" --non-interactive --wait
