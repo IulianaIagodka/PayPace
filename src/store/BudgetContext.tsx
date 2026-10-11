@@ -830,13 +830,14 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         );
       }
       if (isSecureSharedBudgetEnabled()) await requireHouseholdUserId();
+      const secureMemberId = newId();
       const remote = isSecureSharedBudgetEnabled()
-        ? await secureJoinHousehold(code)
+        ? await secureJoinHousehold(code, { id: secureMemberId, displayName: trimmed, deviceId: await getDeviceId(), role: 'partner', joinedAt: stamp() })
         : await cloudFetchByInviteCode(code);
       if (!remote) throw new Error('That code wasn’t found. Double-check it with your partner.');
       const deviceId = await getDeviceId();
       const existingMember = isSecureSharedBudgetEnabled()
-        ? null
+        ? remote.household.members.find((m) => m.id === secureMemberId) ?? null
         : findExistingHouseholdMember(remote.household.members, deviceId, trimmed);
       if (!existingMember && remote.household.members.length >= 2) {
         throw new Error(HOUSEHOLD_FULL_RECLAIM_HINT);
@@ -861,12 +862,9 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           m.id === memberId ? { ...m, displayName: trimmed, deviceId } : m,
         );
       }
-      const household: Household = {
-        ...remote.household,
-        members,
-        updatedAt: stamp(),
-        revision: remote.revision + 1,
-      };
+      const household: Household = isSecureSharedBudgetEnabled()
+        ? remote.household
+        : { ...remote.household, members, updatedAt: stamp(), revision: remote.revision + 1 };
       const next: AppStoreData = {
         ...store,
         settings: {
