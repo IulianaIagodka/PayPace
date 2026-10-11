@@ -252,7 +252,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
               variant="secondary"
             />
             <Text style={styles.hint}>
-              Secure sharing is in testing. Creating and joining budgets stays disabled until the server migration is verified.
+              Secure sharing is in testing. Use a staging Supabase project; do not connect this build to production.
             </Text>
           </SoftCard>
         ) : null}
@@ -277,7 +277,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
           <Text style={styles.hint}>You’ll get a code to send your partner.</Text>
           <HudButton
             title="Create shared budget"
-            disabled={!name.trim() || busy || secureSharing}
+            disabled={!name.trim() || busy || (secureSharing && !appleSignedIn)}
             onPress={() => run(() => createHousehold(name))}
             variant="secondary"
           />
@@ -299,7 +299,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
           />
           <HudButton
             title="Join"
-            disabled={!name.trim() || !code.trim() || busy || secureSharing}
+            disabled={!name.trim() || !code.trim() || busy || (secureSharing && !appleSignedIn)}
             onPress={() => run(() => joinHousehold(code, name))}
             variant="secondary"
           />
