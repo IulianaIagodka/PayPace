@@ -35,6 +35,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
     syncStatus,
     syncError,
     createHousehold,
+    migrateLegacyHousehold,
     joinHousehold,
     leaveHousehold,
     renameLocalMember,
@@ -128,6 +129,14 @@ export function SharedBudgetScreen({ navigation }: Props) {
             One budget for two. You both see the same balance, payday, bills, and spending.
           </Text>
 
+          {secureSharing && household.inviteCode.length < 12 ? (
+            <SoftCard>
+              <Text style={styles.section}>Move to secure shared budget</Text>
+              <Text style={styles.hint}>Creates a new Apple-protected household from this phone's local budget. Your original local data is backed up and the old cloud budget is not deleted. Your partner must join again with the new invite code. Changes made on your partner's phone but not synced to this phone will not be included.</Text>
+              <HudButton title={appleSignedIn ? 'Apple account connected' : 'Sign in with Apple'} onPress={authorizeApple} disabled={busy || appleSignedIn} variant="secondary" />
+              <HudButton title="Create secure copy" disabled={busy || !appleSignedIn} onPress={() => Alert.alert('Create secure copy?', 'This creates a separate secure household from the local data on this phone. Confirm your partner has synced their changes first. The old cloud budget stays intact.', [{text:'Cancel',style:'cancel'},{text:'Create secure copy',onPress:()=>run(migrateLegacyHousehold)}])} variant="secondary" />
+            </SoftCard>
+          ) : null}
           <SoftCard>
             <Text style={styles.section}>{household.name}</Text>
             <Text style={styles.codeLabel}>Invite code</Text>
