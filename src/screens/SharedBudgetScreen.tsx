@@ -20,6 +20,9 @@ import { colors } from '../theme/colors';
 import { hudType } from '../theme/hud';
 import type { RootStackParamList } from '../navigation/types';
 import { formatMoney } from '../services/formatting';
+import { isSecureSharedBudgetEnabled } from '../services/featureFlags';
+import { signInWithApple } from '../services/appleSignIn';
+import { requireHouseholdUserId } from '../services/householdAuthClient';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SharedBudget'>;
 
@@ -32,6 +35,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
     syncStatus,
     syncError,
     createHousehold,
+    migrateLegacyHousehold,
     joinHousehold,
     leaveHousehold,
     renameLocalMember,
@@ -43,6 +47,24 @@ export function SharedBudgetScreen({ navigation }: Props) {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const currency = store.settings.currencyCode;
+  const secureSharing = isSecureSharedBudgetEnabled();
+  const [appleSignedIn, setAppleSignedIn] = useState(false);
+
+  const authorizeApple = async () => {
+    setBusy(true);
+    try {
+      try {
+        await requireHouseholdUserId();
+      } catch {
+        await signInWithApple();
+      }
+      setAppleSignedIn(true);
+    } catch (error) {
+      Alert.alert('SIGN IN WITH APPLE', error instanceof Error ? error.message : 'Sign in failed');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const spentByMember = useMemo(() => {
     const expenses = activeCycle?.expenses ?? [];
@@ -107,6 +129,14 @@ export function SharedBudgetScreen({ navigation }: Props) {
             One budget for two. You both see the same balance, payday, bills, and spending.
           </Text>
 
+          {secureSharing && household.inviteCode.length < 12 ? (
+            <SoftCard>
+              <Text style={styles.section}>Move to secure shared budget</Text>
+              <Text style={styles.hint}>Creates a new Apple-protected household from this phone's local budget. Your original local data is backed up and the old cloud budget is not deleted. Your partner must join again with the new invite code. Changes made on your partner's phone but not synced to this phone will not be included.</Text>
+              <HudButton title={appleSignedIn ? 'Apple account connected' : 'Sign in with Apple'} onPress={authorizeApple} disabled={busy || appleSignedIn} variant="secondary" />
+              <HudButton title="Create secure copy" disabled={busy || !appleSignedIn} onPress={() => Alert.alert('Create secure copy?', 'This creates a separate secure household from the local data on this phone. Confirm your partner has synced their changes first. The old cloud budget stays intact.', [{text:'Cancel',style:'cancel'},{text:'Create secure copy',onPress:()=>run(migrateLegacyHousehold)}])} variant="secondary" />
+            </SoftCard>
+          ) : null}
           <SoftCard>
             <Text style={styles.section}>{household.name}</Text>
             <Text style={styles.codeLabel}>Invite code</Text>
@@ -218,6 +248,24 @@ export function SharedBudgetScreen({ navigation }: Props) {
           tagged by name.
         </Text>
 
+        {secureSharing ? (
+          <SoftCard>
+            <Text style={styles.section}>Apple account</Text>
+            <Text style={styles.hint}>
+              Only Shared Budget needs an account. Your personal budget stays available without signing in.
+            </Text>
+            <HudButton
+              title={appleSignedIn ? 'Signed in with Apple' : 'Sign in with Apple'}
+              onPress={authorizeApple}
+              disabled={busy || appleSignedIn}
+              variant="secondary"
+            />
+            <Text style={styles.hint}>
+              Secure sharing is in testing. Use a staging Supabase project; do not connect this build to production.
+            </Text>
+          </SoftCard>
+        ) : null}
+
         <SoftCard>
           <Text style={styles.section}>Your name</Text>
           <TextInput
@@ -238,7 +286,7 @@ export function SharedBudgetScreen({ navigation }: Props) {
           <Text style={styles.hint}>You’ll get a code to send your partner.</Text>
           <HudButton
             title="Create shared budget"
-            disabled={!name.trim() || busy}
+            disabled={!name.trim() || busy || (secureSharing && !appleSignedIn)}
             onPress={() => run(() => createHousehold(name))}
             variant="secondary"
           />
@@ -260,13 +308,15 @@ export function SharedBudgetScreen({ navigation }: Props) {
           />
           <HudButton
             title="Join"
-            disabled={!name.trim() || !code.trim() || busy}
+            disabled={!name.trim() || !code.trim() || busy || (secureSharing && !appleSignedIn)}
             onPress={() => run(() => joinHousehold(code, name))}
             variant="secondary"
           />
-          <Text style={styles.hint}>
-            Lost your data? Use the same name as before — that reclaims your seat (max 2 people).
-          </Text>
+          {!secureSharing ? (
+            <Text style={styles.hint}>
+              Lost your data? Use the same name as before — that reclaims your seat (max 2 people).
+            </Text>
+          ) : null}
           {!cloudSyncReady ? (
             <Text style={styles.hint}>
               Joining needs cloud sync. Add your Supabase URL and anon key, then rebuild (see

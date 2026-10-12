@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {
   createContext,
   useCallback,
@@ -28,6 +29,9 @@ import { loadStore, saveStore } from '../services/persistence';
 import { asMoney, toDateKey } from '../services/formatting';
 import { findCycleForDate } from '../services/cycleMatching';
 import { getDeviceId } from '../services/deviceIdentity';
+import { isSecureSharedBudgetEnabled } from '../services/featureFlags';
+import { secureFetchHousehold, secureCreateHousehold, secureJoinHousehold, secureUpdateHousehold } from '../services/householdSecureCloud';
+import { requireHouseholdUserId } from '../services/householdAuthClient';
 import { generateInviteCode, normalizeInviteCode } from '../services/inviteCode';
 import {
   findExistingHouseholdMember,
@@ -116,6 +120,7 @@ type BudgetContextValue = {
   addCustomCategory: (title: string) => Promise<void>;
   removeCustomCategory: (id: string) => Promise<void>;
   createHousehold: (displayName: string, householdName?: string) => Promise<Household>;
+  migrateLegacyHousehold: () => Promise<Household>;
   joinHousehold: (inviteCode: string, displayName: string) => Promise<Household>;
   leaveHousehold: () => Promise<void>;
   renameLocalMember: (displayName: string) => Promise<void>;
@@ -157,12 +162,17 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
 
   const pushIfShared = useCallback(async (next: AppStoreData) => {
     if (!next.household || !isCloudSyncConfigured()) return 'disabled' as const;
+    if (isSecureSharedBudgetEnabled() && next.household.inviteCode.length < 12) return 'disabled' as const;
     const payload = toSharedPayload({
       household: next.household,
       currencyCode: next.settings.currencyCode,
       cycles: next.cycles,
       customCategories: next.settings.customCategories,
     });
+    if (isSecureSharedBudgetEnabled()) {
+      const updated = await secureUpdateHousehold(payload, Math.max(1, next.household.revision - 1));
+      return updated ? 'written' as const : 'disabled' as const;
+    }
     return cloudUpsertPayload(payload);
   }, []);
 
@@ -256,21 +266,27 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
   const syncHouseholdNow = useCallback(async () => {
     const current = storeRef.current;
     if (!current.household || !isCloudSyncConfigured() || syncingRef.current) return;
+    if (isSecureSharedBudgetEnabled() && current.household.inviteCode.length < 12) return;
     syncingRef.current = true;
     setSyncStatus('syncing');
     try {
-      const remote = await cloudFetchById(current.household.id);
+      const remote = isSecureSharedBudgetEnabled()
+        ? await secureFetchHousehold(current.household.id)
+        : await cloudFetchById(current.household.id);
       if (remote) {
         await applyRemotePayload(remote, current.localMemberId);
         const after = storeRef.current;
-        if (after.household) {
-          // Only push when we are not behind — otherwise wait for the next pull.
+        if (after.household && !isSecureSharedBudgetEnabled()) {
+          // Legacy reconciliation may write merged state. Secure mode only writes
+          // from explicit local edits using a revision-checked RPC.
           if (after.household.revision >= remote.revision) {
             await pushIfShared(after);
           }
         }
-      } else {
+      } else if (!isSecureSharedBudgetEnabled()) {
         await pushIfShared(current);
+      } else {
+        throw new Error('Secure household inaccessible; local data was kept.');
       }
       setSyncStatus('idle');
       setSyncError(null);
@@ -305,9 +321,11 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     const sub = AppState.addEventListener('change', onAppState);
 
     // Partner writes → pull immediately (fixes “only updates after restart”).
-    const unsubscribeRealtime = subscribeHouseholdChanges(householdId, () => {
-      void syncHouseholdNow();
-    });
+    const unsubscribeRealtime = isSecureSharedBudgetEnabled()
+      ? () => undefined // Authenticated polling until Realtime JWT policies are verified.
+      : subscribeHouseholdChanges(householdId, () => {
+          void syncHouseholdNow();
+        });
 
     return () => {
       clearInterval(timer);
@@ -762,7 +780,40 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         ),
       });
     },
+    migrateLegacyHousehold: async () => {
+      if (!isSecureSharedBudgetEnabled()) throw new Error('Staging only.');
+      await requireHouseholdUserId();
+      const current = storeRef.current;
+      if (!current.household || !current.localMemberId) throw new Error('No legacy household on this device.');
+      const local = current.household.members.find(m => m.id === current.localMemberId);
+      if (!local) throw new Error('Local member not found.');
+      // Keep a separate immutable snapshot before changing the primary store.
+      const backupKey = 'paypace.secureMigration.legacy.' + current.household.id;
+      await AsyncStorage.setItem(backupKey, JSON.stringify(current));
+      const now = stamp();
+      const memberId = newId();
+      const household: Household = {
+        id: newId(),
+        name: current.household.name,
+        inviteCode: generateInviteCode(16),
+        members: [{ id: memberId, displayName: local.displayName, deviceId: await getDeviceId(), role: 'owner', joinedAt: now }],
+        createdAt: now,
+        updatedAt: now,
+        revision: 1,
+      };
+      const next: AppStoreData = { ...current, household, localMemberId: memberId };
+      const remote = await secureCreateHousehold(toSharedPayload({
+        household, currencyCode: next.settings.currencyCode,
+        cycles: next.cycles, customCategories: next.settings.customCategories,
+      }));
+      if (remote.household.id !== household.id || remote.cycles.length !== next.cycles.length) {
+        throw new Error('Migration verification failed; local budget unchanged.');
+      }
+      await persist(next);
+      return household;
+    },
     createHousehold: async (displayName, householdName) => {
+      if (isSecureSharedBudgetEnabled()) await requireHouseholdUserId();
       if (!store.settings.isPremium) {
         throw new Error('Shared budget is a Plus feature.');
       }
@@ -774,7 +825,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
       const household: Household = {
         id: newId(),
         name: (householdName?.trim() || 'Our budget').slice(0, 40),
-        inviteCode: generateInviteCode(),
+        inviteCode: isSecureSharedBudgetEnabled() ? generateInviteCode(12) : generateInviteCode(),
         members: [
           {
             id: memberId,
@@ -794,7 +845,12 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         household,
         localMemberId: memberId,
       };
-      await commit(next);
+      if (isSecureSharedBudgetEnabled()) {
+        await secureCreateHousehold(toSharedPayload({ household, currencyCode: next.settings.currencyCode, cycles: next.cycles, customCategories: next.settings.customCategories }));
+        await persist(next);
+      } else {
+        await commit(next);
+      }
       return household;
     },
     joinHousehold: async (inviteCode, displayName) => {
@@ -810,14 +866,16 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           'Cloud sync isn’t set up yet. Add your Supabase keys (see SHARED-BUDGET.md), then rebuild.',
         );
       }
-      const remote = await cloudFetchByInviteCode(code);
+      if (isSecureSharedBudgetEnabled()) await requireHouseholdUserId();
+      const secureMemberId = newId();
+      const remote = isSecureSharedBudgetEnabled()
+        ? await secureJoinHousehold(code, { id: secureMemberId, displayName: trimmed, deviceId: await getDeviceId(), role: 'partner', joinedAt: stamp() })
+        : await cloudFetchByInviteCode(code);
       if (!remote) throw new Error('That code wasn’t found. Double-check it with your partner.');
       const deviceId = await getDeviceId();
-      const existingMember = findExistingHouseholdMember(
-        remote.household.members,
-        deviceId,
-        trimmed,
-      );
+      const existingMember = isSecureSharedBudgetEnabled()
+        ? remote.household.members.find((m) => m.id === secureMemberId) ?? null
+        : findExistingHouseholdMember(remote.household.members, deviceId, trimmed);
       if (!existingMember && remote.household.members.length >= 2) {
         throw new Error(HOUSEHOLD_FULL_RECLAIM_HINT);
       }
@@ -841,12 +899,9 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
           m.id === memberId ? { ...m, displayName: trimmed, deviceId } : m,
         );
       }
-      const household: Household = {
-        ...remote.household,
-        members,
-        updatedAt: stamp(),
-        revision: remote.revision + 1,
-      };
+      const household: Household = isSecureSharedBudgetEnabled()
+        ? remote.household
+        : { ...remote.household, members, updatedAt: stamp(), revision: remote.revision + 1 };
       const next: AppStoreData = {
         ...store,
         settings: {
@@ -862,7 +917,7 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
         cycles: remote.cycles.length ? remote.cycles : store.cycles,
       };
       await persist(next);
-      await cloudUpsertPayload(
+      if (!isSecureSharedBudgetEnabled()) await cloudUpsertPayload(
         toSharedPayload({
           household,
           currencyCode: next.settings.currencyCode,

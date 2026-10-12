@@ -1,10 +1,19 @@
+import * as Crypto from 'expo-crypto';
+
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-/** Short human-friendly invite code, e.g. 7K2M9Q */
+/** Cryptographically random human-friendly invite code. */
 export function generateInviteCode(length = 6): string {
+  if (!Number.isInteger(length) || length < 1 || length > 64) throw new Error('Invalid invite length');
   let out = '';
-  for (let i = 0; i < length; i++) {
-    out += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+  // Rejection sampling avoids modulo bias: 256 is divisible by 32.
+  while (out.length < length) {
+    const bytes = Crypto.getRandomBytes(length - out.length);
+    for (const byte of bytes) {
+      if (byte < 256 - (256 % CODE_ALPHABET.length)) {
+        out += CODE_ALPHABET[byte % CODE_ALPHABET.length];
+      }
+    }
   }
   return out;
 }
