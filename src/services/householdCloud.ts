@@ -19,17 +19,25 @@ function extraConfig() {
   return (Constants.expoConfig?.extra ?? {}) as Record<string, string | undefined>;
 }
 
+const SECURE_STAGING_SUPABASE_URL = 'https://xclvzyevfsadipmupeos.supabase.co';
+const SECURE_STAGING_PUBLISHABLE_KEY = 'sb_publishable_VSwkxTUDzduNCcZ4o4bz4A_ZUoFUK2B';
+
 export function getSupabaseConfig(): { url: string; anonKey: string } | null {
-  const url =
-    process.env.EXPO_PUBLIC_SUPABASE_URL ||
-    extraConfig().supabaseUrl ||
-    extraConfig().EXPO_PUBLIC_SUPABASE_URL ||
-    '';
-  const anonKey =
-    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
-    extraConfig().supabaseAnonKey ||
-    extraConfig().EXPO_PUBLIC_SUPABASE_ANON_KEY ||
-    '';
+  const extra = extraConfig();
+  const secureStaging =
+    process.env.EXPO_PUBLIC_SECURE_SHARED_BUDGET === 'true' ||
+    extra.secureSharedBudget === true ||
+    extra.EXPO_PUBLIC_SECURE_SHARED_BUDGET === 'true';
+  // Staging is an isolated Supabase project. Never let a production EAS
+  // environment variable silently redirect secure household RPC calls.
+  if (secureStaging) {
+    return {
+      url: SECURE_STAGING_SUPABASE_URL,
+      anonKey: SECURE_STAGING_PUBLISHABLE_KEY,
+    };
+  }
+  const url = process.env.EXPO_PUBLIC_SUPABASE_URL || extra.supabaseUrl || extra.EXPO_PUBLIC_SUPABASE_URL || '';
+  const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || extra.supabaseAnonKey || extra.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
   if (!url || !anonKey) return null;
   return { url, anonKey };
 }
