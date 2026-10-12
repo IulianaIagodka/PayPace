@@ -26,7 +26,7 @@ export function getSupabaseConfig(): { url: string; anonKey: string } | null {
   const extra = extraConfig();
   const secureStaging =
     process.env.EXPO_PUBLIC_SECURE_SHARED_BUDGET === 'true' ||
-    extra.secureSharedBudget === true ||
+    extra.secureSharedBudget === 'true' ||
     extra.EXPO_PUBLIC_SECURE_SHARED_BUDGET === 'true';
   // Staging is an isolated Supabase project. Never let a production EAS
   // environment variable silently redirect secure household RPC calls.
