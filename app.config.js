@@ -29,7 +29,7 @@ module.exports = ({ config }) => {
   const supportUrl =
     process.env.EXPO_PUBLIC_SUPPORT_URL?.trim() ||
     'https://iulianaiagodka.github.io/PayPace/support.html';
-  const secureSharedBudget = process.env.EXPO_PUBLIC_SECURE_SHARED_BUDGET === 'true';
+  const secureSharedBudget = process.env.EAS_BUILD_PROFILE === 'secure-staging' || process.env.EXPO_PUBLIC_SECURE_SHARED_BUDGET === 'true';
   const plusProductId = process.env.EXPO_PUBLIC_PLUS_PRODUCT_ID?.trim() || 'app.paypace.plus';
   const plusMonthlyProductId =
     process.env.EXPO_PUBLIC_PLUS_MONTHLY_PRODUCT_ID?.trim() || 'app.paypace.plus.monthly';
